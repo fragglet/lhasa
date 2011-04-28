@@ -4,7 +4,7 @@
 
 #include "lha_file_header.h"
 
-#define MIN_HEADER_LEN 24 /* bytes */
+#define MIN_HEADER_LEN 22 /* bytes */
 
 // Perform checksum of header contents.
 
