@@ -75,5 +75,15 @@ size_t lha_reader_read_compressed(LHAReader *reader, void *buf, size_t buf_len);
 
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len);
 
+/**
+ * Decompress the contents of the current archived file, and check
+ * that the checksum matches correctly.
+ *
+ * @param reader     The LHAReader structure.
+ * @return           Non-zero if the checksum matches.
+ */
+
+int lha_reader_check(LHAReader *reader);
+
 #endif /* #ifndef LHASA_LHA_READER_H */
 

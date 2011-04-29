@@ -21,6 +21,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#include "crc16.h"
+
 #include "lha_decoder.h"
 #include "lha_reader.h"
 
@@ -166,5 +168,35 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 	// Read from decoder and return result.
 
 	return lha_decoder_read(reader->decoder, buf, buf_len);
+}
+
+int lha_reader_check(LHAReader *reader)
+{
+	uint8_t buf[64];
+	uint16_t crc;
+	unsigned int bytes, total_bytes;
+
+	if (reader->curr_file == NULL) {
+		return 0;
+	}
+
+	// Decompress the current file, performing a running
+	// CRC of the contents as we go.
+
+	total_bytes = 0;
+	crc = 0;
+
+	do {
+		bytes = lha_reader_read(reader, buf, sizeof(buf));
+
+		lha_crc16_buf(&crc, buf, bytes);
+
+		total_bytes += bytes;
+	} while (bytes > 0);
+
+	// Decompressed length should match, as well as CRC.
+
+	return total_bytes == reader->curr_file->length
+	    && crc == reader->curr_file->crc;
 }
 

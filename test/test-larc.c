@@ -112,6 +112,34 @@ static void test_decompress(char *arcname, char *filename,
 	lha_reader_free(reader);
 }
 
+static void test_crc_check(char *filename)
+{
+	FILE *fstream;
+	LHAInputStream *stream;
+	LHAReader *reader;
+	LHAFileHeader *header;
+
+	fstream = fopen(filename, "rb");
+	stream = lha_input_stream_new(fstream);
+	reader = lha_reader_new(stream);
+
+	// Read all files in the directory, and check CRCs.
+
+	for (;;) {
+		header = lha_reader_next_file(reader);
+
+		if (header == NULL) {
+			break;
+		}
+
+		assert(lha_reader_check(reader) != 0);
+	}
+
+	fclose(fstream);
+	lha_input_stream_free(stream);
+	lha_reader_free(reader);
+}
+
 void test_lz4(void)
 {
 	struct expected_header expected = {
@@ -128,6 +156,11 @@ void test_lz4(void)
 void test_lz4_decompress(void)
 {
 	test_decompress("larc_lz4.lzs", "GPL-2.GZ", 0xe4690583);
+}
+
+void test_lz4_crc(void)
+{
+	test_crc_check("larc_lz4.lzs");
 }
 
 void test_lz5(void)
@@ -148,13 +181,20 @@ void test_lz5_decompress(void)
 	test_decompress("larc_lz5.lzs", "GPL-2", 0x4e46f4a1);
 }
 
+void test_lz5_crc(void)
+{
+	test_crc_check("larc_lz5.lzs");
+}
+
 int main(int argc, char *argv[])
 {
 	test_lz4();
 	test_lz4_decompress();
+	test_lz4_crc();
 
 	test_lz5();
 	test_lz5_decompress();
+	test_lz5_crc();
 
 	return 0;
 }
