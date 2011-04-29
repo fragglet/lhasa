@@ -23,12 +23,14 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_decoder.h"
 
+#include "lha_null_decoder.h"
 #include "lha_lzss_decoder.h"
 
 static struct {
 	char *name;
 	LHADecoderType *dtype;
 } decoders[] = {
+	{ "-lz4-", &lha_null_decoder },
 	{ "-lz5-", &lha_lzss_decoder }
 };
 
