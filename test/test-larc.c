@@ -66,6 +66,49 @@ static void test_read_directory(char *filename,
 	lha_reader_free(reader);
 }
 
+static void test_decompress(char *arcname, char *filename)
+{
+	FILE *fstream;
+	LHAInputStream *stream;
+	LHAReader *reader;
+	LHAFileHeader *header;
+
+	fstream = fopen(arcname, "rb");
+	stream = lha_input_stream_new(fstream);
+	reader = lha_reader_new(stream);
+
+	// Loop through directory until we find the file.
+
+	for (;;) {
+		size_t bytes;
+
+		header = lha_reader_next_file(reader);
+
+		assert(header != NULL);
+
+		if (strcmp(filename, header->filename) != 0) {
+			printf("%s!=%s\n", filename, header->filename);
+			continue;
+		}
+
+		// This is the file.
+
+		do {
+			char buf[64];
+
+			bytes = lha_reader_read(reader, buf, sizeof(buf));
+
+			fwrite(buf, 1, bytes, stdout);
+		} while (bytes > 0);
+
+		break;
+	}
+
+	fclose(fstream);
+	lha_input_stream_free(stream);
+	lha_reader_free(reader);
+}
+
 void test_lz4(void)
 {
 	struct expected_header expected = {
@@ -92,10 +135,16 @@ void test_lz5(void)
 	test_read_directory("larc_lz5.lzs", &expected);
 }
 
+void test_lz5_decompress(void)
+{
+	test_decompress("larc_lz5.lzs", "GPL-2");
+}
+
 int main(int argc, char *argv[])
 {
 	test_lz4();
 	test_lz5();
+	test_lz5_decompress();
 
 	return 0;
 }

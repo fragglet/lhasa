@@ -21,11 +21,14 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#include "lha_decoder.h"
+#include "lha_lzss_decoder.h"
 #include "lha_reader.h"
 
 struct _LHAReader {
 	LHAInputStream *stream;
 	LHAFileHeader *curr_file;
+	LHADecoder *decoder;
 	size_t curr_file_remaining;
 	int eof;
 };
@@ -43,6 +46,7 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 	reader->stream = stream;
 	reader->curr_file = NULL;
 	reader->curr_file_remaining = 0;
+	reader->decoder = NULL;
 	reader->eof = 0;
 
 	return reader;
@@ -54,6 +58,10 @@ void lha_reader_free(LHAReader *reader)
 		lha_file_header_free(reader->curr_file);
 	}
 
+	if (reader->decoder != NULL) {
+		lha_decoder_free(reader->decoder);
+	}
+
 	free(reader);
 }
 
@@ -61,6 +69,13 @@ LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 {
 	if (reader->eof) {
 		return NULL;
+	}
+
+	// Free a decoder if we have one.
+
+	if (reader->decoder != NULL) {
+		lha_decoder_free(reader->decoder);
+		reader->decoder = NULL;
 	}
 
 	// Free the current file header and skip over any remaining
@@ -115,9 +130,35 @@ size_t lha_reader_read_compressed(LHAReader *reader, void *buf, size_t buf_len)
 	return bytes;
 }
 
+static size_t decoder_callback(void *buf, size_t buf_len, void *user_data)
+{
+	return lha_reader_read_compressed(user_data, buf, buf_len);
+}
+
+static void open_decoder(LHAReader *reader)
+{
+	// TODO: Select decoder based on compression method in
+	// file header.
+
+	reader->decoder = lha_decoder_new(&lha_lzss_decoder,
+	                                  decoder_callback,
+	                                  reader);
+}
+
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 {
-	// TODO
-	return 0;
+	// The first time this is called, we have to create a decoder.
+
+	if (reader->curr_file != NULL && reader->decoder == NULL) {
+		open_decoder(reader);
+
+		if (reader->decoder == NULL) {
+			return 0;
+		}
+	}
+
+	// Read from decoder and return result.
+
+	return lha_decoder_read(reader->decoder, buf, buf_len);
 }
 
