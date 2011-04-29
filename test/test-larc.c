@@ -24,6 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <assert.h>
 
 #include "lha_reader.h"
+#include "crc32.h"
 
 struct expected_header {
 	char *method;
@@ -66,12 +67,15 @@ static void test_read_directory(char *filename,
 	lha_reader_free(reader);
 }
 
-static void test_decompress(char *arcname, char *filename)
+static void test_decompress(char *arcname, char *filename,
+                            uint32_t expected_crc)
 {
 	FILE *fstream;
 	LHAInputStream *stream;
 	LHAReader *reader;
 	LHAFileHeader *header;
+	size_t bytes, total_bytes;
+	uint32_t crc;
 
 	fstream = fopen(arcname, "rb");
 	stream = lha_input_stream_new(fstream);
@@ -79,30 +83,29 @@ static void test_decompress(char *arcname, char *filename)
 
 	// Loop through directory until we find the file.
 
-	for (;;) {
-		size_t bytes;
+	do {
 
 		header = lha_reader_next_file(reader);
 
 		assert(header != NULL);
+	} while (strcmp(filename, header->filename) != 0);
 
-		if (strcmp(filename, header->filename) != 0) {
-			printf("%s!=%s\n", filename, header->filename);
-			continue;
-		}
+	// This is the file.  Read and calculate CRC.
 
-		// This is the file.
+	crc = 0;
+	total_bytes = 0;
 
-		do {
-			char buf[64];
+	do {
+		uint8_t buf[64];
 
-			bytes = lha_reader_read(reader, buf, sizeof(buf));
+		bytes = lha_reader_read(reader, buf, sizeof(buf));
+		total_bytes += bytes;
 
-			fwrite(buf, 1, bytes, stdout);
-		} while (bytes > 0);
+		crc32_buf(&crc, buf, bytes);
+		//fwrite(buf, bytes, 1, stdout);
+	} while (bytes > 0);
 
-		break;
-	}
+	assert(crc == expected_crc);
 
 	fclose(fstream);
 	lha_input_stream_free(stream);
@@ -122,6 +125,11 @@ void test_lz4(void)
 	test_read_directory("larc_lz4.lzs", &expected);
 }
 
+void test_lz4_decompress(void)
+{
+	test_decompress("larc_lz4.lzs", "GPL-2.GZ", 0xe4690583);
+}
+
 void test_lz5(void)
 {
 	struct expected_header expected = {
@@ -137,12 +145,14 @@ void test_lz5(void)
 
 void test_lz5_decompress(void)
 {
-	test_decompress("larc_lz5.lzs", "GPL-2");
+	test_decompress("larc_lz5.lzs", "GPL-2", 0x4e46f4a1);
 }
 
 int main(int argc, char *argv[])
 {
 	test_lz4();
+	test_lz4_decompress();
+
 	test_lz5();
 	test_lz5_decompress();
 
