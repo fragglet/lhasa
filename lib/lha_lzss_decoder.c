@@ -133,8 +133,9 @@ static int process_run(LHALZSSDecoder *decoder,
 				return 0;
 			}
 
-			seqstart = ((cmd[1] & 0xf0) << 4) | cmd[0];
-			seqlen = (cmd[1] & 0x0f) + THRESHOLD;
+			seqstart = (((unsigned int) cmd[1] & 0xf0) << 4)
+			         | cmd[0];
+			seqlen = ((unsigned int) cmd[1] & 0x0f) + THRESHOLD;
 
 			output_block(decoder, seqstart, seqlen);
 		}

@@ -45,14 +45,15 @@ static int checksum_header(uint8_t *header, size_t header_len, size_t csum)
 
 static uint16_t decode_uint16(uint8_t *buf)
 {
-	return buf[0] | (buf[1] << 8);
+	return (uint16_t) (buf[0] | (buf[1] << 8));
 }
 
 // Decode 32-bit integer.
 
 static uint32_t decode_uint32(uint8_t *buf)
 {
-	return buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+	return (uint32_t) (buf[0] | (buf[1] << 8)
+	                 | (buf[2] << 16) | (buf[3] << 24));
 }
 
 // Decode MS-DOS timestamp.

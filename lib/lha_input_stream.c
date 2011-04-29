@@ -71,7 +71,7 @@ int lha_input_stream_read_short(LHAInputStream *reader, uint16_t *result)
 		return 0;
 	}
 
-	*result = buf[0] | (buf[1] << 8);
+	*result = (uint16_t) (buf[0] | (buf[1] << 8));
 
 	return 1;
 }
@@ -84,7 +84,8 @@ int lha_input_stream_read_long(LHAInputStream *reader, uint32_t *result)
 		return 0;
 	}
 
-	*result = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+	*result = (uint32_t) (buf[0] | (buf[1] << 8)
+	                    | (buf[2] << 16) | (buf[3] << 24));
 
 	return 1;
 }
@@ -93,7 +94,7 @@ int lha_input_stream_skip(LHAInputStream *reader, size_t bytes)
 {
 	int result;
 
-	result = fseek(reader->stream, bytes, SEEK_CUR);
+	result = fseek(reader->stream, (long) bytes, SEEK_CUR);
 
 	return result == 0;
 }
