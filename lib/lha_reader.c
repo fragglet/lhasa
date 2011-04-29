@@ -22,7 +22,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 
 #include "lha_decoder.h"
-#include "lha_lzss_decoder.h"
 #include "lha_reader.h"
 
 struct _LHAReader {
@@ -137,12 +136,19 @@ static size_t decoder_callback(void *buf, size_t buf_len, void *user_data)
 
 static void open_decoder(LHAReader *reader)
 {
-	// TODO: Select decoder based on compression method in
-	// file header.
+	LHADecoderType *dtype;
 
-	reader->decoder = lha_decoder_new(&lha_lzss_decoder,
-	                                  decoder_callback,
-	                                  reader);
+	// Look up the decoder to use for this compression method.
+
+	dtype = lha_decoder_for_name(reader->curr_file->compress_method);
+
+	if (dtype == NULL) {
+		return;
+	}
+
+	// Create decoder.
+
+	reader->decoder = lha_decoder_new(dtype, decoder_callback, reader);
 }
 
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)

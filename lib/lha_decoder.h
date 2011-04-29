@@ -103,6 +103,16 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 			    void *callback_data);
 
 /**
+ * Get the decoder type for the specified name.
+ *
+ * @param name           The decoder type.
+ * @return               Pointer to the decoder type, or NULL for unknown
+ *                       decoder type.
+ */
+
+LHADecoderType *lha_decoder_for_name(char *name);
+
+/**
  * Free a decoder.
  *
  * @param decoder        The decoder to free.

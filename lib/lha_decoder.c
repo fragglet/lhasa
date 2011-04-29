@@ -18,7 +18,19 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "lha_decoder.h"
+
+#include "lha_lzss_decoder.h"
+
+static struct {
+	char *name;
+	LHADecoderType *dtype;
+} decoders[] = {
+	{ "-lz5-", &lha_lzss_decoder }
+};
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,
                             LHADecoderCallback callback,
@@ -42,6 +54,21 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	}
 
 	return decoder;
+}
+
+LHADecoderType *lha_decoder_for_name(char *name)
+{
+	unsigned int i;
+
+	for (i = 0; i < sizeof(decoders) / sizeof(*decoders); ++i) {
+		if (!strcmp(name, decoders[i].name)) {
+			return decoders[i].dtype;
+		}
+	}
+
+	// Unknown?
+
+	return NULL;
 }
 
 void lha_decoder_free(LHADecoder *decoder)
