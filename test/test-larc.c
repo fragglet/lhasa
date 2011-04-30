@@ -150,17 +150,17 @@ void test_lz4(void)
 		0xb6d5
 	};
 
-	test_read_directory("larc_lz4.lzs", &expected);
+	test_read_directory("archives/larc333/lz4.lzs", &expected);
 }
 
 void test_lz4_decompress(void)
 {
-	test_decompress("larc_lz4.lzs", "GPL-2.GZ", 0xe4690583);
+	test_decompress("archives/larc333/lz4.lzs", "GPL-2.GZ", 0xe4690583);
 }
 
 void test_lz4_crc(void)
 {
-	test_crc_check("larc_lz4.lzs");
+	test_crc_check("archives/larc333/lz4.lzs");
 }
 
 void test_lz5(void)
@@ -173,17 +173,17 @@ void test_lz5(void)
 		0xa33a
 	};
 
-	test_read_directory("larc_lz5.lzs", &expected);
+	test_read_directory("archives/larc333/lz5.lzs", &expected);
 }
 
 void test_lz5_decompress(void)
 {
-	test_decompress("larc_lz5.lzs", "GPL-2", 0x4e46f4a1);
+	test_decompress("archives/larc333/lz5.lzs", "GPL-2", 0x4e46f4a1);
 }
 
 void test_lz5_crc(void)
 {
-	test_crc_check("larc_lz5.lzs");
+	test_crc_check("archives/larc333/lz5.lzs");
 }
 
 int main(int argc, char *argv[])
