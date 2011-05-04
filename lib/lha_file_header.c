@@ -22,22 +22,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 
 #include "lha_file_header.h"
+#include "ext_header.h"
 
 #define LEVEL_0_MIN_HEADER_LEN 22 /* bytes */
 #define LEVEL_1_MIN_HEADER_LEN 25 /* bytes */
-
-// Extended header types:
-
-#define EXT_HEADER_FILENAME         0x01
-#define EXT_HEADER_DIRECTORY        0x02
-#define EXT_HEADER_MULTI_DISC       0x39
-#define EXT_HEADER_COMMENT          0x3f
-
-#define EXT_HEADER_UNIX_PERMISSION  0x50
-#define EXT_HEADER_UNIX_UID_GID     0x51
-#define EXT_HEADER_UNIX_GROUP       0x52
-#define EXT_HEADER_UNIX_USER        0x53
-#define EXT_HEADER_UNIX_TIMESTAMP   0x54
 
 // Perform checksum of header contents.
 
@@ -227,8 +215,17 @@ static int decode_extended_headers(LHAFileHeader **header,
 			(*header)->compressed_length -= ext_header_len;
 		}
 
-		// Process header ...
+		// Must be at least 3 bytes - 1 byte header type
+		// + 2 bytes for next header length
 
+		if (ext_header_len < 3) {
+			return 0;
+		}
+
+		// Process header:
+
+		lha_ext_header_decode(*header, ext_header[0],
+		                      ext_header + 1, ext_header_len - 3);
 	}
 
 	return 1;
@@ -257,7 +254,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 		return NULL;
 	}
 
-	header->filename = NULL;
+	memset(header, 0, sizeof(LHAFileHeader));
 
 	// Read the raw header data and perform checksum.
 

@@ -30,6 +30,7 @@ struct _LHAFileHeader {
 	char compress_method[6];
 	size_t compressed_length;
 	size_t length;
+	char *path;
 	char *filename;
 	uint8_t header_level;
 	unsigned int timestamp;
