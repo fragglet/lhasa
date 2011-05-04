@@ -31,6 +31,7 @@ struct _LHAFileHeader {
 	size_t compressed_length;
 	size_t length;
 	char *filename;
+	uint8_t header_level;
 	unsigned int timestamp;
 	uint16_t crc;
 	void *raw_data;
