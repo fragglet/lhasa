@@ -70,6 +70,7 @@ AC_SUBST(ac_aux_dir)
 AC_OUTPUT([
     Makefile
     lib/Makefile
+    src/Makefile
     test/Makefile
 ])
 
