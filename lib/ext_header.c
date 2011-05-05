@@ -20,12 +20,27 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "ext_header.h"
 
+// ext_common.c:
+
 extern LHAExtHeaderType lha_ext_header_filename;
 extern LHAExtHeaderType lha_ext_header_path;
 
+// ext_unix.c:
+
+extern LHAExtHeaderType lha_ext_header_unix_perms;
+extern LHAExtHeaderType lha_ext_header_unix_uid_gid;
+extern LHAExtHeaderType lha_ext_header_unix_username;
+extern LHAExtHeaderType lha_ext_header_unix_group;
+extern LHAExtHeaderType lha_ext_header_unix_timestamp;
+
 static const LHAExtHeaderType *ext_header_types[] = {
 	&lha_ext_header_filename,
-	&lha_ext_header_path
+	&lha_ext_header_path,
+	&lha_ext_header_unix_perms,
+	&lha_ext_header_unix_uid_gid,
+	&lha_ext_header_unix_username,
+	&lha_ext_header_unix_group,
+	&lha_ext_header_unix_timestamp
 };
 
 /**

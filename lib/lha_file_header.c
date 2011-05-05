@@ -21,6 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#include "endian.h"
 #include "lha_file_header.h"
 #include "ext_header.h"
 
@@ -43,28 +44,13 @@ static int checksum_header(uint8_t *header, size_t header_len, size_t csum)
 	return (result & 0xff) == csum;
 }
 
-// Decode 16-bit integer.
-
-static uint16_t decode_uint16(uint8_t *buf)
-{
-	return (uint16_t) (buf[0] | (buf[1] << 8));
-}
-
-// Decode 32-bit integer.
-
-static uint32_t decode_uint32(uint8_t *buf)
-{
-	return (uint32_t) (buf[0] | (buf[1] << 8)
-	                 | (buf[2] << 16) | (buf[3] << 24));
-}
-
 // Decode MS-DOS timestamp.
 
 static unsigned decode_ftime(uint8_t *buf)
 {
 	// Ugh. TODO
 
-	return decode_uint32(buf);
+	return lha_decode_uint32(buf);
 }
 
 // Decode the contents of the header.
@@ -92,8 +78,8 @@ static int decode_header(LHAFileHeader *header)
 
 	// File lengths:
 
-	header->compressed_length = decode_uint32(data + 5);
-	header->length = decode_uint32(data + 9);
+	header->compressed_length = lha_decode_uint32(data + 5);
+	header->length = lha_decode_uint32(data + 9);
 
 	// Timestamp:
 
@@ -136,7 +122,7 @@ static int decode_header(LHAFileHeader *header)
 
 	// CRC field.
 
-	header->crc = decode_uint16(data + 20 + path_len);
+	header->crc = lha_decode_uint16(data + 20 + path_len);
 
 	return 1;
 }
@@ -152,7 +138,7 @@ static int read_next_ext_header(LHAFileHeader **header,
 	// Last two bytes of the header raw data contain the size
 	// of the next header.
 
-	*ext_header_len = decode_uint16((*header)->raw_data
+	*ext_header_len = lha_decode_uint16((*header)->raw_data
 	                              + (*header)->raw_data_len - 2);
 
 	// No more headers?
