@@ -58,6 +58,7 @@ typedef struct
 typedef struct
 {
 	char *name;
+	unsigned int width;
 	void (*handler)(LHAFileHeader *header);
 	void (*footer)(FileStatistics *stats);
 } ListColumn;
@@ -89,7 +90,7 @@ static void permission_column_footer(FileStatistics *stats)
 }
 
 static ListColumn permission_column = {
-	" PERMSSN  ",
+	" PERMSSN", 10,
 	permission_column_print,
 	permission_column_footer
 };
@@ -118,7 +119,7 @@ static void unix_uid_gid_column_footer(FileStatistics *stats)
 }
 
 static ListColumn unix_uid_gid_column = {
-	" UID  GID  ",
+	" UID  GID", 11,
 	unix_uid_gid_column_print,
 	unix_uid_gid_column_footer
 };
@@ -136,7 +137,7 @@ static void packed_column_footer(FileStatistics *stats)
 }
 
 static ListColumn packed_column = {
-	" PACKED",
+	" PACKED", 7,
 	packed_column_print,
 	packed_column_footer
 };
@@ -154,7 +155,7 @@ static void size_column_footer(FileStatistics *stats)
 }
 
 static ListColumn size_column = {
-	"   SIZE",
+	"   SIZE", 7,
 	size_column_print,
 	size_column_footer
 };
@@ -174,7 +175,7 @@ static void ratio_column_footer(FileStatistics *stats)
 }
 
 static ListColumn ratio_column = {
-	" RATIO",
+	" RATIO", 6,
 	ratio_column_print,
 	ratio_column_footer
 };
@@ -187,7 +188,7 @@ static void method_crc_column_print(LHAFileHeader *header)
 }
 
 static ListColumn method_crc_column = {
-	"METHOD CRC",
+	"METHOD CRC", 10,
 	method_crc_column_print
 };
 
@@ -204,7 +205,7 @@ static void timestamp_column_footer(FileStatistics *stats)
 };
 
 static ListColumn timestamp_column = {
-	"    STAMP   ",
+	"    STAMP", 12,
 	timestamp_column_print,
 	timestamp_column_footer
 };
@@ -217,7 +218,7 @@ static void name_column_print(LHAFileHeader *header)
 }
 
 static ListColumn name_column = {
-	"       NAME         ",
+	"       NAME", 20,
 	name_column_print
 };
 
@@ -225,10 +226,16 @@ static ListColumn name_column = {
 
 static void print_list_headings(ListColumn **columns)
 {
-	unsigned int i;
+	unsigned int i, j;
 
 	for (i = 0; columns[i] != NULL; ++i) {
-		printf("%s ", columns[i]->name);
+		j = printf("%s", columns[i]->name);
+
+		if (columns[i + 1] != NULL) {
+			for (; j < columns[i]->width + 1; ++j) {
+				printf(" ");
+			}
+		}
 	}
 
 	printf("\n");
@@ -241,12 +248,13 @@ static void print_list_separators(ListColumn **columns)
 	unsigned int i, j, len;
 
 	for (i = 0; columns[i] != NULL; ++i) {
-		len = strlen(columns[i]->name);
-
-		for (j = 0; j < len; ++j) {
+		for (j = 0; j < columns[i]->width; ++j) {
 			printf("-");
 		}
-		printf(" ");
+
+		if (columns[i + 1] != NULL) {
+			printf(" ");
+		}
 	}
 
 	printf("\n");
@@ -260,7 +268,10 @@ static void print_columns(ListColumn **columns, LHAFileHeader *header)
 
 	for (i = 0; columns[i] != NULL; ++i) {
 		columns[i]->handler(header);
-		printf(" ");
+
+		if (columns[i + 1] != NULL) {
+			printf(" ");
+		}
 	}
 
 	printf("\n");
@@ -275,7 +286,7 @@ static void print_footers(ListColumn **columns, FileStatistics *stats)
 	for (i = 0; columns[i] != NULL; ++i) {
 		if (columns[i]->footer != NULL) {
 			columns[i]->footer(stats);
-		} else {
+		} else if (columns[i + 1] != NULL) {
 			len = strlen(columns[i]->name);
 
 			for (j = 0; j < len; ++j) {
@@ -283,7 +294,9 @@ static void print_footers(ListColumn **columns, FileStatistics *stats)
 			}
 		}
 
-		printf(" ");
+		if (columns[i + 1] != NULL) {
+			printf(" ");
+		}
 	}
 
 	printf("\n");
