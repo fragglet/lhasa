@@ -276,6 +276,9 @@ fail:
 void lha_file_header_free(LHAFileHeader *header)
 {
 	free(header->filename);
+	free(header->path);
+	free(header->unix_username);
+	free(header->unix_group);
 	free(header);
 }
 
