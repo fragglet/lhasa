@@ -66,7 +66,21 @@ typedef struct
 
 static void permission_column_print(LHAFileHeader *header)
 {
-	printf("[generic] ");
+	const char *perms = "drwxrwxrwx";
+	unsigned int i;
+
+	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) == 0) {
+		printf("[generic] ");
+		return;
+	}
+
+	for (i = 0; i < 10; ++i) {
+		if (header->unix_perms & (1 << (9 - i))) {
+			printf("%c", perms[i]);
+		} else {
+			printf("-");
+		}
+	}
 }
 
 static void permission_column_footer(FileStatistics *stats)
@@ -84,7 +98,11 @@ static ListColumn permission_column = {
 
 static void unix_uid_gid_column_print(LHAFileHeader *header)
 {
-	printf("           ");
+	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
+		printf("%5i/%-5i", header->unix_uid, header->unix_gid);
+	} else {
+		printf("           ");
+	}
 }
 
 static void unix_uid_gid_column_footer(FileStatistics *stats)
