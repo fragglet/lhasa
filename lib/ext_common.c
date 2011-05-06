@@ -53,6 +53,7 @@ static int ext_header_path_decoder(LHAFileHeader *header,
                                    uint8_t *data,
                                    size_t data_len)
 {
+	unsigned int i;
 	char *new_path;
 
 	new_path = malloc(data_len + 1);
@@ -66,6 +67,12 @@ static int ext_header_path_decoder(LHAFileHeader *header,
 
 	free(header->path);
 	header->path = new_path;
+
+	for (i = 0; i < data_len; ++i) {
+		if (data[i] == 0xff) {
+			new_path[i] = '/';
+		}
+	}
 
 	return 1;
 }

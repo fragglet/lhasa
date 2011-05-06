@@ -112,7 +112,7 @@ static void unix_uid_gid_column_footer(FileStatistics *stats)
 	// listed below it.
 
 	if (stats->num_files == 1) {
-		printf("%6i file", stats->num_files);
+		printf("%5i file ", stats->num_files);
 	} else {
 		printf("%5i files", stats->num_files);
 	}
@@ -164,8 +164,12 @@ static ListColumn size_column = {
 
 static void ratio_column_print(LHAFileHeader *header)
 {
-	printf("%5.1f%%", compression_percent(header->compressed_length,
-	                                      header->length));
+	if (!strcmp(header->compress_method, "-lhd-")) {
+		printf("******");
+	} else {
+		printf("%5.1f%%", compression_percent(header->compressed_length,
+		                                      header->length));
+	}
 }
 
 static void ratio_column_footer(FileStatistics *stats)
@@ -184,7 +188,7 @@ static ListColumn ratio_column = {
 
 static void method_crc_column_print(LHAFileHeader *header)
 {
-	printf("%-5s %4x", header->compress_method, header->crc);
+	printf("%-5s %04x", header->compress_method, header->crc);
 }
 
 static ListColumn method_crc_column = {
@@ -214,11 +218,19 @@ static ListColumn timestamp_column = {
 
 static void name_column_print(LHAFileHeader *header)
 {
+	if (header->path != NULL) {
+		printf("%s", header->path);
+	}
 	printf("%s", header->filename);
 }
 
 static ListColumn name_column = {
 	"       NAME", 20,
+	name_column_print
+};
+
+static ListColumn short_name_column = {
+	"      NAME", 13,
 	name_column_print
 };
 
@@ -369,7 +381,7 @@ static ListColumn *verbose_column_headers[] = {
 	&ratio_column,
 	&method_crc_column,
 	&timestamp_column,
-	&name_column,
+	&short_name_column,
 	NULL
 };
 
