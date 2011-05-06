@@ -20,6 +20,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "endian.h"
 #include "lha_file_header.h"
@@ -51,6 +52,96 @@ static unsigned decode_ftime(uint8_t *buf)
 	// Ugh. TODO
 
 	return lha_decode_uint32(buf);
+}
+
+// Fix up MS-DOS path: translate all-caps to lower case and replace
+// DOS-style \ directory separator with /
+
+static void fixup_msdos_path(char *path, int lowercase)
+{
+	unsigned int i;
+
+	for (i = 0; path[i] != '\0'; ++i) {
+		if (path[i] == '\\') {
+			path[i] = '/';
+		}
+
+		if (lowercase) {
+			path[i] = (char) tolower(path[i]);
+		}
+	}
+}
+
+// Decode the path field in the header.
+
+static int process_level0_path(LHAFileHeader *header, uint8_t *data,
+                               size_t data_len)
+{
+	uint8_t *filename;
+	size_t filename_len;
+	unsigned int i;
+	int is_allcaps;
+	uint8_t *sep;
+
+	// Is the path an all-caps filename?  If so, it is a DOS path that
+	// should be translated to lower case.
+
+	if (header->os_type == LHA_OS_TYPE_UNKNOWN
+	 || header->os_type == LHA_OS_TYPE_MSDOS) {
+		is_allcaps = 1;
+
+		for (i = 0; i < data_len; ++i) {
+			if (islower(data[i])) {
+				is_allcaps = 0;
+				break;
+			}
+		}
+	} else {
+		is_allcaps = 0;
+	}
+
+	// Is there a directory separator in the path?  If so, we need to
+	// split into directory name and filename.
+
+	sep = NULL;
+
+	for (i = 0; i < data_len; ++i) {
+		if (data[i] == '\\') {
+			sep = data + i;
+		}
+	}
+
+	if (sep != NULL) {
+		header->path = malloc((size_t) (sep - data) + 2);
+
+		if (header->path == NULL) {
+			return 0;
+		}
+
+		memcpy(header->path, data, (size_t) (sep - data) + 1);
+		header->path[sep - data + 1] = '\0';
+		fixup_msdos_path(header->path, is_allcaps);
+
+		filename = sep + 1;
+		filename_len = data_len - 1 - (size_t) (sep - data);
+	} else {
+		filename = data;
+		filename_len = data_len;
+	}
+
+	// Allocate filename buffer:
+
+	header->filename = malloc(filename_len + 1);
+
+	if (header->filename == NULL) {
+		return 0;
+	}
+
+	memcpy(header->filename, filename, filename_len);
+	header->filename[filename_len] = '\0';
+	fixup_msdos_path(header->filename, is_allcaps);
+
+	return 1;
 }
 
 // Decode the contents of the header.
@@ -111,14 +202,19 @@ static int decode_header(LHAFileHeader *header)
 		return 0;
 	}
 
-	header->filename = malloc(path_len + 1);
+	// OS type?
 
-	if (header->filename == NULL) {
-		return 0;
+	if (header->header_level == 1) {
+		header->os_type = data[path_len + 22];
+	} else {
+		header->os_type = LHA_OS_TYPE_UNKNOWN;
 	}
 
-	memcpy(header->filename, data + 20, path_len);
-	header->filename[path_len] = '\0';
+	// Read filename field:
+
+	if (!process_level0_path(header, data + 20, path_len)) {
+		return 0;
+	}
 
 	// CRC field.
 

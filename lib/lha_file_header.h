@@ -27,6 +27,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_FILE_UNIX_PERMS            0x01
 #define LHA_FILE_UNIX_UID_GID          0x02
 
+#define LHA_OS_TYPE_UNKNOWN            0x00
+#define LHA_OS_TYPE_MSDOS              'M'
+#define LHA_OS_TYPE_UNIX               'U'
+
 typedef struct _LHAFileHeader LHAFileHeader;
 
 struct _LHAFileHeader {
@@ -36,8 +40,9 @@ struct _LHAFileHeader {
 	char *path;
 	char *filename;
 	uint8_t header_level;
-	unsigned int timestamp;
+	uint8_t os_type;
 	uint16_t crc;
+	unsigned int timestamp;
 	void *raw_data;
 	size_t raw_data_len;
 	unsigned int extra_flags;

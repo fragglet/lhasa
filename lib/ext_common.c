@@ -19,6 +19,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <string.h>
+#include <ctype.h>
 
 #include "ext_header.h"
 
@@ -71,6 +72,8 @@ static int ext_header_path_decoder(LHAFileHeader *header,
 	for (i = 0; i < data_len; ++i) {
 		if (data[i] == 0xff) {
 			new_path[i] = '/';
+		} else if (header->os_type == LHA_OS_TYPE_MSDOS) {
+			new_path[i] = (char) tolower(new_path[i]);
 		}
 	}
 
