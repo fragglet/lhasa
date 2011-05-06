@@ -63,6 +63,22 @@ typedef struct
 	void (*footer)(FileStatistics *stats);
 } ListColumn;
 
+// Display OS type:
+
+static char *os_type_to_string(uint8_t os_type)
+{
+	switch (os_type) {
+		case LHA_OS_TYPE_MSDOS:
+			return "[MS-DOS]";
+		case LHA_OS_TYPE_UNIX:
+			return "[Unix]";
+		case LHA_OS_TYPE_UNKNOWN:
+			return "[generic]";
+		default:
+			return "[unknown]";
+	}
+}
+
 // File permissions
 
 static void permission_column_print(LHAFileHeader *header)
@@ -71,7 +87,7 @@ static void permission_column_print(LHAFileHeader *header)
 	unsigned int i;
 
 	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) == 0) {
-		printf("[generic] ");
+		printf("%-10s", os_type_to_string(header->os_type));
 		return;
 	}
 
