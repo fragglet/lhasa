@@ -2,35 +2,15 @@
 AM_CFLAGS=$(TEST_CFLAGS) -I../lib -g
 LDADD=$(top_builddir)/lib/liblhasatest.a libtestframework.a
 
-ARCHIVES=                                  \
-  archives/larc333/lz4.lzs                 \
-  archives/larc333/lz5.lzs                 \
-  archives/larc333/sfx.com                 \
-  archives/larc333/subdir.lzs              \
-  archives/lharc113/lh0.lzh                \
-  archives/lharc113/lh1.lzh                \
-  archives/lharc113/sfx.com                \
-  archives/lharc113/subdir.lzh             \
-  archives/lha213/lh0.lzh                  \
-  archives/lha213/lh5.lzh                  \
-  archives/lha213/sfx.exe                  \
-  archives/lha213/subdir.lzh               \
-  archives/lha255e/lh0.lzh                 \
-  archives/lha255e/lh5.lzh                 \
-  archives/lha255e/sfx.exe                 \
-  archives/lha255e/subdir.lzh              \
-  archives/lha_unix114i/subdir.lzh         \
-  archives/lha_unix114i/lh0.lzh            \
-  archives/lha_unix114i/lh5.lzh            \
-  archives/lha_unix114i/lh6.lzh            \
-  archives/lha_unix114i/lh7.lzh
+EXTRA_DIST=archives output
 
-EXTRA_DIST=$(ARCHIVES)
-
-TESTS=                       \
+COMPILED_TESTS=                       \
 	test-larc
 
-check_PROGRAMS=$(TESTS)
+TESTS=$(COMPILED_TESTS)               \
+	test-list-output
+
+check_PROGRAMS=$(COMPILED_TESTS)
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
