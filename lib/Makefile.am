@@ -9,8 +9,8 @@ HEADER_FILES =                     \
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
 	endian.c                endian.h                \
-	ext_common.c            ext_common.h            \
-	ext_unix.c              ext_unix.h              \
+	ext_common.c                                    \
+	ext_unix.c                                      \
 	ext_header.c            ext_header.h            \
 	lha_decoder.c           lha_decoder.h           \
 	lha_file_header.c                               \
