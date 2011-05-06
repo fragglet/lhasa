@@ -248,7 +248,7 @@ static void output_timestamp(unsigned int timestamp)
 	if (timestamp > tmp - 6 * 30 * 24 * 60 * 60) {
 		printf("%02i:%02i", ts->tm_hour, ts->tm_min);
 	} else {
-		printf(" %04i", ts->tm_year);
+		printf(" %04i", ts->tm_year + 1900);
 	}
 }
 
