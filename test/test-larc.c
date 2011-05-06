@@ -144,7 +144,7 @@ void test_lz4(void)
 {
 	struct expected_header expected = {
 		"-lz4-",
-		"GPL-2.GZ",
+		"gpl-2.gz",
 		6829,
 		6829,
 		0xb6d5
@@ -155,7 +155,7 @@ void test_lz4(void)
 
 void test_lz4_decompress(void)
 {
-	test_decompress("archives/larc333/lz4.lzs", "GPL-2.GZ", 0xe4690583);
+	test_decompress("archives/larc333/lz4.lzs", "gpl-2.gz", 0xe4690583);
 }
 
 void test_lz4_crc(void)
@@ -167,7 +167,7 @@ void test_lz5(void)
 {
 	struct expected_header expected = {
 		"-lz5-",
-		"GPL-2",
+		"gpl-2",
 		18092,
 		8480,
 		0xa33a
@@ -178,7 +178,7 @@ void test_lz5(void)
 
 void test_lz5_decompress(void)
 {
-	test_decompress("archives/larc333/lz5.lzs", "GPL-2", 0x4e46f4a1);
+	test_decompress("archives/larc333/lz5.lzs", "gpl-2", 0x4e46f4a1);
 }
 
 void test_lz5_crc(void)
