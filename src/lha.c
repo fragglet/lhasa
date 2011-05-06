@@ -24,6 +24,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <errno.h>
 #include <time.h>
 
+#include <unistd.h>
+#include <sys/stat.h>
+
 #include "lha_reader.h"
 
 static void help_page(char *progname)
@@ -54,6 +57,7 @@ typedef struct
 	unsigned int num_files;
 	unsigned int compressed_length;
 	unsigned int length;
+	unsigned int timestamp;
 } FileStatistics;
 
 typedef struct
@@ -224,6 +228,11 @@ static void output_timestamp(unsigned int timestamp)
 	struct tm *ts;
 	time_t tmp;
 
+	if (timestamp == 0) {
+		printf("------------");
+		return;
+	}
+
 	tmp = timestamp;
 	ts = localtime(&tmp);
 
@@ -250,7 +259,7 @@ static void timestamp_column_print(LHAFileHeader *header)
 
 static void timestamp_column_footer(FileStatistics *stats)
 {
-	printf(" -- TODO -- ");
+	output_timestamp(stats->timestamp);
 };
 
 static ListColumn timestamp_column = {
@@ -339,8 +348,25 @@ static void print_columns(ListColumn **columns, LHAFileHeader *header)
 static void print_footers(ListColumn **columns, FileStatistics *stats)
 {
 	unsigned int i, j, len;
+	unsigned int num_columns;
+
+	// Work out how many columns there are to print, ignoring trailing
+	// columns that have no footer:
+
+	num_columns = 0;
 
 	for (i = 0; columns[i] != NULL; ++i) {
+		++num_columns;
+	}
+
+	while (num_columns > 0 && columns[num_columns-1]->footer == NULL) {
+		--num_columns;
+	}
+
+	// Print footers for each column.
+	// Some columns do not have footers: fill in with spaces instead.
+
+	for (i = 0; i < num_columns; ++i) {
 		if (columns[i]->footer != NULL) {
 			columns[i]->footer(stats);
 		} else if (columns[i + 1] != NULL) {
@@ -351,12 +377,23 @@ static void print_footers(ListColumn **columns, FileStatistics *stats)
 			}
 		}
 
-		if (columns[i + 1] != NULL) {
+		if (i + 1 < num_columns) {
 			printf(" ");
 		}
 	}
 
 	printf("\n");
+}
+
+static unsigned int read_file_timestamp(FILE *fstream)
+{
+	struct stat data;
+
+	if (fstat(fileno(fstream), &data) != 0) {
+		return (unsigned int) -1;
+	}
+
+	return data.st_mtime;
 }
 
 static void list_file_contents(char *filename, ListColumn **columns)
@@ -382,6 +419,7 @@ static void list_file_contents(char *filename, ListColumn **columns)
 	stats.num_files = 0;
 	stats.length = 0;
 	stats.compressed_length = 0;
+	stats.timestamp = read_file_timestamp(fstream);
 
 	for (;;) {
 		LHAFileHeader *header;
