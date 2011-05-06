@@ -21,6 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #include "endian.h"
 #include "lha_file_header.h"
@@ -47,11 +48,24 @@ static int checksum_header(uint8_t *header, size_t header_len, size_t csum)
 
 // Decode MS-DOS timestamp.
 
-static unsigned decode_ftime(uint8_t *buf)
+static unsigned int decode_ftime(uint8_t *buf)
 {
-	// Ugh. TODO
+	int raw;
+	struct tm datetime;
 
-	return lha_decode_uint32(buf);
+	raw = (int) lha_decode_uint32(buf);
+
+	datetime.tm_sec = (raw << 1) & 0x3e;
+	datetime.tm_min = (raw >> 5) & 0x3f;
+	datetime.tm_hour = (raw >> 11) & 0x1f;
+	datetime.tm_mday = (raw >> 16) & 0x1f;
+	datetime.tm_mon = ((raw >> 21) & 0xf) - 1;
+	datetime.tm_year = 80 + ((raw >> 25) & 0x7f);
+	datetime.tm_wday = 0;
+	datetime.tm_yday = 0;
+	datetime.tm_isdst = -1;
+
+	return (unsigned int) mktime(&datetime);
 }
 
 // Fix up MS-DOS path: translate all-caps to lower case and replace

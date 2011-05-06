@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "lha_reader.h"
 
@@ -214,9 +215,37 @@ static ListColumn method_crc_column = {
 
 // File timestamp
 
+static void output_timestamp(unsigned int timestamp)
+{
+	const char *months[] = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+	struct tm *ts;
+	time_t tmp;
+
+	tmp = timestamp;
+	ts = localtime(&tmp);
+
+	// Print date:
+
+	printf("%s %2d ", months[ts->tm_mon], ts->tm_mday);
+
+	// If this is an old time (more than 6 months), print the year.
+	// For recent timestamps, print the time.
+
+	tmp = time(NULL);
+
+	if (timestamp > tmp - 6 * 30 * 24 * 60 * 60) {
+		printf("%02i:%02i", ts->tm_hour, ts->tm_min);
+	} else {
+		printf(" %04i", ts->tm_year);
+	}
+}
+
 static void timestamp_column_print(LHAFileHeader *header)
 {
-	printf(" -- TODO -- ");
+	output_timestamp(header->timestamp);
 };
 
 static void timestamp_column_footer(FileStatistics *stats)
