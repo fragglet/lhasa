@@ -77,6 +77,8 @@ static char *os_type_to_string(uint8_t os_type)
 			return "[MS-DOS]";
 		case LHA_OS_TYPE_UNIX:
 			return "[Unix]";
+		case LHA_OS_TYPE_OS2:
+			return "[OS/2]";
 		case LHA_OS_TYPE_UNKNOWN:
 			return "[generic]";
 		default:

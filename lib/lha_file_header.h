@@ -30,6 +30,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_OS_TYPE_UNKNOWN            0x00
 #define LHA_OS_TYPE_MSDOS              'M'
 #define LHA_OS_TYPE_UNIX               'U'
+#define LHA_OS_TYPE_OS2                '2'
 
 typedef struct _LHAFileHeader LHAFileHeader;
 
