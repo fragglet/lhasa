@@ -26,10 +26,20 @@ set -eu
 test_archive() {
 	archive=$1
 
+	# Fix timestamp to a set date.  The list output includes
+	# the timestamp of the file, so it must match the check
+	# file.
+
+	touch -d 2000-01-01 archives/$archive
+
+	# Normal list output:
+
 	../src/lha l archives/$archive > /tmp/l.txt
 	diff -u /tmp/l.txt output/$archive-l.txt
 
 	rm /tmp/l.txt
+
+	# Verbose output:
 
 	../src/lha v archives/$archive > /tmp/v.txt
 	diff -u /tmp/v.txt output/$archive-v.txt
