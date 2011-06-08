@@ -46,10 +46,15 @@ struct _LHADecoderType {
 	 *
 	 * @param extra_data     Pointer to the extra data area allocated for
 	 *                       the decoder.
+	 * @param callback       Callback function to invoke to read more
+	 *                       compressed data.
+	 * @param callback_data  Extra pointer to pass to the callback.
 	 * @return               Non-zero for success.
 	 */
-	
-	int (*init)(void *extra_data);
+
+	int (*init)(void *extra_data,
+	            LHADecoderCallback callback,
+	            void *callback_data);
 
 	/**
 	 * Callback function to free the decoder.
@@ -57,7 +62,7 @@ struct _LHADecoderType {
 	 * @param extra_data     Pointer to the extra data area allocated for
 	 *                       the decoder.
 	 */
-	
+
 	void (*free)(void *extra_data);
 
 	/**
@@ -66,26 +71,27 @@ struct _LHADecoderType {
 	 *
 	 * @param extra_data     Pointer to the decoder's custom data.
 	 * @param buf            Pointer to the buffer in which to store
-	 *                       the decompressed data.
-	 * @param buf_len        Size of the buffer, in bytes.
-	 * @param callback       Callback function to invoke to read more
-	 *                       compressed data.
-	 * @param callback_data  Extra pointer to pass to the callback.
+	 *                       the decompressed data.  The buffer is
+	 *                       at least 'max_read' bytes in size.
 	 * @return               Number of bytes decompressed.
 	 */
 
-	size_t (*read)(void *extra_data, uint8_t *buf, size_t buf_len,
-	               LHADecoderCallback callback, void *callback_data);
+	size_t (*read)(void *extra_data, uint8_t *buf);
 
 	/** Number of bytes of extra data to allocate for the decoder. */
 
 	size_t extra_size;
+
+	/** Maximum number of bytes that might be put into the buffer by
+	    a single call to read() */
+
+	size_t max_read;
 };
 
 struct _LHADecoder {
 	LHADecoderType *dtype;
-	LHADecoderCallback callback;
-	void *callback_data;
+	unsigned int outbuf_pos, outbuf_len;
+	uint8_t *outbuf;
 };
 
 /**

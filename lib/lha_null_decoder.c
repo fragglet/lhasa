@@ -25,16 +25,37 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_null_decoder.h"
 
-static size_t lha_null_read(void *extra_data, uint8_t *buf, size_t buf_len,
-                            LHADecoderCallback callback, void *callback_data)
+#define BLOCK_READ_SIZE 1024
+
+typedef struct
 {
-	return callback(buf, buf_len, callback_data);
+	LHADecoderCallback callback;
+	void *callback_data;
+} LHANullDecoder;
+
+static int lha_null_init(void *data, LHADecoderCallback callback,
+                         void *callback_data)
+{
+	LHANullDecoder *decoder = data;
+
+	decoder->callback = callback;
+	decoder->callback_data = callback_data;
+
+	return 1;
+}
+
+static size_t lha_null_read(void *data, uint8_t *buf)
+{
+	LHANullDecoder *decoder = data;
+
+	return decoder->callback(buf, BLOCK_READ_SIZE, decoder->callback_data);
 }
 
 LHADecoderType lha_null_decoder = {
-	NULL,
+	lha_null_init,
 	NULL,
 	lha_null_read,
-	0
+	sizeof(LHANullDecoder),
+	BLOCK_READ_SIZE
 };
 

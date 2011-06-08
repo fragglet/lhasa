@@ -45,35 +45,35 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 // This processes "runs" of eight commands, each of which is either
 // "output a character" or "copy block".  The result of that run
-// is written into outbuf.  Successive calls to lha_lzss_read empty
-// outbuf until another run is processed.
+// is written into the output buffer.
 
 typedef struct {
 	uint8_t ringbuf[RING_BUFFER_SIZE];
 	unsigned int ringbuf_pos;
-	uint8_t outbuf[OUTPUT_BUFFER_SIZE];
-	unsigned int outbuf_pos, outbuf_len;
+	LHADecoderCallback callback;
+	void *callback_data;
 } LHALZSSDecoder;
 
-static int lha_lzss_init(void *data)
+static int lha_lzss_init(void *data, LHADecoderCallback callback,
+                         void *callback_data)
 {
 	LHALZSSDecoder *decoder = data;
 
 	memset(decoder->ringbuf, ' ', RING_BUFFER_SIZE);
 	decoder->ringbuf_pos = RING_BUFFER_SIZE - START_OFFSET;
-
-	decoder->outbuf_pos = 0;
-	decoder->outbuf_len = 0;
+	decoder->callback = callback;
+	decoder->callback_data = callback_data;
 
 	return 1;
 }
 
 // Add a single byte to the output buffer.
 
-static void output_byte(LHALZSSDecoder *decoder, uint8_t b)
+static void output_byte(LHALZSSDecoder *decoder, uint8_t *buf,
+                        int *buf_len, uint8_t b)
 {
-	decoder->outbuf[decoder->outbuf_len] = b;
-	++decoder->outbuf_len;
+	buf[*buf_len] = b;
+	++*buf_len;
 
 	decoder->ringbuf[decoder->ringbuf_pos] = b;
 	decoder->ringbuf_pos = (decoder->ringbuf_pos + 1) % RING_BUFFER_SIZE;
@@ -81,13 +81,16 @@ static void output_byte(LHALZSSDecoder *decoder, uint8_t b)
 
 // Output a "block" of data from the specified range in the ring buffer.
 
-static void output_block(LHALZSSDecoder *decoder, unsigned int start,
+static void output_block(LHALZSSDecoder *decoder,
+                         uint8_t *buf,
+                         int *buf_len,
+                         unsigned int start,
                          unsigned int len)
 {
 	unsigned int i;
 
 	for (i = 0; i < len; ++i) {
-		output_byte(decoder,
+		output_byte(decoder, buf, buf_len,
 		            decoder->ringbuf[(start + i) % RING_BUFFER_SIZE]);
 	}
 }
@@ -95,20 +98,20 @@ static void output_block(LHALZSSDecoder *decoder, unsigned int start,
 // Process a "run" of LZSS-compressed data (a control byte followed by
 // eight "commands").
 
-static int process_run(LHALZSSDecoder *decoder,
-                       LHADecoderCallback callback,
-                       void *callback_data)
+static size_t lha_lzss_read(void *data, uint8_t *buf)
 {
+	LHALZSSDecoder *decoder = data;
 	uint8_t bitmap;
 	unsigned int bit;
+	int result;
 
-	// Initialize outbuf.
+	// Start from an empty buffer.
 
-	decoder->outbuf_len = 0;
+	result = 0;
 
 	// Read the bitmap byte first.
 
-	if (!callback(&bitmap, 1, callback_data)) {
+	if (!decoder->callback(&bitmap, 1, decoder->callback_data)) {
 		return 0;
 	}
 
@@ -120,75 +123,35 @@ static int process_run(LHALZSSDecoder *decoder,
 		if ((bitmap & (1 << bit)) != 0) {
 			uint8_t b;
 
-			if (!callback(&b, 1, callback_data)) {
-				return 0;
+			if (!decoder->callback(&b, 1, decoder->callback_data)) {
+				break;
 			}
 
-			output_byte(decoder, b);
+			output_byte(decoder, buf, &result, b);
 		} else {
 			uint8_t cmd[2];
 			unsigned int seqstart, seqlen;
 
-			if (!callback(cmd, 2, callback_data)) {
-				return 0;
+			if (!decoder->callback(cmd, 2, decoder->callback_data)) {
+				break;
 			}
 
 			seqstart = (((unsigned int) cmd[1] & 0xf0) << 4)
 			         | cmd[0];
 			seqlen = ((unsigned int) cmd[1] & 0x0f) + THRESHOLD;
 
-			output_block(decoder, seqstart, seqlen);
+			output_block(decoder, buf, &result, seqstart, seqlen);
 		}
 	}
 
-	return 1;
-}
-
-static size_t lha_lzss_read(void *data, uint8_t *buf, size_t buf_len,
-                            LHADecoderCallback callback, void *callback_data)
-{
-	LHALZSSDecoder *decoder = data;
-	size_t filled, bytes;
-
-	filled = 0;
-
-	while (filled < buf_len) {
-
-		// Try to empty out some of the output buffer first.
-
-		bytes = decoder->outbuf_len - decoder->outbuf_pos;
-
-		if (buf_len - filled < bytes) {
-			bytes = buf_len - filled;
-		}
-
-		memcpy(buf + filled, decoder->outbuf + decoder->outbuf_pos,
-		       bytes);
-		decoder->outbuf_pos += bytes;
-		filled += bytes;
-
-		// If outbuf is now empty, we can process another run to
-		// re-fill it.
-
-		if (decoder->outbuf_pos >= decoder->outbuf_len) {
-			process_run(decoder, callback, callback_data);
-			decoder->outbuf_pos = 0;
-		}
-
-		// No more data to be read?
-
-		if (decoder->outbuf_len == 0) {
-			break;
-		}
-	}
-
-	return filled;
+	return result;
 }
 
 LHADecoderType lha_lzss_decoder = {
 	lha_lzss_init,
 	NULL,
 	lha_lzss_read,
-	sizeof(LHALZSSDecoder)
+	sizeof(LHALZSSDecoder),
+	OUTPUT_BUFFER_SIZE
 };
 

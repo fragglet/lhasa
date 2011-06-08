@@ -39,18 +39,30 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 			    void *callback_data)
 {
 	LHADecoder *decoder;
+	void *extra_data;
 
-	decoder = malloc(sizeof(LHADecoder) + dtype->extra_size);
+	// Space is allocated together: the LHADecoder structure,
+	// then the private data area used by the algorithm,
+	// followed by the output buffer,
+
+	decoder = malloc(sizeof(LHADecoder) + dtype->extra_size
+	                 + dtype->max_read);
 
 	if (decoder == NULL) {
 		return NULL;
 	}
 
 	decoder->dtype = dtype;
-	decoder->callback = callback;
-	decoder->callback_data = callback_data;
+	decoder->outbuf_pos = 0;
+	decoder->outbuf_len = 0;
 
-	if (dtype->init != NULL && !dtype->init(decoder + 1)) {
+	// Private data area follows the structure.
+
+	extra_data = decoder + 1;
+	decoder->outbuf = ((uint8_t *) extra_data) + dtype->extra_size;
+
+	if (dtype->init != NULL
+	 && !dtype->init(extra_data, callback, callback_data)) {
 		free(decoder);
 		return NULL;
 	}
@@ -84,7 +96,42 @@ void lha_decoder_free(LHADecoder *decoder)
 
 size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 {
-	return decoder->dtype->read(decoder + 1, buf, buf_len,
-	                            decoder->callback, decoder->callback_data);
+	size_t filled, bytes;
+
+	filled = 0;
+
+	while (filled < buf_len) {
+
+		// Try to empty out some of the output buffer first.
+
+		bytes = decoder->outbuf_len - decoder->outbuf_pos;
+
+		if (buf_len - filled < bytes) {
+			bytes = buf_len - filled;
+		}
+
+		memcpy(buf + filled, decoder->outbuf + decoder->outbuf_pos,
+		       bytes);
+		decoder->outbuf_pos += bytes;
+		filled += bytes;
+
+		// If outbuf is now empty, we can process another run to
+		// re-fill it.
+
+		if (decoder->outbuf_pos >= decoder->outbuf_len) {
+			decoder->outbuf_len
+			    = decoder->dtype->read(decoder + 1,
+			                           decoder->outbuf);
+			decoder->outbuf_pos = 0;
+		}
+
+		// No more data to be read?
+
+		if (decoder->outbuf_len == 0) {
+			break;
+		}
+	}
+
+	return filled;
 }
 
