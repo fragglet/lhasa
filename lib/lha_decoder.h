@@ -90,6 +90,7 @@ struct _LHADecoderType {
 
 struct _LHADecoder {
 	LHADecoderType *dtype;
+	size_t stream_pos, stream_length;
 	unsigned int outbuf_pos, outbuf_len;
 	uint8_t *outbuf;
 };
@@ -101,12 +102,15 @@ struct _LHADecoder {
  * @param callback       Callback function for the decoder to call to read
  *                       more compressed data.
  * @param callback_data  Extra data to pass to the callback function.
+ * @param stream_length  Length of the uncompressed data, in bytes. When
+ *                       this point is reached decompression will stop.
  * @return               Pointer to the new decoder, or NULL for failure.
  */
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,
                             LHADecoderCallback callback,
-			    void *callback_data);
+                            void *callback_data,
+                            size_t stream_length);
 
 /**
  * Get the decoder type for the specified name.

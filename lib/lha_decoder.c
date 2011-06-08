@@ -40,7 +40,8 @@ static struct {
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,
                             LHADecoderCallback callback,
-			    void *callback_data)
+			    void *callback_data,
+                            size_t stream_length)
 {
 	LHADecoder *decoder;
 	void *extra_data;
@@ -59,6 +60,8 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	decoder->dtype = dtype;
 	decoder->outbuf_pos = 0;
 	decoder->outbuf_len = 0;
+	decoder->stream_pos = 0;
+	decoder->stream_length = stream_length;
 
 	// Private data area follows the structure.
 
@@ -102,6 +105,21 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 {
 	size_t filled, bytes;
 
+	// When we reach the end of the stream, we must truncate the
+	// decompressed data at exactly the right point (stream_length),
+	// or we may read a few extra false byte(s) by mistake.
+	// Reduce buf_len when we get to the end to limit it to the
+	// real number of remaining characters.
+
+	if (decoder->stream_pos + buf_len > decoder->stream_length) {
+		buf_len = decoder->stream_length - decoder->stream_pos;
+	}
+
+	// Try to fill up the buffer that has been passed with as much
+	// data as possible. Each call to read() will fill up outbuf
+	// with some data; this is then copied into buf, with some
+	// data left at the end for the next call.
+
 	filled = 0;
 
 	while (filled < buf_len) {
@@ -135,6 +153,10 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 			break;
 		}
 	}
+
+	// Track stream position.
+
+	decoder->stream_pos += filled;
 
 	return filled;
 }

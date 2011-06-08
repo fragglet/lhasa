@@ -150,7 +150,8 @@ static void open_decoder(LHAReader *reader)
 
 	// Create decoder.
 
-	reader->decoder = lha_decoder_new(dtype, decoder_callback, reader);
+	reader->decoder = lha_decoder_new(dtype, decoder_callback, reader,
+	                                  reader->curr_file->length);
 }
 
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
