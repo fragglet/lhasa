@@ -70,7 +70,7 @@ static int lha_lzss_init(void *data, LHADecoderCallback callback,
 // Add a single byte to the output buffer.
 
 static void output_byte(LHALZSSDecoder *decoder, uint8_t *buf,
-                        int *buf_len, uint8_t b)
+                        size_t *buf_len, uint8_t b)
 {
 	buf[*buf_len] = b;
 	++*buf_len;
@@ -83,7 +83,7 @@ static void output_byte(LHALZSSDecoder *decoder, uint8_t *buf,
 
 static void output_block(LHALZSSDecoder *decoder,
                          uint8_t *buf,
-                         int *buf_len,
+                         size_t *buf_len,
                          unsigned int start,
                          unsigned int len)
 {
@@ -103,7 +103,7 @@ static size_t lha_lzss_read(void *data, uint8_t *buf)
 	LHALZSSDecoder *decoder = data;
 	uint8_t bitmap;
 	unsigned int bit;
-	int result;
+	size_t result;
 
 	// Start from an empty buffer.
 
