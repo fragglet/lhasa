@@ -16,6 +16,7 @@ SRC =                                                   \
 	lha_file_header.c                               \
 	lha_input_stream.c                              \
 	lha_null_decoder.c      lha_null_decoder.h      \
+	lha_lzhuf_decoder.c                             \
 	lha_lzss_decoder.c      lha_lzss_decoder.h      \
 	lha_reader.c
 

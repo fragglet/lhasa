@@ -115,7 +115,7 @@ typedef struct
 	// Length of offsets, in bits.
 
 	uint8_t offset_lengths[NUM_OFFSETS];
-} LZHUFDecoder;
+} LHALZHUFDecoder;
 
 // Frequency distribution used to calculate the offset codes.
 
@@ -130,7 +130,7 @@ static const unsigned int offset_fdist[] = {
 
 // Allocate a group from the free groups array.
 
-static uint16_t alloc_group(LZHUFDecoder *decoder)
+static uint16_t alloc_group(LHALZHUFDecoder *decoder)
 {
 	uint16_t result;
 
@@ -142,7 +142,7 @@ static uint16_t alloc_group(LZHUFDecoder *decoder)
 
 // Free a group that is no longer in use.
 
-static void free_group(LZHUFDecoder *decoder, uint16_t group)
+static void free_group(LHALZHUFDecoder *decoder, uint16_t group)
 {
 	--decoder->num_groups;
 	decoder->groups[decoder->num_groups] = group;
@@ -150,7 +150,7 @@ static void free_group(LZHUFDecoder *decoder, uint16_t group)
 
 // Initialize groups array.
 
-static void init_groups(LZHUFDecoder *decoder)
+static void init_groups(LHALZHUFDecoder *decoder)
 {
 	unsigned int i;
 
@@ -163,7 +163,7 @@ static void init_groups(LZHUFDecoder *decoder)
 
 // Initialize the tree with its basic initial configuration.
 
-static void init_tree(LZHUFDecoder *decoder)
+static void init_tree(LHALZHUFDecoder *decoder)
 {
 	unsigned int i, child;
 	int node_index;
@@ -236,7 +236,7 @@ static void init_tree(LZHUFDecoder *decoder)
 // any values in the range from 'mask'.  Set these values to point
 // to 'offset'.
 
-static void fill_offset_range(LZHUFDecoder *decoder, uint8_t code,
+static void fill_offset_range(LHALZHUFDecoder *decoder, uint8_t code,
                               uint8_t mask, unsigned int offset)
 {
 	unsigned int i;
@@ -252,7 +252,7 @@ static void fill_offset_range(LZHUFDecoder *decoder, uint8_t code,
 // Calculate the values for the offset_lookup and offset_lengths
 // tables.
 
-static void init_offset_table(LZHUFDecoder *decoder)
+static void init_offset_table(LHALZHUFDecoder *decoder)
 {
 	unsigned int i, j, len;
 	unsigned int offset, iterbit;
@@ -295,16 +295,16 @@ static void init_offset_table(LZHUFDecoder *decoder)
 
 // Initialize the history ring buffer.
 
-static void init_ring_buffer(LZHUFDecoder *decoder)
+static void init_ring_buffer(LHALZHUFDecoder *decoder)
 {
 	memset(decoder->ringbuf, ' ', RING_BUFFER_SIZE);
 	decoder->ringbuf_pos = 0;
 }
 
-static int lha_lzh_init(void *data, LHADecoderCallback callback,
-                        void *callback_data)
+static int lha_lzhuf_init(void *data, LHADecoderCallback callback,
+                          void *callback_data)
 {
-	LZHUFDecoder *decoder = data;
+	LHALZHUFDecoder *decoder = data;
 
 	decoder->callback = callback;
 	decoder->callback_data = callback_data;
@@ -324,7 +324,7 @@ static int lha_lzh_init(void *data, LHADecoderCallback callback,
 // Return the next n bits waiting to be read from the input stream,
 // without removing any.
 
-static int peek_bits(LZHUFDecoder *decoder,
+static int peek_bits(LHALZHUFDecoder *decoder,
 		     unsigned int n,
                      unsigned int *result)
 {
@@ -354,7 +354,7 @@ static int peek_bits(LZHUFDecoder *decoder,
 // Read a bit from the input stream.
 // Returns true on success and sets *result.
 
-static int read_bits(LZHUFDecoder *decoder,
+static int read_bits(LHALZHUFDecoder *decoder,
                      unsigned int n,
                      unsigned int *result)
 {
@@ -372,7 +372,7 @@ static int read_bits(LZHUFDecoder *decoder,
 // Read a bit from the input stream.
 // Returns true on success and sets *result.
 
-static int read_bit(LZHUFDecoder *decoder,
+static int read_bit(LHALZHUFDecoder *decoder,
                     unsigned int *result)
 {
 	return read_bits(decoder, 1, result);
@@ -382,7 +382,7 @@ static int read_bit(LZHUFDecoder *decoder,
 // leader so that it is in the left-most position.  Returns the new index
 // of the node.
 
-static unsigned int make_group_leader(LZHUFDecoder *decoder,
+static unsigned int make_group_leader(LHALZHUFDecoder *decoder,
                                       unsigned int node_index)
 {
 	Node *node, *leader;
@@ -432,7 +432,8 @@ static unsigned int make_group_leader(LZHUFDecoder *decoder,
 // Increase the frequency count for a node, rearranging groups as
 // appropriate.
 
-static void increment_node_freq(LZHUFDecoder *decoder, unsigned int node_index)
+static void increment_node_freq(LHALZHUFDecoder *decoder,
+                                unsigned int node_index)
 {
 	Node *node, *other;
 
@@ -473,7 +474,7 @@ static void increment_node_freq(LZHUFDecoder *decoder, unsigned int node_index)
 	}
 }
 
-static void increment_for_code(LZHUFDecoder *decoder, uint16_t code)
+static void increment_for_code(LHALZHUFDecoder *decoder, uint16_t code)
 {
 	unsigned int node_index;
 
@@ -509,7 +510,7 @@ static void increment_for_code(LZHUFDecoder *decoder, uint16_t code)
 
 // Read a code from the input stream.
 
-static int read_code(LZHUFDecoder *decoder,
+static int read_code(LHALZHUFDecoder *decoder,
                      uint16_t *result)
 {
 	unsigned int node_index;
@@ -544,7 +545,7 @@ static int read_code(LZHUFDecoder *decoder,
 
 // Read an offset code from the input stream.
 
-static int read_offset(LZHUFDecoder *decoder,
+static int read_offset(LHALZHUFDecoder *decoder,
                        uint16_t *result)
 {
 	unsigned int future, offset, offset2;
@@ -572,7 +573,7 @@ static int read_offset(LZHUFDecoder *decoder,
 	return 1;
 }
 
-static void output_byte(LZHUFDecoder *decoder, uint8_t *buf,
+static void output_byte(LHALZHUFDecoder *decoder, uint8_t *buf,
                         size_t *buf_len, uint8_t b)
 {
 	buf[*buf_len] = b;
@@ -582,9 +583,9 @@ static void output_byte(LZHUFDecoder *decoder, uint8_t *buf,
 	decoder->ringbuf_pos = (decoder->ringbuf_pos + 1) % RING_BUFFER_SIZE;
 }
 
-static size_t lha_lzh_read(void *data, uint8_t *buf)
+static size_t lha_lzhuf_read(void *data, uint8_t *buf)
 {
-	LZHUFDecoder *decoder = data;
+	LHALZHUFDecoder *decoder = data;
 	size_t result;
 	uint16_t code;
 
@@ -630,37 +631,12 @@ static size_t lha_lzh_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LZHUFDecoder the_decoder;
+LHADecoderType lha_lzhuf_decoder = {
+	lha_lzhuf_init,
+	NULL,
+	lha_lzhuf_read,
+	sizeof(LHALZHUFDecoder),
+	OUTPUT_BUFFER_SIZE
+};
 
-static size_t instream_reader(void *buf, size_t buf_len, void *data)
-{
-	FILE *instream = data;
-
-	return fread(buf, 1, buf_len, instream);
-}
-
-int main(int argc, char *argv[])
-{
-	FILE *instream;
-
-	instream = fopen(argv[1], "rb");
-
-	lha_lzh_init(&the_decoder, instream_reader, instream);
-
-	for (;;) {
-		uint8_t buf[OUTPUT_BUFFER_SIZE];
-		size_t b;
-		unsigned int i;
-
-		b = lha_lzh_read(&the_decoder, buf);
-
-		if (b == 0) {
-			break;
-		}
-
-		for (i = 0; i < b; ++i) {
-			putchar(buf[i]);
-		}
-	}
-}
 

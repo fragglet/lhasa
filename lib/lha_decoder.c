@@ -26,12 +26,15 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_null_decoder.h"
 #include "lha_lzss_decoder.h"
 
+extern LHADecoderType lha_lzhuf_decoder;
+
 static struct {
 	char *name;
 	LHADecoderType *dtype;
 } decoders[] = {
 	{ "-lz4-", &lha_null_decoder },
-	{ "-lz5-", &lha_lzss_decoder }
+	{ "-lz5-", &lha_lzss_decoder },
+	{ "-lh1-", &lha_lzhuf_decoder },
 };
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,
