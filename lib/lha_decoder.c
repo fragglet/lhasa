@@ -34,6 +34,7 @@ static struct {
 } decoders[] = {
 	{ "-lz4-", &lha_null_decoder },
 	{ "-lz5-", &lha_lzss_decoder },
+	{ "-lh0-", &lha_null_decoder },
 	{ "-lh1-", &lha_lzhuf_decoder },
 };
 
