@@ -1,15 +1,43 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 
 #include "lha_decoder.h"
 
+// Size of the ring buffer used to hold history:
+
+#define RING_BUFFER_SIZE     4096 /* bytes */
+
+// When this limit is reached, the code tree is reordered.
+
 #define TREE_REORDER_LIMIT   32 * 1024  /* 32 kB */
+
+// Number of codes ('byte' codes + 'copy' codes):
+
 #define NUM_CODES            314
+
+// Number of nodes in the code tree.
+
 #define NUM_TREE_NODES       (NUM_CODES * 2 - 1)
+
+// Number of possible offsets:
+
 #define NUM_OFFSETS          64
+
+// Minimum length of the offset top bits:
+
 #define MIN_OFFSET_LENGTH    3 /* bits */
+
+// Threshold for copying. The first copy code starts from here.
+
+#define COPY_THRESHOLD       3 /* bytes */
+
+// Required size of the output buffer.  At most, a single call to read()
+// might result in a copy of the entire ring buffer.
+
+#define OUTPUT_BUFFER_SIZE   RING_BUFFER_SIZE
 
 typedef struct
 {
@@ -39,6 +67,17 @@ typedef struct
 
 typedef struct
 {
+	// Callback function to invoke to read more data from the
+	// input stream.
+
+	LHADecoderCallback callback;
+	void *callback_data;
+
+	// Ring buffer of past data.  Used for position-based copies.
+
+	uint8_t ringbuf[RING_BUFFER_SIZE];
+	unsigned int ringbuf_pos;
+
 	// Array of tree nodes. nodes[0] is the root node.  The array
 	// is maintained in order by frequency.
 
@@ -252,26 +291,30 @@ static void init_offset_table(LZHUFDecoder *decoder)
 			++offset;
 		}
 	}
-
-/*
-	for (i = 0; i < 256; ++i) {
-		if ((i % 16) == 0)
-			printf("%02x: ", i);
-		printf("%2i ", decoder->offset_lookup[i]);
-
-		if ((i % 16) == 15)
-			printf("\n");
-	}
-*/
 }
 
-static int lha_lzh_init(void *data)
+// Initialize the history ring buffer.
+
+static void init_ring_buffer(LZHUFDecoder *decoder)
+{
+	memset(decoder->ringbuf, ' ', RING_BUFFER_SIZE);
+	decoder->ringbuf_pos = 0;
+}
+
+static int lha_lzh_init(void *data, LHADecoderCallback callback,
+                        void *callback_data)
 {
 	LZHUFDecoder *decoder = data;
+
+	decoder->callback = callback;
+	decoder->callback_data = callback_data;
+
+	// Initialize data structures.
 
 	init_groups(decoder);
 	init_tree(decoder);
 	init_offset_table(decoder);
+	init_ring_buffer(decoder);
 
 	decoder->bits = 0;
 
@@ -282,8 +325,6 @@ static int lha_lzh_init(void *data)
 // without removing any.
 
 static int peek_bits(LZHUFDecoder *decoder,
-                     LHADecoderCallback callback,
-                     void *callback_data,
 		     unsigned int n,
                      unsigned int *result)
 {
@@ -293,7 +334,7 @@ static int peek_bits(LZHUFDecoder *decoder,
 	// When the level drops low, read some more bytes to top it up.
 
 	if (decoder->bits < 8) {
-		if (!callback(buf, 3, callback_data)) {
+		if (decoder->callback(buf, 3, decoder->callback_data) < 3) {
 			return 0;
 		}
 
@@ -314,12 +355,10 @@ static int peek_bits(LZHUFDecoder *decoder,
 // Returns true on success and sets *result.
 
 static int read_bits(LZHUFDecoder *decoder,
-                     LHADecoderCallback callback,
-                     void *callback_data,
                      unsigned int n,
                      unsigned int *result)
 {
-	if (!peek_bits(decoder, callback, callback_data, n, result)) {
+	if (!peek_bits(decoder, n, result)) {
 		return 0;
 	}
 
@@ -334,11 +373,9 @@ static int read_bits(LZHUFDecoder *decoder,
 // Returns true on success and sets *result.
 
 static int read_bit(LZHUFDecoder *decoder,
-                    LHADecoderCallback callback,
-                    void *callback_data,
                     unsigned int *result)
 {
-	return read_bits(decoder, callback, callback_data, 1, result);
+	return read_bits(decoder, 1, result);
 }
 
 // Make the given node the leader of its group: swap it with the current
@@ -473,8 +510,6 @@ static void increment_for_code(LZHUFDecoder *decoder, uint16_t code)
 // Read a code from the input stream.
 
 static int read_code(LZHUFDecoder *decoder,
-                     LHADecoderCallback callback,
-                     void *callback_data,
                      uint16_t *result)
 {
 	unsigned int node_index;
@@ -487,7 +522,7 @@ static int read_code(LZHUFDecoder *decoder,
 
 	//printf("<root ");
 	while (!decoder->nodes[node_index].leaf) {
-		if (!read_bit(decoder, callback, callback_data, &bit)) {
+		if (!read_bit(decoder, &bit)) {
 			return 0;
 		}
 
@@ -510,8 +545,6 @@ static int read_code(LZHUFDecoder *decoder,
 // Read an offset code from the input stream.
 
 static int read_offset(LZHUFDecoder *decoder,
-                       LHADecoderCallback callback,
-                       void *callback_data,
                        uint16_t *result)
 {
 	unsigned int future, offset, offset2;
@@ -520,86 +553,114 @@ static int read_offset(LZHUFDecoder *decoder,
 	// that long. Use the lookup table to find the offset
 	// and its length.
 
-	if (!peek_bits(decoder, callback, callback_data, 8, &future)) {
+	if (!peek_bits(decoder, 8, &future)) {
 		return 0;
 	}
 
 	offset = decoder->offset_lookup[future];
-	//printf("<future=%i, offset=%i, len=%i>", future, offset,  decoder->offset_lengths[offset]);
 
 	// Skip past the offset bits and also read the following
 	// lower-order bits.
 
-	read_bits(decoder, callback, callback_data, 6, &offset2);
-	read_bits(decoder, callback, callback_data,
-	          decoder->offset_lengths[offset], &offset2);
+	if (!read_bits(decoder, decoder->offset_lengths[offset], &offset2)
+	 || !read_bits(decoder, 6, &offset2)) {
+		return 0;
+	}
 
 	*result = (offset << 6) | offset2;
-
-	//printf("<position=%i>", *result);
 
 	return 1;
 }
 
-static size_t lha_lzh_read(void *data, uint8_t *buf, size_t buf_len,
-                           LHADecoderCallback callback, void *callback_data)
+static void output_byte(LZHUFDecoder *decoder, uint8_t *buf,
+                        size_t *buf_len, uint8_t b)
+{
+	buf[*buf_len] = b;
+	++*buf_len;
+
+	decoder->ringbuf[decoder->ringbuf_pos] = b;
+	decoder->ringbuf_pos = (decoder->ringbuf_pos + 1) % RING_BUFFER_SIZE;
+}
+
+static size_t lha_lzh_read(void *data, uint8_t *buf)
 {
 	LZHUFDecoder *decoder = data;
+	size_t result;
 	uint16_t code;
 
-	if (!read_code(decoder, callback, callback_data, &code)) {
-printf("failed to read code\n");
+	result = 0;
+
+	// Read the next code from the input stream.
+
+	if (!read_code(decoder, &code)) {
 		return 0;
 	}
 
+	// The code either indicates a single byte to be output, or
+	// it indicates that a block should be copied from the ring
+	// buffer as it is a repeat of a sequence earlier in the
+	// stream.
+
 	if (code < 0x100) {
-		buf[0] = code;
-		putchar(code);
-		// TODO: Update ring buffer ...
-		return 1;
+		output_byte(decoder, buf, &result, code);
 	} else {
-		unsigned int count = code - 253;
+		unsigned int count, start, i, pos;
 		uint16_t offset;
-		int i;
 
-	//	printf("<%i>", count);
+		// Read the offset into the history at which to start
+		// copying.
 
-		if (!read_offset(decoder, callback, callback_data, &offset)) {
+		if (!read_offset(decoder, &offset)) {
 			return 0;
 		}
 
-		for (i = 0; i < count; ++i) {
-			putchar('-');
-		}
+		count = code - 0x100 + COPY_THRESHOLD;
+		start = decoder->ringbuf_pos - offset + RING_BUFFER_SIZE - 1;
 
-		return 1;
+		// Copy from history into output buffer:
+
+		for (i = 0; i < count; ++i) {
+			pos = (start + i) % RING_BUFFER_SIZE;
+
+			output_byte(decoder, buf, &result,
+			            decoder->ringbuf[pos]);
+		}
 	}
+
+	return result;
 }
 
-FILE *instream;
 LZHUFDecoder the_decoder;
 
-static size_t instream_reader(void *buf, size_t buf_len, void *unused)
+static size_t instream_reader(void *buf, size_t buf_len, void *data)
 {
-	return fread(buf, buf_len, 1, instream);
+	FILE *instream = data;
+
+	return fread(buf, 1, buf_len, instream);
 }
 
 int main(int argc, char *argv[])
 {
+	FILE *instream;
+
 	instream = fopen(argv[1], "rb");
 
-	lha_lzh_init(&the_decoder);
+	lha_lzh_init(&the_decoder, instream_reader, instream);
 
 	for (;;) {
-		uint8_t buf;
+		uint8_t buf[OUTPUT_BUFFER_SIZE];
 		size_t b;
+		unsigned int i;
 
-		b = lha_lzh_read(&the_decoder, &buf, 1,
-		                 instream_reader, NULL);
+		b = lha_lzh_read(&the_decoder, buf);
 
-	//	if (b > 0) {
-	//		putchar(buf);
-	//	}
+		if (b == 0) {
+			break;
+		}
+
+		for (i = 0; i < b; ++i) {
+			putchar(buf[i]);
+		}
 	}
 }
 
