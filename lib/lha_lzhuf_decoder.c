@@ -336,6 +336,7 @@ static int lha_lzhuf_init(void *data, LHADecoderCallback callback,
 	init_ring_buffer(decoder);
 
 	decoder->bits = 0;
+	decoder->bit_buffer = 0;
 
 	return 1;
 }
