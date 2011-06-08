@@ -155,7 +155,7 @@ static void init_groups(LHALZHUFDecoder *decoder)
 	unsigned int i;
 
 	for (i = 0; i < NUM_TREE_NODES; ++i) {
-		decoder->groups[i] = i;
+		decoder->groups[i] = (uint16_t) i;
 	}
 
 	decoder->num_groups = 0;
@@ -179,12 +179,12 @@ static void init_tree(LHALZHUFDecoder *decoder)
 	for (i = 0; i < NUM_CODES; ++i) {
 		node = &decoder->nodes[node_index];
 		node->leaf = 1;
-		node->child_index = i;
+		node->child_index = (unsigned short) i;
 		node->freq = 1;
 		node->group = leaf_group;
 
-		decoder->group_leader[leaf_group] = node_index;
-		decoder->leaf_nodes[i] = node_index;
+		decoder->group_leader[leaf_group] = (uint16_t) node_index;
+		decoder->leaf_nodes[i] = (uint16_t) node_index;
 
 		--node_index;
 	}
@@ -202,14 +202,14 @@ static void init_tree(LHALZHUFDecoder *decoder)
 		// children.
 
 		node->child_index = child;
-		decoder->nodes[child].parent = node_index;
-		decoder->nodes[child - 1].parent = node_index;
+		decoder->nodes[child].parent = (uint16_t) node_index;
+		decoder->nodes[child - 1].parent = (uint16_t) node_index;
 
 		// The node's frequency is equal to the sum of the frequencies
 		// of its children.
 
-		node->freq = decoder->nodes[child].freq
-		           + decoder->nodes[child - 1].freq;
+		node->freq = (uint16_t) (decoder->nodes[child].freq
+		                       + decoder->nodes[child - 1].freq);
 
 		// Is the frequency the same as the last node we processed?
 		// if so, we are in the same group. If not, we must
@@ -222,7 +222,7 @@ static void init_tree(LHALZHUFDecoder *decoder)
 			node->group = alloc_group(decoder);
 		}
 
-		decoder->group_leader[node->group] = node_index;
+		decoder->group_leader[node->group] = (uint16_t) node_index;
 
 		// Process next node.
 
@@ -245,7 +245,7 @@ static void fill_offset_range(LHALZHUFDecoder *decoder, uint8_t code,
 	// that fit within the mask to the target offset.
 
 	for (i = 0; (i & ~mask) == 0; ++i) {
-		decoder->offset_lookup[code | i] = offset;
+		decoder->offset_lookup[code | i] = (uint8_t) offset;
 	}
 }
 
@@ -255,8 +255,7 @@ static void fill_offset_range(LHALZHUFDecoder *decoder, uint8_t code,
 static void init_offset_table(LHALZHUFDecoder *decoder)
 {
 	unsigned int i, j, len;
-	unsigned int offset, iterbit;
-	uint8_t code;
+	uint8_t code, iterbit, offset;
 
 	code = 0;
 	offset = 0;
@@ -273,7 +272,7 @@ static void init_offset_table(LHALZHUFDecoder *decoder)
 		// code to be 1 bit longer).
 
 		len = i + MIN_OFFSET_LENGTH;
-		iterbit = 1 << (8 - len);
+		iterbit = (uint8_t) (1 << (8 - len));
 
 		for (j = 0; j < offset_fdist[i]; ++j) {
 
@@ -282,12 +281,13 @@ static void init_offset_table(LHALZHUFDecoder *decoder)
 			// (iterbit - 1) turns into a mask for the lower
 			// bits that are not part of the code.
 
-			fill_offset_range(decoder, code, iterbit - 1, offset);
-			decoder->offset_lengths[offset] = len;
+			fill_offset_range(decoder, code,
+			                  (uint8_t) (iterbit - 1), offset);
+			decoder->offset_lengths[offset] = (uint8_t) len;
 
 			// Iterate to next code.
 
-			code += iterbit;
+			code = (uint8_t) (code + iterbit);
 			++offset;
 		}
 	}
@@ -382,8 +382,8 @@ static int read_bit(LHALZHUFDecoder *decoder,
 // leader so that it is in the left-most position.  Returns the new index
 // of the node.
 
-static unsigned int make_group_leader(LHALZHUFDecoder *decoder,
-                                      unsigned int node_index)
+static uint16_t make_group_leader(LHALZHUFDecoder *decoder,
+                                  uint16_t node_index)
 {
 	Node *node, *leader;
 	uint16_t group;
@@ -433,7 +433,7 @@ static unsigned int make_group_leader(LHALZHUFDecoder *decoder,
 // appropriate.
 
 static void increment_node_freq(LHALZHUFDecoder *decoder,
-                                unsigned int node_index)
+                                uint16_t node_index)
 {
 	Node *node, *other;
 
@@ -476,7 +476,7 @@ static void increment_node_freq(LHALZHUFDecoder *decoder,
 
 static void increment_for_code(LHALZHUFDecoder *decoder, uint16_t code)
 {
-	unsigned int node_index;
+	uint16_t node_index;
 
 	// When the limit is reached, we must reorder the code tree
 	// to better match the code frequencies:
@@ -546,7 +546,7 @@ static int read_code(LHALZHUFDecoder *decoder,
 // Read an offset code from the input stream.
 
 static int read_offset(LHALZHUFDecoder *decoder,
-                       uint16_t *result)
+                       unsigned int *result)
 {
 	unsigned int future, offset, offset2;
 
@@ -603,10 +603,9 @@ static size_t lha_lzhuf_read(void *data, uint8_t *buf)
 	// stream.
 
 	if (code < 0x100) {
-		output_byte(decoder, buf, &result, code);
+		output_byte(decoder, buf, &result, (uint8_t) code);
 	} else {
-		unsigned int count, start, i, pos;
-		uint16_t offset;
+		unsigned int count, start, i, pos, offset;
 
 		// Read the offset into the history at which to start
 		// copying.
@@ -615,7 +614,7 @@ static size_t lha_lzhuf_read(void *data, uint8_t *buf)
 			return 0;
 		}
 
-		count = code - 0x100 + COPY_THRESHOLD;
+		count = code - 0x100U + COPY_THRESHOLD;
 		start = decoder->ringbuf_pos - offset + RING_BUFFER_SIZE - 1;
 
 		// Copy from history into output buffer:
