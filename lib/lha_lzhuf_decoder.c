@@ -348,22 +348,24 @@ static int peek_bits(LHALZHUFDecoder *decoder,
                      unsigned int *result)
 {
 	uint8_t buf[3];
+	size_t bytes;
 
 	// Always try to keep at least 8 bits in the input buffer.
 	// When the level drops low, read some more bytes to top it up.
 
 	if (decoder->bits < 8) {
-		if (decoder->callback(buf, 3, decoder->callback_data) < 3) {
-			return 0;
-		}
+		bytes = decoder->callback(buf, 3, decoder->callback_data);
 
 		decoder->bit_buffer |= buf[0] << (24 - decoder->bits);
 		decoder->bit_buffer |= buf[1] << (16 - decoder->bits);
 		decoder->bit_buffer |= buf[2] << (8 - decoder->bits);
 
-		decoder->bits += 24;
+		decoder->bits += bytes * 8;
 	}
 
+	if (decoder->bits < n) {
+		return 0;
+	}
 
 	*result = decoder->bit_buffer >> (32 - n);
 
