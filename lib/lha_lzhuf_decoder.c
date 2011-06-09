@@ -496,6 +496,125 @@ static void increment_node_freq(LHALZHUFDecoder *decoder,
 	}
 }
 
+// Reconstruct the code huffman tree to be more evenly distributed.
+// Invoked periodically as data is processed.
+
+static void reconstruct_tree(LHALZHUFDecoder *decoder)
+{
+	Node *leaf;
+	unsigned int child;
+	unsigned int freq;
+	unsigned int group;
+	int i;
+
+	// Gather all leaf nodes at the start of the table.
+
+	leaf = decoder->nodes;
+
+	for (i = 0; i < NUM_TREE_NODES; ++i) {
+		if (decoder->nodes[i].leaf) {
+			leaf->leaf = 1;
+			leaf->child_index = decoder->nodes[i].child_index;
+
+			// Frequency of the nodes in the new tree is halved,
+			// this acts as a running average each time the
+			// tree is reconstructed.
+
+			leaf->freq = (uint16_t) (decoder->nodes[i].freq + 1) / 2;
+
+			++leaf;
+		}
+	}
+
+	// The leaf nodes are now all at the start of the table.  Now
+	// reconstruct the tree, starting from the end of the table and
+	// working backwards, inserting branch nodes between the leaf
+	// nodes.  Each branch node inherits the sum of the frequencies
+	// of its children, and must be placed to maintain the ordering
+	// within the table by decreasing frequency.
+
+	leaf = &decoder->nodes[NUM_CODES - 1];
+	child = NUM_TREE_NODES - 1;
+	i = NUM_TREE_NODES - 1;
+
+	while (i >= 0) {
+
+		// Before we can add a new branch node, we need at least
+		// two nodes to use as children.  If we don't have this
+		// then we need to copy some from the leaves.
+		
+		while ((int) child - i < 2) {
+			decoder->nodes[i] = *leaf;
+			decoder->leaf_nodes[leaf->child_index] = (uint16_t) i;
+
+			--i;
+			--leaf;
+		}
+
+		// Now that we have at least two nodes to take as children
+		// of the new branch node, we can calculate the branch
+		// node's frequency.
+
+		freq = (unsigned int) (decoder->nodes[child].freq
+		                     + decoder->nodes[child - 1].freq);
+
+		// Now copy more leaf nodes until the correct place to
+		// insert the new branch node presents itself.
+
+		while (leaf >= decoder->nodes && freq >= leaf->freq) {
+			decoder->nodes[i] = *leaf;
+			decoder->leaf_nodes[leaf->child_index] = (uint16_t) i;
+
+			--i;
+			--leaf;
+		}
+
+		// The new branch node can now be inserted.
+
+		decoder->nodes[i].leaf = 0;
+		decoder->nodes[i].freq = (uint16_t) freq;
+		decoder->nodes[i].child_index = (uint16_t) child;
+
+		decoder->nodes[child].parent = (uint16_t) i;
+		decoder->nodes[child - 1].parent = (uint16_t) i;
+
+		--i;
+
+		// Process the next pair of children.
+
+		child -= 2;
+	}
+
+	// Reconstruct the group data.  Start by resetting group data.
+
+	init_groups(decoder);
+
+	// Assign a group to the first node.
+	
+	group = alloc_group(decoder);
+	decoder->nodes[0].group = (uint16_t) group;
+	decoder->group_leader[group] = 0;
+
+	// Assign a group number to each node, nodes having the same
+	// group if the have the same frequency, and allocating new
+	// groups when a new frequency is found.
+
+	for (i = 1; i < NUM_TREE_NODES; ++i) {
+		if (decoder->nodes[i].freq == decoder->nodes[i - 1].freq) {
+			decoder->nodes[i].group = decoder->nodes[i - 1].group;
+		} else {
+			group = alloc_group(decoder);
+			decoder->nodes[i].group = (uint16_t) group;
+
+			// First node with a particular frequency is leader.
+			decoder->group_leader[group] = (uint16_t) i;
+		}
+	}
+}
+
+// Increment the counter for the specific code, reordering the tree as
+// necessary.
+
 static void increment_for_code(LHALZHUFDecoder *decoder, uint16_t code)
 {
 	uint16_t node_index;
@@ -504,8 +623,7 @@ static void increment_for_code(LHALZHUFDecoder *decoder, uint16_t code)
 	// to better match the code frequencies:
 
 	if (decoder->nodes[0].freq >= TREE_REORDER_LIMIT) {
-		// TODO:
-		//reorder_tree(decoder);
+		reconstruct_tree(decoder);
 	}
 
 	++decoder->nodes[0].freq;
