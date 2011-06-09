@@ -179,11 +179,13 @@ void test_lh1(void)
 void test_lh1_decompress(void)
 {
 	test_decompress("archives/lharc113/lh1.lzh", "gpl-2", 0x4e46f4a1);
+	test_decompress("archives/lharc113/long.lzh", "long.txt", 0x06788e85);
 }
 
 void test_lh1_crc(void)
 {
 	test_crc_check("archives/lharc113/lh1.lzh");
+	test_crc_check("archives/lharc113/long.lzh");
 }
 
 int main(int argc, char *argv[])
