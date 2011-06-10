@@ -179,11 +179,13 @@ void test_lz5(void)
 void test_lz5_decompress(void)
 {
 	test_decompress("archives/larc333/lz5.lzs", "gpl-2", 0x4e46f4a1);
+	test_decompress("archives/larc333/long.lzs", "long.txt", 0x06788e85);
 }
 
 void test_lz5_crc(void)
 {
 	test_crc_check("archives/larc333/lz5.lzs");
+	test_crc_check("archives/larc333/long.lzs");
 }
 
 int main(int argc, char *argv[])
