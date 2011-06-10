@@ -67,6 +67,8 @@ AC_SUBST(MAIN_CFLAGS)
 AC_SUBST(TEST_CFLAGS)
 AC_SUBST(ac_aux_dir)
 
+AM_CONFIG_HEADER(config.h:config.hin)
+
 AC_OUTPUT([
     Makefile
     lib/Makefile
