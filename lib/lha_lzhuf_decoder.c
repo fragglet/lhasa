@@ -454,8 +454,7 @@ static uint16_t make_group_leader(LHALZHUFDecoder *decoder,
 // Increase the frequency count for a node, rearranging groups as
 // appropriate.
 
-static void increment_node_freq(LHALZHUFDecoder *decoder,
-                                uint16_t node_index)
+static void increment_node_freq(LHALZHUFDecoder *decoder, uint16_t node_index)
 {
 	Node *node, *other;
 
@@ -532,8 +531,7 @@ static void increment_for_code(LHALZHUFDecoder *decoder, uint16_t code)
 
 // Read a code from the input stream.
 
-static int read_code(LHALZHUFDecoder *decoder,
-                     uint16_t *result)
+static int read_code(LHALZHUFDecoder *decoder, uint16_t *result)
 {
 	unsigned int node_index;
 	unsigned int bit;
@@ -567,8 +565,7 @@ static int read_code(LHALZHUFDecoder *decoder,
 
 // Read an offset code from the input stream.
 
-static int read_offset(LHALZHUFDecoder *decoder,
-                       unsigned int *result)
+static int read_offset(LHALZHUFDecoder *decoder, unsigned int *result)
 {
 	unsigned int future, offset, offset2;
 
