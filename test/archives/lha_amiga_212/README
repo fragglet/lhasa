@@ -5,4 +5,7 @@ not included.
 
 lh1.lzh        - Archive containing compressed file (-lh1- algorithm).
 lh6.lzh        - Archive containing compressed file (-lh6- algorithm).
+level0.lzh     - Archive containing level 0 header.
+level1.lzh     - Archive containing level 1 header.
+level2.lzh     - Archive containing level 2 header.
 
