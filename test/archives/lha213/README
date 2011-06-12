@@ -1,0 +1,10 @@
+Archives generated using LHA v2.13 (lha213.exe).
+
+  http://www.ibiblio.org/pub/packages/ccic/software/dos/utils/lha213.exe
+
+lh0.lzh       - Archive containing uncompressed (stored) file.
+lh5.lzh       - Archive containing LZHUF compressed file (-lh5-)
+sfx.exe       - Self-extracting archive.
+subdir.lzs    - Archive containing subdirectories.
+
+
