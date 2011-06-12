@@ -75,3 +75,6 @@ test_archive lha_unix114i/subdir.lzh
 
 test_archive lha_os2_208/example.lzh
 
+test_archive pmarc2/pm0.pma
+test_archive pmarc2/pm2.pma
+
