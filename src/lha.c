@@ -231,7 +231,7 @@ static void output_timestamp(unsigned int timestamp)
 	time_t tmp;
 
 	if (timestamp == 0) {
-		printf("------------");
+		printf("            ");
 		return;
 	}
 

@@ -55,6 +55,10 @@ static unsigned int decode_ftime(uint8_t *buf)
 
 	raw = (int) lha_decode_uint32(buf);
 
+	if (raw == 0) {
+		return 0;
+	}
+
 	datetime.tm_sec = (raw << 1) & 0x3e;
 	datetime.tm_min = (raw >> 5) & 0x3f;
 	datetime.tm_hour = (raw >> 11) & 0x1f;
