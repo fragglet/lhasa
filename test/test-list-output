@@ -23,6 +23,10 @@
 
 set -eu
 
+LHA_TOOL=lha
+GATHER=false
+#GATHER=true
+
 test_archive() {
 	archive=$1
 
@@ -32,39 +36,59 @@ test_archive() {
 
 	touch -d 2000-01-01 archives/$archive
 
+	# Gather output from Unix LHA tool?
+
+	if $GATHER; then
+		if [ ! -e output/$archive-l.txt ]; then
+			$LHA_TOOL l archives/$archive > output/$archive-l.txt
+		fi
+
+		if [ ! -e output/$archive-v.txt ]; then
+			$LHA_TOOL v archives/$archive > output/$archive-v.txt
+		fi
+	fi
+
 	# Normal list output:
 
 	../src/lha l archives/$archive > /tmp/l.txt
-	diff -u /tmp/l.txt output/$archive-l.txt
+
+	if ! diff -u /tmp/l.txt output/$archive-l.txt; then
+		echo "Output not as expected for lha l $archive" >&2
+	fi
 
 	rm /tmp/l.txt
 
 	# Verbose output:
 
 	../src/lha v archives/$archive > /tmp/v.txt
-	diff -u /tmp/v.txt output/$archive-v.txt
+
+	if ! diff -u /tmp/v.txt output/$archive-v.txt; then
+		echo "Output not as expected for lha v $archive" >&2
+	fi
 
 	rm /tmp/v.txt
 }
 
 test_archive larc333/lz4.lzs
 test_archive larc333/lz5.lzs
-#test_archive larc333/sfx.com
+#test_archive larc333/sfx.com         TODO - sfx
 test_archive larc333/subdir.lzs
+test_archive larc333/long.lzs
 
 test_archive lharc113/lh0.lzh
 test_archive lharc113/lh1.lzh
-#test_archive lharc113/sfx.com
+#test_archive lharc113/sfx.com        TODO - sfx
 test_archive lharc113/subdir.lzh
+test_archive lharc113/long.lzh
 
 test_archive lha213/lh0.lzh
 test_archive lha213/lh5.lzh
-#test_archive lha213/sfx.exe
+#test_archive lha213/sfx.exe          TODO - sfx
 test_archive lha213/subdir.lzh
 
 test_archive lha255e/lh0.lzh
 test_archive lha255e/lh5.lzh
-#test_archive lha255e/sfx.exe
+#test_archive lha255e/sfx.exe         TODO - sfx
 test_archive lha255e/subdir.lzh
 
 test_archive lha_unix114i/lh0.lzh
@@ -77,4 +101,22 @@ test_archive lha_os2_208/example.lzh
 
 test_archive pmarc2/pm0.pma
 test_archive pmarc2/pm2.pma
+test_archive pmarc2/comment.pma
+#test_archive pmarc2/sfx.com          TODO - sfx
+
+test_archive lha_amiga_122/level0.lzh
+#test_archive lha_amiga_122/level1.lzh    TODO - Unix LHA fails
+#test_archive lha_amiga_122/level2.lzh    TODO - Level 2 decode
+test_archive lha_amiga_122/lh0.lzh
+test_archive lha_amiga_122/lh1.lzh
+test_archive lha_amiga_122/lh4_long.lzh
+test_archive lha_amiga_122/lh4.lzh
+test_archive lha_amiga_122/lh5.lzh
+test_archive lha_amiga_122/subdir.lzh
+
+test_archive lha_amiga_212/level0.lzh
+test_archive lha_amiga_212/level1.lzh
+#test_archive lha_amiga_212/level2.lzh   TODO - Level 2 decode
+test_archive lha_amiga_212/lh1.lzh
+test_archive lha_amiga_212/lh6.lzh
 
