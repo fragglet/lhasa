@@ -1,0 +1,9 @@
+Archives generated using LhA v1.22 for Amiga.
+
+lh0.lzh       - Archive containing uncompressed (stored) file.
+lh1.lzh       - Archive containing compressed file (-lh1- compression)
+lh4.lzh       - Archive containing compressed file (-lh4- compression)
+lh5.lzh       - Archive containing compressed file (-lh5- compression)
+lh4_long.lzh  - Archive containing large compressed file (-lh4- compression)
+subdir.lzh    - Archive containing subdirectories.
+
