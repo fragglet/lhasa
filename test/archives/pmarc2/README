@@ -5,3 +5,8 @@ Information on the PMARC tool can be found here:
 
     http://www.faq.msxnet.org/suffix.html
 
+pm0.pma         - Archive with uncompressed file (/n option)
+pm2.pma         - Archive with compressed -pm2- format file.
+comment.pma     - Archive with a file that has a comment memorandum.
+sfx.com         - Self-extracting PMA archive.
+
