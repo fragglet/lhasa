@@ -23,8 +23,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_decoder.h"
 
-#include "lha_null_decoder.h"
-#include "lha_lzss_decoder.h"
+#include "null_decoder.h"
+#include "lzss_decoder.h"
 
 extern LHADecoderType lha_lzhuf_decoder;
 

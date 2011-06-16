@@ -23,7 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "lha_null_decoder.h"
+#include "null_decoder.h"
 
 #define BLOCK_READ_SIZE 1024
 
