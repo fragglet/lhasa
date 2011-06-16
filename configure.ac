@@ -2,6 +2,7 @@ AC_INIT(Lhasa, 0.0.1, fraggle@users.sourceforge.net, lhasa)
 AC_CONFIG_AUX_DIR(autotools)
 
 AM_INIT_AUTOMAKE($PACKAGE_TARNAME, $PACKAGE_VERSION, no-define)
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_PROG_CC_C_O
 
 AC_PROG_CXX
