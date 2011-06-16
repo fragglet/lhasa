@@ -25,6 +25,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_decoder.h"
 
+#include "bit_stream_reader.c"
+
 // Size of the ring buffer used to hold history:
 
 #define RING_BUFFER_SIZE     4096 /* bytes */
@@ -86,11 +88,9 @@ typedef struct
 
 typedef struct
 {
-	// Callback function to invoke to read more data from the
-	// input stream.
+	// Input bit stream.
 
-	LHADecoderCallback callback;
-	void *callback_data;
+	BitStreamReader bit_stream_reader;
 
 	// Ring buffer of past data.  Used for position-based copies.
 
@@ -120,11 +120,6 @@ typedef struct
 	// the same frequency.
 
 	uint16_t group_leader[NUM_TREE_NODES];
-
-	// Bits from the input stream that are waiting to be read.
-
-	uint32_t bit_buffer;
-	unsigned int bits;
 
 	// Offset lookup table.  Maps from a byte value (sequence of next
 	// 8 bits from input stream) to an offset value.
@@ -256,7 +251,7 @@ static void init_tree(LHALZHUFDecoder *decoder)
 // to 'offset'.
 
 static void fill_offset_range(LHALZHUFDecoder *decoder, uint8_t code,
-                              uint8_t mask, unsigned int offset)
+                              unsigned int mask, unsigned int offset)
 {
 	unsigned int i;
 
@@ -325,8 +320,10 @@ static int lha_lzhuf_init(void *data, LHADecoderCallback callback,
 {
 	LHALZHUFDecoder *decoder = data;
 
-	decoder->callback = callback;
-	decoder->callback_data = callback_data;
+	// Initialize input stream reader.
+
+	bit_stream_reader_init(&decoder->bit_stream_reader,
+	                       callback, callback_data);
 
 	// Initialize data structures.
 
@@ -335,69 +332,7 @@ static int lha_lzhuf_init(void *data, LHADecoderCallback callback,
 	init_offset_table(decoder);
 	init_ring_buffer(decoder);
 
-	decoder->bits = 0;
-	decoder->bit_buffer = 0;
-
 	return 1;
-}
-
-// Return the next n bits waiting to be read from the input stream,
-// without removing any.
-
-static int peek_bits(LHALZHUFDecoder *decoder,
-		     unsigned int n,
-                     unsigned int *result)
-{
-	uint8_t buf[3];
-	size_t bytes;
-
-	// Always try to keep at least 8 bits in the input buffer.
-	// When the level drops low, read some more bytes to top it up.
-
-	if (decoder->bits < 8) {
-		bytes = decoder->callback(buf, 3, decoder->callback_data);
-
-		decoder->bit_buffer |= buf[0] << (24 - decoder->bits);
-		decoder->bit_buffer |= buf[1] << (16 - decoder->bits);
-		decoder->bit_buffer |= buf[2] << (8 - decoder->bits);
-
-		decoder->bits += bytes * 8;
-	}
-
-	if (decoder->bits < n) {
-		return 0;
-	}
-
-	*result = decoder->bit_buffer >> (32 - n);
-
-	return 1;
-}
-
-// Read a bit from the input stream.
-// Returns true on success and sets *result.
-
-static int read_bits(LHALZHUFDecoder *decoder,
-                     unsigned int n,
-                     unsigned int *result)
-{
-	if (!peek_bits(decoder, n, result)) {
-		return 0;
-	}
-
-	decoder->bit_buffer <<= n;
-	decoder->bits -= n;
-
-	return 1;
-}
-
-
-// Read a bit from the input stream.
-// Returns true on success and sets *result.
-
-static int read_bit(LHALZHUFDecoder *decoder,
-                    unsigned int *result)
-{
-	return read_bits(decoder, 1, result);
 }
 
 // Make the given node the leader of its group: swap it with the current
@@ -661,7 +596,7 @@ static int read_code(LHALZHUFDecoder *decoder, uint16_t *result)
 
 	//printf("<root ");
 	while (!decoder->nodes[node_index].leaf) {
-		if (!read_bit(decoder, &bit)) {
+		if (!read_bit(&decoder->bit_stream_reader, &bit)) {
 			return 0;
 		}
 
@@ -691,7 +626,7 @@ static int read_offset(LHALZHUFDecoder *decoder, unsigned int *result)
 	// that long. Use the lookup table to find the offset
 	// and its length.
 
-	if (!peek_bits(decoder, 8, &future)) {
+	if (!peek_bits(&decoder->bit_stream_reader, 8, &future)) {
 		return 0;
 	}
 
@@ -700,8 +635,8 @@ static int read_offset(LHALZHUFDecoder *decoder, unsigned int *result)
 	// Skip past the offset bits and also read the following
 	// lower-order bits.
 
-	if (!read_bits(decoder, decoder->offset_lengths[offset], &offset2)
-	 || !read_bits(decoder, 6, &offset2)) {
+	if (!read_bits(&decoder->bit_stream_reader, decoder->offset_lengths[offset], &offset2)
+	 || !read_bits(&decoder->bit_stream_reader, 6, &offset2)) {
 		return 0;
 	}
 
