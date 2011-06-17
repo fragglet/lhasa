@@ -54,11 +54,10 @@ static void bit_stream_reader_init(BitStreamReader *reader,
 }
 
 // Return the next n bits waiting to be read from the input stream,
-// without removing any.
+// without removing any.  Returns -1 for failure.
 
 static int peek_bits(BitStreamReader *reader,
-		     unsigned int n,
-                     unsigned int *result)
+                     unsigned int n)
 {
 	uint8_t buf[3];
 	size_t bytes;
@@ -77,38 +76,36 @@ static int peek_bits(BitStreamReader *reader,
 	}
 
 	if (reader->bits < n) {
-		return 0;
+		return -1;
 	}
 
-	*result = reader->bit_buffer >> (32 - n);
-
-	return 1;
+	return (signed int) (reader->bit_buffer >> (32 - n));
 }
 
 // Read a bit from the input stream.
-// Returns true on success and sets *result.
+// Returns -1 for failure.
 
 static int read_bits(BitStreamReader *reader,
-                     unsigned int n,
-                     unsigned int *result)
+                     unsigned int n)
 {
-	if (!peek_bits(reader, n, result)) {
-		return 0;
+	int result;
+
+	result = peek_bits(reader, n);
+
+	if (result >= 0) {
+		reader->bit_buffer <<= n;
+		reader->bits -= n;
 	}
 
-	reader->bit_buffer <<= n;
-	reader->bits -= n;
-
-	return 1;
+	return result;
 }
 
 
 // Read a bit from the input stream.
-// Returns true on success and sets *result.
+// Returns -1 for failure.
 
-static int read_bit(BitStreamReader *reader,
-                    unsigned int *result)
+static int read_bit(BitStreamReader *reader)
 {
-	return read_bits(reader, 1, result);
+	return read_bits(reader, 1);
 }
 

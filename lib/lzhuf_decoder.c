@@ -587,7 +587,7 @@ static void increment_for_code(LHALZHUFDecoder *decoder, uint16_t code)
 static int read_code(LHALZHUFDecoder *decoder, uint16_t *result)
 {
 	unsigned int node_index;
-	unsigned int bit;
+	int bit;
 
 	// Start from the root node, and traverse down until a leaf is
 	// reached.
@@ -596,7 +596,9 @@ static int read_code(LHALZHUFDecoder *decoder, uint16_t *result)
 
 	//printf("<root ");
 	while (!decoder->nodes[node_index].leaf) {
-		if (!read_bit(&decoder->bit_stream_reader, &bit)) {
+		bit = read_bit(&decoder->bit_stream_reader);
+
+		if (bit < 0) {
 			return 0;
 		}
 
@@ -605,7 +607,8 @@ static int read_code(LHALZHUFDecoder *decoder, uint16_t *result)
 		// Choose one of the two children depending on the
 		// bit that was read.
 
-		node_index = decoder->nodes[node_index].child_index - bit;
+		node_index = decoder->nodes[node_index].child_index
+		           - (unsigned int) bit;
 	}
 
 	*result = decoder->nodes[node_index].child_index;
@@ -620,13 +623,16 @@ static int read_code(LHALZHUFDecoder *decoder, uint16_t *result)
 
 static int read_offset(LHALZHUFDecoder *decoder, unsigned int *result)
 {
-	unsigned int future, offset, offset2;
+	unsigned int offset;
+	int future, offset2;
 
 	// The offset can be up to 8 bits long, but is likely not
 	// that long. Use the lookup table to find the offset
 	// and its length.
 
-	if (!peek_bits(&decoder->bit_stream_reader, 8, &future)) {
+	future = peek_bits(&decoder->bit_stream_reader, 8);
+
+	if (future < 0) {
 		return 0;
 	}
 
@@ -635,12 +641,16 @@ static int read_offset(LHALZHUFDecoder *decoder, unsigned int *result)
 	// Skip past the offset bits and also read the following
 	// lower-order bits.
 
-	if (!read_bits(&decoder->bit_stream_reader, decoder->offset_lengths[offset], &offset2)
-	 || !read_bits(&decoder->bit_stream_reader, 6, &offset2)) {
+	read_bits(&decoder->bit_stream_reader,
+	          decoder->offset_lengths[offset]);
+
+	offset2 = read_bits(&decoder->bit_stream_reader, 6);
+
+	if (offset2 < 0) {
 		return 0;
 	}
 
-	*result = (offset << 6) | offset2;
+	*result = (offset << 6) | (unsigned int) offset2;
 
 	return 1;
 }
