@@ -52,6 +52,12 @@ typedef enum
 
 typedef struct
 {
+	uint8_t prev;
+	uint8_t next;
+} HistoryNode;
+
+typedef struct
+{
 	BitStreamReader bit_stream_reader;
 
 	// State of decode tree.
@@ -66,6 +72,16 @@ typedef struct
 
 	uint8_t ringbuf[RING_BUFFER_SIZE];
 	unsigned int ringbuf_pos;
+
+	// History linked list. In the decode stream, codes representing
+	// characters are not the character itself, but the number of
+	// nodes to count back in time in the linked list. Every time
+	// a character is output, it is moved to the front of the linked
+	// list. The entry point index into the list is the last output
+	// character, given by history_head;
+
+	HistoryNode history[256];
+	uint8_t history_head;
 
 	// Array representing the huffman tree used for representing
 	// code values. A given node of the tree has children
@@ -115,6 +131,101 @@ typedef struct
 	unsigned int entries_len;
 } TreeBuildData;
 
+// Initialize the history buffer.
+
+static void init_history(LHAPMADecoder *decoder)
+{
+	unsigned int i;
+
+	// History buffer is initialized to a linear chain to
+	// start off with:
+
+	for (i = 0; i < 256; ++i) {
+		decoder->history[i].prev = (uint8_t) (i - 1);
+		decoder->history[i].next = (uint8_t) (i + 1);
+	}
+
+	// Somewhat inexplicably (?) certain nodes have their pointers
+	// interfered with.  This means that initially the history
+	// looks like:
+	//
+	//   0x20 0x1f 0xa0 0x9f 0xe0 0xdf 0x80 0x7f 0x00 0xff
+	//
+	// ..looping round repeatedly in a circular ring.
+	// I don't think this is what the PMA authors intended...
+
+	decoder->history_head = 0x20;
+
+	decoder->history[0x1f].prev = 0xa0; decoder->history[0xa0].next = 0x1f;
+	decoder->history[0x9f].prev = 0xe0; decoder->history[0xe0].next = 0x9f;
+	decoder->history[0xdf].prev = 0x80; decoder->history[0x80].next = 0xdf;
+	decoder->history[0x7f].prev = 0x00; decoder->history[0x00].next = 0x7f;
+	decoder->history[0xff].prev = 0x20; decoder->history[0x20].next = 0xff;
+}
+
+// Look up an entry in the history chain, returning the code found.
+
+static uint8_t find_in_history(LHAPMADecoder *decoder, uint8_t count)
+{
+	unsigned int i;
+	uint8_t code;
+
+	// Start from the last outputted byte.
+
+	code = decoder->history_head;
+
+	// Walk along the history chain until we reach the desired
+	// node.  If we will have to walk more than half the chain,
+	// go the other way around.
+
+	if (count < 128) {
+		for (i = 0; i < count; ++i) {
+			code = decoder->history[code].prev;
+		}
+	} else {
+		for (i = 0; i < 256 - count; ++i) {
+			code = decoder->history[code].prev;
+		}
+	}
+
+	return code;
+}
+
+// Update history buffer, by moving the specified byte to the head
+// of the queue.
+
+static void update_history(LHAPMADecoder *decoder, uint8_t b)
+{
+	HistoryNode *node, *old_head;
+
+	// No update necessary?
+
+	if (decoder->history_head == b) {
+		return;
+	}
+
+	// Unhook the entry from its current position:
+
+	node = &decoder->history[b];
+	decoder->history[node->next].prev = node->prev;
+	decoder->history[node->prev].next = node->next;
+
+	// Hook in between the old head and old_head->next:
+
+	old_head = &decoder->history[decoder->history_head];
+	node->prev = decoder->history_head;
+	node->next = old_head->next;
+
+	old_head->next = b;
+	decoder->history[old_head->next].prev = b;
+
+	// 'b' is now the head of the queue:
+
+	decoder->history_head = b;
+}
+
+// Initialize PMA decoder.
+
 static int lha_pma_decoder_init(void *data, LHADecoderCallback callback,
                                 void *callback_data)
 {
@@ -132,6 +243,10 @@ static int lha_pma_decoder_init(void *data, LHADecoderCallback callback,
 	// Initialize ring buffer contents.
 
 	memset(&decoder->ringbuf, ' ', RING_BUFFER_SIZE);
+
+	// Init history lookup list.
+
+	init_history(decoder);
 
 	// Initialize the lookup trees to a known state.
 
@@ -507,7 +622,9 @@ static void output_byte(LHAPMADecoder *decoder, uint8_t *buf,
 	buf[*buf_len] = b;
 	++*buf_len;
 
-	// TODO: History list
+	// Update history chain.
+
+	update_history(decoder, b);
 
 	// Count down until it is time to perform a rebuild of the
 	// lookup trees.
