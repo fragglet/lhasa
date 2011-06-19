@@ -131,6 +131,41 @@ typedef struct
 	unsigned int entries_len;
 } TreeBuildData;
 
+typedef struct
+{
+	unsigned int offset;
+	unsigned int bits;
+} VariableLengthTable;
+
+// Decode table for history value. Characters that appeared recently in
+// the history are more likely than ones that appeared a long time ago,
+// so the history value is huffman coded so that small values require
+// fewer bits. The history value is then used to search within the
+// history linked list to get the actual character.
+
+static const VariableLengthTable history_decode[] = {
+	{   0, 3 },   //   0 + (1 << 3) =   8
+	{   8, 3 },   //   8 + (1 << 3) =  16
+	{  16, 4 },   //  16 + (1 << 4) =  32
+	{  32, 5 },   //  32 + (1 << 5) =  64
+	{  64, 5 },   //  64 + (1 << 5) =  96
+	{  96, 5 },   //  96 + (1 << 5) = 128
+	{ 128, 6 },   // 128 + (1 << 6) = 192
+	{ 192, 6 },   // 192 + (1 << 6) = 256
+};
+
+// Decode table for copies. As with history_decode[], copies from
+// recent history are more common, and require less bits.
+
+static const VariableLengthTable copy_decode[] = {
+	{  17, 3 },   //  17 + (1 << 3) =  25
+	{  25, 3 },   //  25 + (1 << 3) =  33
+	{  33, 5 },   //  33 + (1 << 5) =  65
+	{  65, 6 },   //  65 + (1 << 6) = 129
+	{ 129, 7 },   // 129 + (1 << 7) = 256
+	{ 256, 0 },   // 256 (unique value)
+};
+
 // Initialize the history buffer.
 
 static void init_history(LHAPMADecoder *decoder)
@@ -141,26 +176,31 @@ static void init_history(LHAPMADecoder *decoder)
 	// start off with:
 
 	for (i = 0; i < 256; ++i) {
-		decoder->history[i].prev = (uint8_t) (i - 1);
-		decoder->history[i].next = (uint8_t) (i + 1);
+		decoder->history[i].prev = (uint8_t) (i + 1);
+		decoder->history[i].next = (uint8_t) (i - 1);
 	}
 
-	// Somewhat inexplicably (?) certain nodes have their pointers
-	// interfered with.  This means that initially the history
-	// looks like:
-	//
-	//   0x20 0x1f 0xa0 0x9f 0xe0 0xdf 0x80 0x7f 0x00 0xff
-	//
-	// ..looping round repeatedly in a circular ring.
-	// I don't think this is what the PMA authors intended...
+	// The chain is cut into groups and initially arranged so
+	// that the ASCII characters are closest to the start of
+	// the chain. This is followed by ASCII control characters,
+	// then various other groups.
 
 	decoder->history_head = 0x20;
 
-	decoder->history[0x1f].prev = 0xa0; decoder->history[0xa0].next = 0x1f;
-	decoder->history[0x9f].prev = 0xe0; decoder->history[0xe0].next = 0x9f;
-	decoder->history[0xdf].prev = 0x80; decoder->history[0x80].next = 0xdf;
-	decoder->history[0x7f].prev = 0x00; decoder->history[0x00].next = 0x7f;
-	decoder->history[0xff].prev = 0x20; decoder->history[0x20].next = 0xff;
+	decoder->history[0x7f].prev = 0x00;  // 0x20 ... 0x7f -> 0x00
+	decoder->history[0x00].next = 0x7f;
+
+	decoder->history[0x1f].prev = 0xa0;  // 0x00 ... 0x1f -> 0xa0
+	decoder->history[0xa0].next = 0x1f;
+
+	decoder->history[0xdf].prev = 0x80;  // 0xa0 ... 0xdf -> 0x80
+	decoder->history[0x80].next = 0xdf;
+
+	decoder->history[0x9f].prev = 0xe0;  // 0x80 ... 0x9f -> 0xe0
+	decoder->history[0xe0].next = 0x9f;
+
+	decoder->history[0xff].prev = 0x20;  // 0xe0 ... 0xff -> 0x20
+	decoder->history[0x20].next = 0xff;
 }
 
 // Look up an entry in the history chain, returning the code found.
@@ -184,7 +224,7 @@ static uint8_t find_in_history(LHAPMADecoder *decoder, uint8_t count)
 		}
 	} else {
 		for (i = 0; i < 256 - count; ++i) {
-			code = decoder->history[code].prev;
+			code = decoder->history[code].next;
 		}
 	}
 
@@ -216,8 +256,8 @@ static void update_history(LHAPMADecoder *decoder, uint8_t b)
 	node->prev = decoder->history_head;
 	node->next = old_head->next;
 
-	old_head->next = b;
 	decoder->history[old_head->next].prev = b;
+	old_head->next = b;
 
 	// 'b' is now the head of the queue:
 
@@ -243,6 +283,7 @@ static int lha_pma_decoder_init(void *data, LHADecoderCallback callback,
 	// Initialize ring buffer contents.
 
 	memset(&decoder->ringbuf, ' ', RING_BUFFER_SIZE);
+	decoder->ringbuf_pos = 0;
 
 	// Init history lookup list.
 
@@ -404,6 +445,25 @@ static void build_tree(uint8_t *tree, size_t tree_len,
 		                       num_code_lengths, code_len));
 }
 
+/*
+static void display_tree(uint8_t *tree, unsigned int node, int offset)
+{
+	unsigned int i;
+
+	if (node & TREE_NODE_LEAF) {
+		for (i = 0; i < offset; ++i) putchar(' ');
+		printf("leaf %i\n", node & ~TREE_NODE_LEAF);
+	} else {
+		for (i = 0; i < offset; ++i) putchar(' ');
+		printf("0 ->\n");
+		display_tree(tree, tree[node], offset + 4);
+		for (i = 0; i < offset; ++i) putchar(' ');
+		printf("1 ->\n");
+		display_tree(tree, tree[node + 1], offset + 4);
+	}
+}
+*/
+
 // Read the list of code lengths to use for the code tree and construct
 // the code_tree structure.
 
@@ -484,6 +544,10 @@ static int read_offset_tree(LHAPMADecoder *decoder,
 	unsigned int off;
 	unsigned int single_offset, num_codes;
 	int len;
+
+	if (!decoder->need_offset_tree) {
+		return 1;
+	}
 
 	// Read 'num_offsets' 3-bit length values.  For each offset
 	// value 'off', offset_lengths[off] is the length of the
@@ -591,7 +655,7 @@ static int read_from_tree(LHAPMADecoder *decoder, uint8_t *tree)
 
 	// Start from root.
 
-	code = 0;
+	code = tree[0];
 
 	while ((code & TREE_NODE_LEAF) == 0) {
 
@@ -636,6 +700,43 @@ static void output_byte(LHAPMADecoder *decoder, uint8_t *buf,
 	}
 }
 
+// Read a variable length code, given the header bits already read.
+// Returns the decoded value, or -1 for error.
+
+static int decode_variable_length(LHAPMADecoder *decoder,
+                                  const VariableLengthTable *table,
+                                  unsigned int header)
+{
+	int value;
+
+	value = read_bits(&decoder->bit_stream_reader, table[header].bits);
+
+	if (value < 0) {
+		return -1;
+	}
+
+	return table[header].offset + value;
+}
+
+static void read_single_byte(LHAPMADecoder *decoder, unsigned int code,
+                             uint8_t *buf, size_t *buf_len)
+{
+	int offset;
+	uint8_t b;
+
+	offset = decode_variable_length(decoder, history_decode, code);
+
+	if (offset < 0) {
+		return;
+	}
+
+	b = find_in_history(decoder, (uint8_t) offset);
+	output_byte(decoder, buf, buf_len, b);
+}
+
+// Decode data and store it into buf[], returning the number of
+// bytes decoded.
+
 static size_t lha_pma_decoder_read(void *data, uint8_t *buf)
 {
 	LHAPMADecoder *decoder = data;
@@ -645,6 +746,10 @@ static size_t lha_pma_decoder_read(void *data, uint8_t *buf)
 	// On first pass through, build initial lookup trees.
 
 	if (decoder->tree_state == PMA_REBUILD_UNBUILT) {
+
+		// First bit in stream is discarded?
+
+		read_bit(&decoder->bit_stream_reader);
 		rebuild_tree(decoder);
 	}
 
@@ -656,6 +761,9 @@ static size_t lha_pma_decoder_read(void *data, uint8_t *buf)
 		return 0;
 	}
 
+	if (code < 8) {
+		read_single_byte(decoder, (unsigned int) code, buf, &result);
+	}
 
 
 	return result;
@@ -666,6 +774,39 @@ LHADecoderType lha_pma_decoder = {
 	NULL,
 	lha_pma_decoder_read,
 	sizeof(LHAPMADecoder),
-	0 // TODO
+	1 // TODO
 };
+
+static size_t read_data(void *buf, size_t buf_len, void *user_data)
+{
+	return fread(buf, 1, buf_len, (FILE *) user_data);
+}
+
+int main(int argc, char *argv[])
+{
+	LHAPMADecoder decoder;
+	uint8_t buf[16];
+	FILE *fs;
+
+	fs = fopen(argv[1], "rb");
+
+	lha_pma_decoder_init(&decoder, read_data, fs);
+
+	for (;;) {
+		size_t bytes;
+		unsigned int i;
+
+		bytes = lha_pma_decoder_read(&decoder, buf);
+
+		if (bytes == 0) {
+			break;
+		}
+
+		for (i = 0; i < bytes; ++i) {
+			putchar(buf[i]);
+		}
+	}
+
+	return 0;
+}
 
