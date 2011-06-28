@@ -59,24 +59,41 @@ static void bit_stream_reader_init(BitStreamReader *reader,
 static int peek_bits(BitStreamReader *reader,
                      unsigned int n)
 {
-	uint8_t buf[3];
+	uint8_t buf[4];
+	unsigned int fill_bytes;
 	size_t bytes;
 
-	// Always try to keep at least 8 bits in the input buffer.
-	// When the level drops low, read some more bytes to top it up.
+	if (n == 0) {
+		return 0;
+	}
 
-	if (reader->bits < 8) {
-		bytes = reader->callback(buf, 3, reader->callback_data);
+	// If there are not enough bits in the buffer to satisfy this
+	// request, we need to fill up the buffer with more bits.
+
+	if (reader->bits < n) {
+
+		// Maximum number of bytes we can fill?
+
+		fill_bytes = (32 - reader->bits) / 8;
+
+		// Read from input and fill bit_buffer.
+
+		memset(buf, 0, sizeof(buf));
+		bytes = reader->callback(buf, fill_bytes,
+		                         reader->callback_data);
 
 		reader->bit_buffer |= (uint32_t) buf[0] << (24 - reader->bits);
 		reader->bit_buffer |= (uint32_t) buf[1] << (16 - reader->bits);
 		reader->bit_buffer |= (uint32_t) buf[2] << (8 - reader->bits);
+		reader->bit_buffer |= (uint32_t) buf[3];
 
 		reader->bits += bytes * 8;
-	}
 
-	if (reader->bits < n) {
-		return -1;
+		// Do we have enough now?  If not, we're out of luck.
+
+		if (reader->bits < n) {
+			return -1;
+		}
 	}
 
 	return (signed int) (reader->bit_buffer >> (32 - n));
