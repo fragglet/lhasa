@@ -25,6 +25,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "null_decoder.h"
 #include "lzss_decoder.h"
+#include "pma_decoder.h"
 
 extern LHADecoderType lha_lzhuf_decoder;
 
@@ -36,6 +37,8 @@ static struct {
 	{ "-lz5-", &lha_lzss_decoder },
 	{ "-lh0-", &lha_null_decoder },
 	{ "-lh1-", &lha_lzhuf_decoder },
+	{ "-pm0-", &lha_null_decoder },
+	{ "-pm2-", &lha_pma_decoder },
 };
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,

@@ -41,6 +41,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define TREE_NODE_LEAF      0x80
 
+// Maximum number of bytes that might be placed in the output buffer
+// from a single call to lha_pma_decoder_read (largest copy size).
+
+#define OUTPUT_BUFFER_SIZE  256
+
 typedef enum
 {
 	PMA_REBUILD_UNBUILT,          // At start of stream
@@ -154,8 +159,8 @@ static const VariableLengthTable history_decode[] = {
 	{ 192, 6 },   // 192 + (1 << 6) = 256
 };
 
-// Decode table for copies. As with history_decode[], copies from
-// recent history are more common, and require less bits.
+// Decode table for copies. As with history_decode[], small copies
+// are more common, and require fewer bits.
 
 static const VariableLengthTable copy_decode[] = {
 	{  17, 3 },   //  17 + (1 << 3) =  25
@@ -223,7 +228,7 @@ static uint8_t find_in_history(LHAPMADecoder *decoder, uint8_t count)
 			code = decoder->history[code].prev;
 		}
 	} else {
-		for (i = 0; i < 256 - count; ++i) {
+		for (i = 0; i < 256U - count; ++i) {
 			code = decoder->history[code].next;
 		}
 	}
@@ -337,8 +342,7 @@ static uint8_t read_queue_entry(TreeBuildData *build)
 static void expand_queue(TreeBuildData *build)
 {
 	unsigned int num_nodes, i;
-	unsigned int node;
-	uint8_t entry_index;
+	uint8_t node, entry_index;
 
 	num_nodes = build->entries_len;
 
@@ -350,18 +354,18 @@ static void expand_queue(TreeBuildData *build)
 
 		// Allocate a new node.
 
-		node = build->tree_allocated;
+		node = (uint8_t) build->tree_allocated;
 		build->tree_allocated += 2;
 
 		// Add into tree at the next available location.
 
 		entry_index = read_queue_entry(build);
-		build->tree[entry_index] = (uint8_t) node;
+		build->tree[entry_index] = node;
 
 		// Add child pointers of this node.
 
 		add_queue_entry(build, node);
-		add_queue_entry(build, node + 1);
+		add_queue_entry(build, (uint8_t) (node + 1));
 	}
 }
 
@@ -374,9 +378,9 @@ static int add_codes_with_length(TreeBuildData *build,
                                  unsigned int num_code_lengths,
                                  unsigned int code_len)
 {
-	unsigned int codes_remaining;
 	unsigned int i;
 	unsigned int node;
+	int codes_remaining;
 
 	codes_remaining = 0;
 
@@ -387,7 +391,7 @@ static int add_codes_with_length(TreeBuildData *build,
 		if (code_lengths[i] == code_len) {
 			node = read_queue_entry(build);
 
-			build->tree[node] = i | TREE_NODE_LEAF;
+			build->tree[node] = (uint8_t) i | TREE_NODE_LEAF;
 		}
 
 		// More work to be done after this pass?
@@ -495,7 +499,8 @@ static int read_code_tree(LHAPMADecoder *decoder)
 	// Minimum length of zero means a tree containing a single code.
 
 	if (min_code_length == 0) {
-		decoder->code_tree[0] = TREE_NODE_LEAF | (num_codes - 1);
+		decoder->code_tree[0]
+		  = (uint8_t) (TREE_NODE_LEAF | (num_codes - 1));
 		return 1;
 	}
 
@@ -509,13 +514,14 @@ static int read_code_tree(LHAPMADecoder *decoder)
 
 	// Read table of code lengths:
 
-	for (i = 0; i < num_codes; ++i) {
+	for (i = 0; i < (unsigned int) num_codes; ++i) {
 
 		// Read a table entry.  A value of zero represents an
 		// unused code.  Otherwise the value represents
 		// an offset from the minimum length (previously read).
 
-		val = read_bits(&decoder->bit_stream_reader, length_bits);
+		val = read_bits(&decoder->bit_stream_reader,
+		                (unsigned int) length_bits);
 
 		if (val < 0) {
 			return 0;
@@ -529,7 +535,7 @@ static int read_code_tree(LHAPMADecoder *decoder)
 	// Build the tree.
 
 	build_tree(decoder->code_tree, sizeof(decoder->code_tree),
-	           code_lengths, num_codes);
+	           code_lengths, (unsigned int) num_codes);
 
 	return 1;
 }
@@ -555,6 +561,7 @@ static int read_offset_tree(LHAPMADecoder *decoder,
 	// appear within the tree.
 
 	num_codes = 0;
+	single_offset = 0;
 
 	for (off = 0; off < num_offsets; ++off) {
 		len = read_bits(&decoder->bit_stream_reader, 3);
@@ -576,7 +583,8 @@ static int read_offset_tree(LHAPMADecoder *decoder,
 	// If there was a single code, this is a single node tree.
 
 	if (num_codes == 1) {
-		decoder->offset_tree[0] = single_offset | TREE_NODE_LEAF;
+		decoder->offset_tree[0]
+		  = (uint8_t) (single_offset | TREE_NODE_LEAF);
 		return 1;
 	}
 
@@ -650,7 +658,7 @@ static void rebuild_tree(LHAPMADecoder *decoder)
 
 static int read_from_tree(LHAPMADecoder *decoder, uint8_t *tree)
 {
-	unsigned int code;
+	uint8_t code;
 	int bit;
 
 	// Start from root.
@@ -665,12 +673,12 @@ static int read_from_tree(LHAPMADecoder *decoder, uint8_t *tree)
 			return -1;
 		}
 
-		code = tree[code + bit];
+		code = tree[code + (unsigned int) bit];
 	}
 
 	// Mask off leaf bit to get the plain code.
 
-	return code & ~TREE_NODE_LEAF;
+	return (int) (code & ~TREE_NODE_LEAF);
 }
 
 static void output_byte(LHAPMADecoder *decoder, uint8_t *buf,
@@ -715,8 +723,11 @@ static int decode_variable_length(LHAPMADecoder *decoder,
 		return -1;
 	}
 
-	return table[header].offset + value;
+	return (int) table[header].offset + value;
 }
+
+// Read a single byte from the input stream and add it to the output
+// buffer.
 
 static void read_single_byte(LHAPMADecoder *decoder, unsigned int code,
                              uint8_t *buf, size_t *buf_len)
@@ -732,6 +743,112 @@ static void read_single_byte(LHAPMADecoder *decoder, unsigned int code,
 
 	b = find_in_history(decoder, (uint8_t) offset);
 	output_byte(decoder, buf, buf_len, b);
+}
+
+// Calculate how many bytes from history to copy:
+
+static int history_get_count(LHAPMADecoder *decoder, unsigned int code)
+{
+	// How many bytes to copy?  A small value represents the
+	// literal number of bytes to copy; larger values are a header
+	// for a variable length value to be decoded.
+
+	if (code < 15) {
+		return (int) code + 2;
+	} else {
+		return decode_variable_length(decoder, copy_decode, code - 15);
+	}
+}
+
+// Calculate the offset within history at which to start copying:
+
+static int history_get_offset(LHAPMADecoder *decoder, unsigned int code)
+{
+	unsigned int bits;
+	int result, val;
+
+	result = 0;
+
+	// Calculate number of bits to read.
+
+	// Code of zero indicates a simple 6-bit value giving the offset.
+
+	if (code == 0) {
+		bits = 6;
+	}
+
+	// Mid-range encoded offset value.
+	// Read a code using the offset tree, indicating the length
+	// of the offset value to follow.  The code indicates the
+	// number of bits (values 0-7 = 6-13 bits).
+
+	else if (code < 20) {
+
+		val = read_from_tree(decoder, decoder->offset_tree);
+
+		if (val < 0) {
+			return -1;
+		} else if (val == 0) {
+			bits = 6;
+		} else {
+			bits = (unsigned int) val + 5;
+			result = 1 << bits;
+		}
+	}
+
+	// Large copy values start from offset zero.
+
+	else {
+		return 0;
+	}
+
+	// Read a number of bits representing the offset value.  The
+	// number of length of this value is variable, and is calculated
+	// above.
+
+	val = read_bits(&decoder->bit_stream_reader, bits);
+
+	if (val < 0) {
+		return -1;
+	}
+
+	result += val;
+
+	return result;
+}
+
+static void copy_from_history(LHAPMADecoder *decoder, unsigned int code,
+                              uint8_t *buf, size_t *buf_len)
+{
+	int to_copy, offset;
+	unsigned int i, pos, start;
+
+	// Read number of bytes to copy and offset within history to copy
+	// from.
+
+	to_copy = history_get_count(decoder, code);
+	offset = history_get_offset(decoder, code);
+
+	if (to_copy < 0 || offset < 0) {
+		return;
+	}
+
+	// Sanity check to prevent the potential for buffer overflow.
+
+	if (to_copy > OUTPUT_BUFFER_SIZE) {
+		return;
+	}
+
+	// Perform copy.
+
+	start = decoder->ringbuf_pos + RING_BUFFER_SIZE - 1
+	      - (unsigned int) offset;
+
+	for (i = 0; i < (unsigned int) to_copy; ++i) {
+		pos = (start + i) % RING_BUFFER_SIZE;
+
+		output_byte(decoder, buf, buf_len, decoder->ringbuf[pos]);
+	}
 }
 
 // Decode data and store it into buf[], returning the number of
@@ -763,8 +880,10 @@ static size_t lha_pma_decoder_read(void *data, uint8_t *buf)
 
 	if (code < 8) {
 		read_single_byte(decoder, (unsigned int) code, buf, &result);
+	} else {
+		copy_from_history(decoder, (unsigned int) code - 8,
+		                  buf, &result);
 	}
-
 
 	return result;
 }
@@ -774,39 +893,6 @@ LHADecoderType lha_pma_decoder = {
 	NULL,
 	lha_pma_decoder_read,
 	sizeof(LHAPMADecoder),
-	1 // TODO
+	OUTPUT_BUFFER_SIZE
 };
-
-static size_t read_data(void *buf, size_t buf_len, void *user_data)
-{
-	return fread(buf, 1, buf_len, (FILE *) user_data);
-}
-
-int main(int argc, char *argv[])
-{
-	LHAPMADecoder decoder;
-	uint8_t buf[16];
-	FILE *fs;
-
-	fs = fopen(argv[1], "rb");
-
-	lha_pma_decoder_init(&decoder, read_data, fs);
-
-	for (;;) {
-		size_t bytes;
-		unsigned int i;
-
-		bytes = lha_pma_decoder_read(&decoder, buf);
-
-		if (bytes == 0) {
-			break;
-		}
-
-		for (i = 0; i < bytes; ++i) {
-			putchar(buf[i]);
-		}
-	}
-
-	return 0;
-}
 

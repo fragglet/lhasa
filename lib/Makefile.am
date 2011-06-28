@@ -18,7 +18,8 @@ SRC =                                                   \
 	null_decoder.c          null_decoder.h          \
 	lzhuf_decoder.c                                 \
 	lzss_decoder.c          lzss_decoder.h          \
-	lha_reader.c
+	lha_reader.c                                    \
+	pma_decoder.c           pma_decoder.h
 
 liblhasatest_a_CFLAGS=$(TEST_CFLAGS) -DALLOC_TESTING -I../test -g
 liblhasatest_a_SOURCES=$(SRC) $(HEADER_FILES)
