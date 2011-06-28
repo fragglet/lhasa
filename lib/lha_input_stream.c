@@ -21,6 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "lha_input_stream.h"
 
@@ -72,11 +73,31 @@ void lha_input_stream_free(LHAInputStream *reader)
 
 static int file_header_match(uint8_t *buf)
 {
-	return buf[2] == '-'
-	    && (!strncmp((char *) buf + 3, "lh", 2)
-	     || !strncmp((char *) buf + 3, "pm", 2)
-	     || !strncmp((char *) buf + 3, "lz", 2))
-	    && buf[6] == '-';
+	if (buf[2] != '-' || buf[6] != '-') {
+		return 0;
+	}
+
+	// LHA algorithm?
+
+	if (!strncmp((char *) buf + 3, "lh", 2)) {
+		return 1;
+	}
+
+	// LArc algorithm (lz4, lz5)?
+
+	if (!strncmp((char *) buf + 3, "lz", 2) && isdigit(buf[5])) {
+		return 1;
+	}
+
+	// PMarc algorithm? (pm0, pm2)
+	// Note: PMarc SFX archives have a -pms- string in them that must
+	// be ignored.
+
+	if (!strncmp((char *) buf + 3, "pm", 2) && buf[5] != 's') {
+		return 1;
+	}
+
+	return 0;
 }
 
 // Empty some of the bytes from the start of the lead-in buffer.

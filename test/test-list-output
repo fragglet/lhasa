@@ -52,8 +52,9 @@ test_archive() {
 
 	../src/lha l archives/$archive > /tmp/l.txt
 
-	if ! diff -u /tmp/l.txt output/$archive-l.txt; then
+	if ! diff -u output/$archive-l.txt /tmp/l.txt; then
 		echo "Output not as expected for lha l $archive" >&2
+		exit 1
 	fi
 
 	rm /tmp/l.txt
@@ -62,8 +63,9 @@ test_archive() {
 
 	../src/lha v archives/$archive > /tmp/v.txt
 
-	if ! diff -u /tmp/v.txt output/$archive-v.txt; then
+	if ! diff -u output/$archive-v.txt /tmp/v.txt; then
 		echo "Output not as expected for lha v $archive" >&2
+		exit 1
 	fi
 
 	rm /tmp/v.txt
@@ -102,7 +104,7 @@ test_archive lha_os2_208/example.lzh
 test_archive pmarc2/pm0.pma
 test_archive pmarc2/pm2.pma
 test_archive pmarc2/comment.pma
-#test_archive pmarc2/sfx.com          TODO - sfx
+test_archive pmarc2/sfx.com
 
 test_archive lha_amiga_122/level0.lzh
 #test_archive lha_amiga_122/level1.lzh    TODO - Unix LHA fails
