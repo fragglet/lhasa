@@ -71,24 +71,24 @@ test_archive() {
 
 test_archive larc333/lz4.lzs
 test_archive larc333/lz5.lzs
-#test_archive larc333/sfx.com         TODO - sfx
+test_archive larc333/sfx.com
 test_archive larc333/subdir.lzs
 test_archive larc333/long.lzs
 
 test_archive lharc113/lh0.lzh
 test_archive lharc113/lh1.lzh
-#test_archive lharc113/sfx.com        TODO - sfx
+test_archive lharc113/sfx.com
 test_archive lharc113/subdir.lzh
 test_archive lharc113/long.lzh
 
 test_archive lha213/lh0.lzh
 test_archive lha213/lh5.lzh
-#test_archive lha213/sfx.exe          TODO - sfx
+test_archive lha213/sfx.exe
 test_archive lha213/subdir.lzh
 
 test_archive lha255e/lh0.lzh
 test_archive lha255e/lh5.lzh
-#test_archive lha255e/sfx.exe         TODO - sfx
+test_archive lha255e/sfx.exe
 test_archive lha255e/subdir.lzh
 
 test_archive lha_unix114i/lh0.lzh
