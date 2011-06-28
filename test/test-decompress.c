@@ -26,16 +26,17 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_reader.h"
 #include "crc32.h"
 
-struct expected_header {
+typedef struct {
 	char *method;
 	char *filename;
 	size_t length;
 	size_t compressed_length;
-	uint16_t crc;
-};
+	uint16_t crc16;
+	uint32_t crc32;
+} ExpectedFileDetails;
 
 static void test_read_directory(char *filename,
-                                struct expected_header *expected)
+                                ExpectedFileDetails *expected)
 {
 	FILE *fstream;
 	LHAInputStream *stream;
@@ -56,7 +57,7 @@ static void test_read_directory(char *filename,
 	assert(!strcmp(header->filename, expected->filename));
 	assert(header->length == expected->length);
 	assert(header->compressed_length == expected->compressed_length);
-	assert(header->crc == expected->crc);
+	assert(header->crc == expected->crc16);
 
 	// Only entry in the file:
 
@@ -140,63 +141,151 @@ static void test_crc_check(char *filename)
 	lha_reader_free(reader);
 }
 
-void test_lh0(void)
-{
-	struct expected_header expected = {
-		"-lh0-",
-		"gpl-2.gz",
-		6829,
-		6829,
-		0xb6d5
-	};
+// Run all tests for the specified file.
 
-	test_read_directory("archives/lharc113/lh0.lzh", &expected);
+static void test_file(char *filename, ExpectedFileDetails *expected)
+{
+	test_read_directory(filename, expected);
+	test_decompress(filename, expected->filename, expected->crc32);
+	test_crc_check(filename);
+
+	//printf("Passed: %s\n", filename);
 }
 
-void test_lh0_decompress(void)
+//
+// LArc (.lzs) archive tests:
+//
+
+static ExpectedFileDetails lz4_expected = {
+	"-lz4-",
+	"gpl-2.gz",
+	6829,
+	6829,
+	0xb6d5,
+	0xe4690583
+};
+
+static ExpectedFileDetails lz5_expected = {
+	"-lz5-",
+	"gpl-2",
+	18092,
+	8480,
+	0xa33a,
+	0x4e46f4a1
+};
+
+static ExpectedFileDetails lz5_long_expected = {
+	"-lz5-",
+	"long.txt",
+	1241658,
+	226557,
+	0x6a7c,
+	0x06788e85
+};
+
+void test_larc(void)
 {
-	test_decompress("archives/lharc113/lh0.lzh", "gpl-2.gz", 0xe4690583);
+	// LZ4 (LArc uncompressed):
+
+	test_file("archives/larc333/lz4.lzs", &lz4_expected);
+
+	// LZ5 (LArc compressed):
+
+	test_file("archives/larc333/lz5.lzs", &lz5_expected);
+	test_file("archives/larc333/long.lzs", &lz5_long_expected);
 }
 
-void test_lh0_crc(void)
+//
+// LHArc ("old" .lzh) archive tests:
+//
+
+static ExpectedFileDetails lh0_expected = {
+	"-lh0-",
+	"gpl-2.gz",
+	6829,
+	6829,
+	0xb6d5,
+	0xe4690583
+};
+
+static ExpectedFileDetails lh1_expected = {
+	"-lh1-",
+	"gpl-2",
+	18092,
+	7518,
+	0xa33a,
+	0x4e46f4a1
+};
+
+static ExpectedFileDetails lh1_long_expected = {
+	"-lh1-",
+	"long.txt",
+	1241658,
+	114249,
+	0x6a7c,
+	0x06788e85
+};
+
+void test_lharc(void)
 {
-	test_crc_check("archives/lharc113/lh0.lzh");
+	// lh0 (LHA uncompressed):
+
+	test_file("archives/lharc113/lh0.lzh", &lh0_expected);
+
+	// lh1 (LHA "old" algorithm):
+
+	test_file("archives/lharc113/lh1.lzh", &lh1_expected);
+	test_file("archives/lharc113/long.lzh", &lh1_long_expected);
 }
 
-void test_lh1(void)
-{
-	struct expected_header expected = {
-		"-lh1-",
-		"gpl-2",
-		18092,
-		7518,
-		0xa33a
-	};
+//
+// PMArc (.pma) archive tests:
+//
 
-	test_read_directory("archives/lharc113/lh1.lzh", &expected);
-}
+static ExpectedFileDetails pm0_expected = {
+	"-pm0-",
+	"gpl-2.gz",
+	6912,
+	6912,
+	0x39cc,
+	0x549d935a
+};
 
-void test_lh1_decompress(void)
-{
-	test_decompress("archives/lharc113/lh1.lzh", "gpl-2", 0x4e46f4a1);
-	test_decompress("archives/lharc113/long.lzh", "long.txt", 0x06788e85);
-}
+static ExpectedFileDetails pm2_expected = {
+	"-pm2-",
+	"gpl-2.",
+	 18176,
+	 7098,
+	 0x83cd,
+	 0x8e2093a7
+};
 
-void test_lh1_crc(void)
+static ExpectedFileDetails pm2_long_expected = {
+	"-pm2-",
+	"long.txt",
+	1241659,
+	85397,
+	0x2aea,
+	0xb2b419d6
+};
+
+static void test_pmarc()
 {
-	test_crc_check("archives/lharc113/lh1.lzh");
-	test_crc_check("archives/lharc113/long.lzh");
+	// pm0 (PMA uncompressed):
+
+	test_file("archives/pmarc2/pm0.pma", &pm0_expected);
+
+	// pm2 (PMA compressed):
+
+	test_file("archives/pmarc2/pm2.pma", &pm2_expected);
+	test_file("archives/pmarc2/long.pma", &pm2_long_expected);
 }
 
 int main(int argc, char *argv[])
 {
-	test_lh0();
-	test_lh0_decompress();
-	test_lh0_crc();
-
-	test_lh1();
-	test_lh1_decompress();
-	test_lh1_crc();
+	test_larc();
+	test_lharc();
+	test_pmarc();
 
 	return 0;
 }
