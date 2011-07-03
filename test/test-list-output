@@ -34,7 +34,7 @@ test_archive() {
 	# the timestamp of the file, so it must match the check
 	# file.
 
-	touch -d 2000-01-01 archives/$archive
+	touch -t 200001010000 archives/$archive
 
 	# Gather output from Unix LHA tool?
 
