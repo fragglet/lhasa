@@ -20,6 +20,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 
+// Maximum number of dots in progress output:
+
+#define MAX_PROGRESS_LEN 53
+
 static void print_filename(LHAFileHeader *header, char *status)
 {
 	printf("\r%s%s\t- %s  ",
@@ -34,7 +38,15 @@ static void crc_check_callback(unsigned int block,
                                void *data)
 {
 	LHAFileHeader *header = data;
+	unsigned int factor;
 	unsigned int i;
+
+	// Scale factor for blocks, so that the line is never too long.  When
+	// MAX_PROGRESS_LEN is exceeded, the length is halved (factor=2), then
+	// progressively larger scale factors are applied.
+
+	factor = 1 + (num_blocks / MAX_PROGRESS_LEN);
+	num_blocks /= factor;
 
 	// First call to specify number of blocks?
 
@@ -46,7 +58,7 @@ static void crc_check_callback(unsigned int block,
 		}
 
 		print_filename(header, "Testing  :");
-	} else {
+	} else if ((block % factor) == (factor - 1)) {
 		// Otherwise, signal progress:
 
 		printf("o");
