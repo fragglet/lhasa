@@ -31,7 +31,8 @@ typedef enum
 {
 	MODE_UNKNOWN,
 	MODE_LIST,
-	MODE_LIST_VERBOSE
+	MODE_LIST_VERBOSE,
+	MODE_CRC_CHECK
 } ProgramMode;
 
 static void help_page(char *progname)
@@ -39,7 +40,8 @@ static void help_page(char *progname)
 	printf("usage: %s [-]{lv} archive_file\n", progname);
 
 	printf("commands:\n"
-	       " l,v List / Verbose List\n");
+	       " l,v List / Verbose List\n"
+	       " t   Test file CRC in archive\n");
 	exit(-1);
 }
 
@@ -68,6 +70,10 @@ static void do_command(ProgramMode mode, char *filename)
 		case MODE_LIST_VERBOSE:
 			list_file_verbose(reader, fstream);
 			break;
+
+		case MODE_CRC_CHECK:
+			test_file_crc(reader);
+			break;
 	}
 
 	lha_reader_free(reader);
@@ -90,6 +96,8 @@ int main(int argc, char *argv[])
 		mode = MODE_LIST;
 	} else if (!strcmp(argv[1], "v")) {
 		mode = MODE_LIST_VERBOSE;
+	} else if (!strcmp(argv[1], "t")) {
+		mode = MODE_CRC_CHECK;
 	} else {
 		help_page(argv[0]);
 	}
