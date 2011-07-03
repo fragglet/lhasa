@@ -56,3 +56,8 @@ test_archive lengths/lh1-64k.lzh
 test_archive lengths/lh1-1m.lzh
 test_archive lengths/lh1-2m.lzh
 
+test_archive lengths/lz5-0.lzs
+test_archive lengths/lz5-1.lzs
+test_archive lengths/lz5-64k.lzs
+test_archive lengths/lz5-1m.lzs
+
