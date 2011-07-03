@@ -56,6 +56,7 @@ LHADecoderType lha_null_decoder = {
 	NULL,
 	lha_null_read,
 	sizeof(LHANullDecoder),
+	BLOCK_READ_SIZE,
 	BLOCK_READ_SIZE
 };
 

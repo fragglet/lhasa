@@ -20,6 +20,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "lha_decoder.h"
 
@@ -61,6 +62,8 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	}
 
 	decoder->dtype = dtype;
+	decoder->progress_callback = NULL;
+	decoder->last_block = UINT_MAX;
 	decoder->outbuf_pos = 0;
 	decoder->outbuf_len = 0;
 	decoder->stream_pos = 0;
@@ -102,6 +105,39 @@ void lha_decoder_free(LHADecoder *decoder)
 	}
 
 	free(decoder);
+}
+
+// Check if the stream has progressed far enough that the progress callback
+// should be invoked again.
+
+static void check_progress_callback(LHADecoder *decoder)
+{
+	unsigned int block;
+
+	block = (decoder->stream_pos + decoder->dtype->block_size - 1)
+	      / decoder->dtype->block_size;
+
+	// Started a new block?
+
+	if (block != decoder->last_block) {
+		decoder->progress_callback(block, decoder->total_blocks,
+		                           decoder->progress_callback_data);
+		decoder->last_block = block;
+	}
+}
+
+void lha_decoder_monitor(LHADecoder *decoder,
+                         LHADecoderProgressCallback callback,
+                         void *callback_data)
+{
+	decoder->progress_callback = callback;
+	decoder->progress_callback_data = callback_data;
+
+	decoder->total_blocks
+	  = (decoder->stream_length + decoder->dtype->block_size - 1)
+	  / decoder->dtype->block_size;
+
+	check_progress_callback(decoder);
 }
 
 size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
@@ -160,6 +196,12 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 	// Track stream position.
 
 	decoder->stream_pos += filled;
+
+	// Check progress callback, if one is set:
+
+	if (decoder->progress_callback != NULL) {
+		check_progress_callback(decoder);
+	}
 
 	return filled;
 }

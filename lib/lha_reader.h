@@ -23,21 +23,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_input_stream.h"
 #include "lha_file_header.h"
+#include "lha_decoder.h"
 
 typedef struct _LHAReader LHAReader;
-
-/**
- * Callback function invoked when checking file CRC.
- * The callback is invoked for every 64 KiB block processed.
- *
- * @param num_blocks      Number of blocks processed so far.
- * @param total_blocks    Total number of blocks to process.
- * @paaram callback_data  Extra user-specified data passed to the callback.
- */
-
-typedef void (*LHACheckProgressCallback)(unsigned int num_blocks,
-                                         unsigned int total_blocks,
-                                         void *callback_data);
 
 /**
  * Create a new LHA reader to read data from an input stream.
@@ -99,7 +87,8 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len);
  * @return               Non-zero if the checksum matches.
  */
 
-int lha_reader_check(LHAReader *reader, LHACheckProgressCallback callback,
+int lha_reader_check(LHAReader *reader,
+                     LHADecoderProgressCallback callback,
                      void *callback_data);
 
 #endif /* #ifndef LHASA_LHA_READER_H */

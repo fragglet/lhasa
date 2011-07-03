@@ -39,6 +39,20 @@ typedef struct _LHADecoderType LHADecoderType;
 
 typedef size_t (*LHADecoderCallback)(void *buf, size_t buf_len, void *user_data);
 
+/**
+ * Callback function used for monitoring decoode progress.
+ * The callback is invoked for every block processed (block size depends on
+ * decode algorithm).
+ *
+ * @param num_blocks      Number of blocks processed so far.
+ * @param total_blocks    Total number of blocks to process.
+ * @paaram callback_data  Extra user-specified data passed to the callback.
+ */
+
+typedef void (*LHADecoderProgressCallback)(unsigned int num_blocks,
+                                           unsigned int total_blocks,
+                                           void *callback_data);
+
 struct _LHADecoderType {
 
 	/**
@@ -86,11 +100,34 @@ struct _LHADecoderType {
 	    a single call to read() */
 
 	size_t max_read;
+
+	/** Block size. Used for calculating number of blocks for
+	    progress bar. */
+
+	size_t block_size;
 };
 
 struct _LHADecoder {
+
+	/** Type of decoder (algorithm) */
+
 	LHADecoderType *dtype;
+
+	/** Callback function to monitor decoder progress. */
+
+	LHADecoderProgressCallback progress_callback;
+	void *progress_callback_data;
+
+	/** Last announced block position, for progress callback. */
+
+	unsigned int last_block, total_blocks;
+
+	/** Current position in the decode stream, and total length. */
+
 	size_t stream_pos, stream_length;
+
+	/** Output buffer, containing decoded data not yet returned. */
+
 	unsigned int outbuf_pos, outbuf_len;
 	uint8_t *outbuf;
 };
@@ -129,6 +166,18 @@ LHADecoderType *lha_decoder_for_name(char *name);
  */
 
 void lha_decoder_free(LHADecoder *decoder);
+
+/**
+ * Set a callback function to monitor decode progress.
+ *
+ * @param decoder        The decoder.
+ * @param callback       Callback function to monitor decode progress.
+ * @param callback_data  Extra data to pass to the decoder.
+ */
+
+void lha_decoder_monitor(LHADecoder *decoder,
+                         LHADecoderProgressCallback callback,
+                         void *callback_data);
 
 /**
  * Decode (decompress) more data.

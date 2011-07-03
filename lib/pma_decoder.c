@@ -893,6 +893,7 @@ LHADecoderType lha_pma_decoder = {
 	NULL,
 	lha_pma_decoder_read,
 	sizeof(LHAPMADecoder),
-	OUTPUT_BUFFER_SIZE
+	OUTPUT_BUFFER_SIZE,
+	RING_BUFFER_SIZE
 };
 

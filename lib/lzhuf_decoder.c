@@ -717,7 +717,8 @@ LHADecoderType lha_lzhuf_decoder = {
 	NULL,
 	lha_lzhuf_read,
 	sizeof(LHALZHUFDecoder),
-	OUTPUT_BUFFER_SIZE
+	OUTPUT_BUFFER_SIZE,
+	RING_BUFFER_SIZE
 };
 
 

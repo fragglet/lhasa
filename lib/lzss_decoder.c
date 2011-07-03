@@ -152,6 +152,7 @@ LHADecoderType lha_lzss_decoder = {
 	NULL,
 	lha_lzss_read,
 	sizeof(LHALZSSDecoder),
-	OUTPUT_BUFFER_SIZE
+	OUTPUT_BUFFER_SIZE,
+	RING_BUFFER_SIZE
 };
 
