@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Maximum number of dots in progress output:
 
-#define MAX_PROGRESS_LEN 53
+#define MAX_PROGRESS_LEN 58
 
 static void print_filename(LHAFileHeader *header, char *status)
 {
@@ -46,7 +46,7 @@ static void crc_check_callback(unsigned int block,
 	// progressively larger scale factors are applied.
 
 	factor = 1 + (num_blocks / MAX_PROGRESS_LEN);
-	num_blocks /= factor;
+	num_blocks = (num_blocks + factor - 1) / factor;
 
 	// First call to specify number of blocks?
 
@@ -58,7 +58,7 @@ static void crc_check_callback(unsigned int block,
 		}
 
 		print_filename(header, "Testing  :");
-	} else if ((block % factor) == (factor - 1)) {
+	} else if (((block + factor - 1) % factor) == 0) {
 		// Otherwise, signal progress:
 
 		printf("o");

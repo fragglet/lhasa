@@ -6,7 +6,8 @@ COMPILED_TESTS=                       \
 	test-decompress
 
 UNCOMPILED_TESTS=                     \
-	test-list-output
+	test-list-output              \
+	test-crc-output
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 EXTRA_DIST=archives output $(UNCOMPILED_TESTS)
