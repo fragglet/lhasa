@@ -29,15 +29,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 
-static void help_page(char *progname)
-{
-	printf("usage: %s [-]{lv} archive_file\n", progname);
-
-	printf("commands:\n"
-	       " l,v List / Verbose List\n");
-	exit(-1);
-}
-
 static float compression_percent(unsigned int compressed,
                                  unsigned int uncompressed)
 {
@@ -398,26 +389,17 @@ static unsigned int read_file_timestamp(FILE *fstream)
 	return data.st_mtime;
 }
 
-static void list_file_contents(char *filename, ListColumn **columns)
+// List contents of file, using the specified columns.
+// Different columns are provided for basic and verbose modes.
+
+static void list_file_contents(LHAReader *reader, FILE *fstream,
+                               ListColumn **columns)
 {
-	FILE *fstream;
-	LHAInputStream *stream;
-	LHAReader *reader;
 	FileStatistics stats;
-
-	fstream = fopen(filename, "rb");
-
-	if (fstream == NULL) {
-		fprintf(stderr, "LHa: Error: %s %s\n",
-		                filename, strerror(errno));
-		exit(-1);
-	}
 
 	print_list_headings(columns);
 	print_list_separators(columns);
 
-	stream = lha_input_stream_new(fstream);
-	reader = lha_reader_new(stream);
 	stats.num_files = 0;
 	stats.length = 0;
 	stats.compressed_length = 0;
@@ -439,13 +421,8 @@ static void list_file_contents(char *filename, ListColumn **columns)
 		stats.compressed_length += header->compressed_length;
 	}
 
-	lha_reader_free(reader);
-	lha_input_stream_free(stream);
-
 	print_list_separators(columns);
 	print_footers(columns, &stats);
-
-	fclose(fstream);
 }
 
 static ListColumn *normal_column_headers[] = {
@@ -457,6 +434,13 @@ static ListColumn *normal_column_headers[] = {
 	&name_column,
 	NULL
 };
+
+// lha -l command.
+
+void list_file_basic(LHAReader *reader, FILE *fstream)
+{
+	list_file_contents(reader, fstream, normal_column_headers);
+}
 
 static ListColumn *verbose_column_headers[] = {
 	&permission_column,
@@ -470,18 +454,10 @@ static ListColumn *verbose_column_headers[] = {
 	NULL
 };
 
-int main(int argc, char *argv[])
-{
-	if (argc < 3) {
-		help_page(argv[0]);
-	}
+// lha -v command.
 
-	if (!strcmp(argv[1], "l")) {
-		list_file_contents(argv[2], normal_column_headers);
-	} else if (!strcmp(argv[1], "v")) {
-		list_file_contents(argv[2], verbose_column_headers);
-	} else {
-		help_page(argv[0]);
-	}
+void list_file_verbose(LHAReader *reader, FILE *fstream)
+{
+	list_file_contents(reader, fstream, verbose_column_headers);
 }
 
