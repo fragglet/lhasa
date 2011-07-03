@@ -51,6 +51,8 @@ static void crc_check_callback(unsigned int block,
 
 		printf("o");
 	}
+
+	fflush(stdout);
 }
 
 // Perform CRC check of an archived file.
