@@ -133,7 +133,7 @@ static void test_crc_check(char *filename)
 			break;
 		}
 
-		assert(lha_reader_check(reader) != 0);
+		assert(lha_reader_check(reader, NULL, NULL) != 0);
 	}
 
 	fclose(fstream);

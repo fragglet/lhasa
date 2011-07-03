@@ -26,6 +26,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_decoder.h"
 #include "lha_reader.h"
 
+#define BLOCK_SIZE (64 * 1024)
+
 struct _LHAReader {
 	LHAInputStream *stream;
 	LHAFileHeader *curr_file;
@@ -171,19 +173,32 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 	return lha_decoder_read(reader->decoder, buf, buf_len);
 }
 
-int lha_reader_check(LHAReader *reader)
+int lha_reader_check(LHAReader *reader,
+                     LHACheckProgressCallback callback,
+                     void *callback_data)
 {
 	uint8_t buf[64];
 	uint16_t crc;
 	unsigned int bytes, total_bytes;
+	unsigned int old_block, block, total_blocks;
 
 	if (reader->curr_file == NULL) {
 		return 0;
 	}
 
+	// How many 64 KiB blocks to process?
+
+	total_blocks = (reader->curr_file->length + BLOCK_SIZE - 1)
+	             / BLOCK_SIZE;
+
+	if (callback != NULL) {
+		callback(0, total_blocks, callback_data);
+	}
+
 	// Decompress the current file, performing a running
 	// CRC of the contents as we go.
 
+	old_block = 0;
 	total_bytes = 0;
 	crc = 0;
 
@@ -191,8 +206,19 @@ int lha_reader_check(LHAReader *reader)
 		bytes = lha_reader_read(reader, buf, sizeof(buf));
 
 		lha_crc16_buf(&crc, buf, bytes);
-
 		total_bytes += bytes;
+
+		// Invoke callback to signal progress?
+
+		if (callback != NULL) {
+			block = (total_bytes + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+			if (block != old_block) {
+				callback(block, total_blocks, callback_data);
+				old_block = block;
+			}
+		}
+
 	} while (bytes > 0);
 
 	// Decompressed length should match, as well as CRC.
