@@ -25,6 +25,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <time.h>
 
 #include "lha_reader.h"
+
+#include "extract.h"
 #include "list.h"
 
 typedef enum

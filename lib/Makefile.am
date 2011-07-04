@@ -6,6 +6,9 @@ HEADER_FILES =                     \
 	lha_input_stream.h         \
 	lha_reader.h
 
+EXTRA_DIST =                                            \
+	bit_stream_reader.c
+
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
 	endian.c                endian.h                \
