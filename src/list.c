@@ -35,12 +35,12 @@ static float compression_percent(unsigned int compressed,
 	float factor;
 
 	if (uncompressed > 0) {
-		factor = (float) compressed / uncompressed;
+		factor = (float) compressed / (float) uncompressed;
 	} else {
-		factor = 1.0;
+		factor = 1.0f;
 	}
 
-	return factor * 100.0;
+	return factor * 100.0f;
 }
 
 typedef struct
@@ -90,7 +90,7 @@ static void permission_column_print(LHAFileHeader *header)
 	}
 
 	for (i = 0; i < 10; ++i) {
-		if (header->unix_perms & (1 << (9 - i))) {
+		if (header->unix_perms & (1U << (9 - i))) {
 			printf("%c", perms[i]);
 		} else {
 			printf("-");
@@ -226,7 +226,7 @@ static void output_timestamp(unsigned int timestamp)
 		return;
 	}
 
-	tmp = timestamp;
+	tmp = (time_t) timestamp;
 	ts = localtime(&tmp);
 
 	// Print date:
@@ -238,7 +238,7 @@ static void output_timestamp(unsigned int timestamp)
 
 	tmp = time(NULL);
 
-	if (timestamp > tmp - 6 * 30 * 24 * 60 * 60) {
+	if ((time_t) timestamp > tmp - 6 * 30 * 24 * 60 * 60) {
 		printf("%02i:%02i", ts->tm_hour, ts->tm_min);
 	} else {
 		printf(" %04i", ts->tm_year + 1900);
@@ -288,7 +288,7 @@ static void print_list_headings(ListColumn **columns)
 	unsigned int i, j;
 
 	for (i = 0; columns[i] != NULL; ++i) {
-		j = printf("%s", columns[i]->name);
+		j = (unsigned) printf("%s", columns[i]->name);
 
 		if (columns[i + 1] != NULL) {
 			for (; j < columns[i]->width + 1; ++j) {
@@ -304,7 +304,7 @@ static void print_list_headings(ListColumn **columns)
 
 static void print_list_separators(ListColumn **columns)
 {
-	unsigned int i, j, len;
+	unsigned int i, j;
 
 	for (i = 0; columns[i] != NULL; ++i) {
 		for (j = 0; j < columns[i]->width; ++j) {
@@ -386,7 +386,7 @@ static unsigned int read_file_timestamp(FILE *fstream)
 		return (unsigned int) -1;
 	}
 
-	return data.st_mtime;
+	return (unsigned int) data.st_mtime;
 }
 
 // List contents of file, using the specified columns.

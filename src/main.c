@@ -76,6 +76,9 @@ static void do_command(ProgramMode mode, char *filename)
 		case MODE_CRC_CHECK:
 			test_file_crc(reader);
 			break;
+
+		case MODE_UNKNOWN:
+			break;
 	}
 
 	lha_reader_free(reader);
@@ -105,5 +108,7 @@ int main(int argc, char *argv[])
 	}
 
 	do_command(mode, argv[2]);
+
+	return 0;
 }
 
