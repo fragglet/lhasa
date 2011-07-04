@@ -51,7 +51,7 @@ static const LHAExtHeaderType *ext_header_types[] = {
  *                  not found for this header type.
  */
 
-static LHAExtHeaderType *ext_header_for_num(uint8_t num)
+static const LHAExtHeaderType *ext_header_for_num(uint8_t num)
 {
 	unsigned int i;
 
@@ -69,7 +69,7 @@ int lha_ext_header_decode(LHAFileHeader *header,
                           uint8_t *data,
                           size_t data_len)
 {
-	LHAExtHeaderType *htype;
+	const LHAExtHeaderType *htype;
 
 	htype = ext_header_for_num(num);
 
