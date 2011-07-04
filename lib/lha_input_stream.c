@@ -41,13 +41,15 @@ typedef enum {
 } LHAInputStreamState;
 
 struct _LHAInputStream {
+	const LHAInputStreamType *type;
+	void *handle;
 	LHAInputStreamState state;
-	FILE *stream;
 	uint8_t leadin[LEADIN_BUFFER_LEN];
 	size_t leadin_len;
 };
 
-LHAInputStream *lha_input_stream_new(FILE *stream)
+LHAInputStream *lha_input_stream_new(const LHAInputStreamType *type,
+                                     void *handle)
 {
 	LHAInputStream *result;
 
@@ -57,16 +59,23 @@ LHAInputStream *lha_input_stream_new(FILE *stream)
 		return NULL;
 	}
 
-	result->stream = stream;
+	result->type = type;
+	result->handle = handle;
 	result->leadin_len = 0;
 	result->state = LHA_INPUT_STREAM_INIT;
 
 	return result;
 }
 
-void lha_input_stream_free(LHAInputStream *reader)
+void lha_input_stream_free(LHAInputStream *stream)
 {
-	free(reader);
+	// Close the input stream.
+
+	if (stream->type->close != NULL) {
+		stream->type->close(stream->handle);
+	}
+
+	free(stream);
 }
 
 // Check if the specified buffer is the start of a file header.
@@ -102,20 +111,28 @@ static int file_header_match(uint8_t *buf)
 
 // Empty some of the bytes from the start of the lead-in buffer.
 
-static void empty_leadin(LHAInputStream *reader, size_t bytes)
+static void empty_leadin(LHAInputStream *stream, size_t bytes)
 {
-	memmove(reader->leadin, reader->leadin + bytes,
-	        reader->leadin_len - bytes);
-	reader->leadin_len -= bytes;
+	memmove(stream->leadin, stream->leadin + bytes,
+	        stream->leadin_len - bytes);
+	stream->leadin_len -= bytes;
+}
+
+// Read bytes from the input stream into the specified buffer.
+
+static int do_read(LHAInputStream *stream, void *buf, size_t buf_len)
+{
+	return stream->type->read(stream->handle, buf, buf_len);
 }
 
 // Skip the self-extractor header at the start of the file.
 // Returns non-zero if a header was found.
 
-static int skip_sfx(LHAInputStream *reader)
+static int skip_sfx(LHAInputStream *stream)
 {
-	size_t read, filepos;
+	size_t filepos;
 	unsigned int i;
+	int read;
 
 	filepos = 0;
 
@@ -123,47 +140,47 @@ static int skip_sfx(LHAInputStream *reader)
 
 		// Add some more bytes to the lead-in buffer:
 
-		read = fread(reader->leadin + reader->leadin_len,
-		             1, LEADIN_BUFFER_LEN - reader->leadin_len,
-		             reader->stream);
+		read = do_read(stream, stream->leadin + stream->leadin_len,
+		               LEADIN_BUFFER_LEN - stream->leadin_len);
 
 		if (read <= 0) {
 			break;
 		}
 
-		reader->leadin_len += read;
+		stream->leadin_len += (unsigned int) read;
 
 		// Check the lead-in buffer for a file header.
 
-		for (i = 0; i + 7 < reader->leadin_len; ++i) {
-			if (file_header_match(reader->leadin + i)) {
-				empty_leadin(reader, i);
+		for (i = 0; i + 7 < stream->leadin_len; ++i) {
+			if (file_header_match(stream->leadin + i)) {
+				empty_leadin(stream, i);
 				return 1;
 			}
 		}
 
-		empty_leadin(reader, i);
+		empty_leadin(stream, i);
 		filepos += i;
 	}
 
 	return 0;
 }
 
-int lha_input_stream_read(LHAInputStream *reader, void *buf, size_t buf_len)
+int lha_input_stream_read(LHAInputStream *stream, void *buf, size_t buf_len)
 {
-	size_t n, total_bytes;
+	size_t total_bytes, n;
+	int result;
 
 	// Start of the stream?  Skip self-extract header, if there is one.
 
-	if (reader->state == LHA_INPUT_STREAM_INIT) {
-		if (skip_sfx(reader)) {
-			reader->state = LHA_INPUT_STREAM_READING;
+	if (stream->state == LHA_INPUT_STREAM_INIT) {
+		if (skip_sfx(stream)) {
+			stream->state = LHA_INPUT_STREAM_READING;
 		} else {
-			reader->state = LHA_INPUT_STREAM_FAIL;
+			stream->state = LHA_INPUT_STREAM_FAIL;
 		}
 	}
 
-	if (reader->state == LHA_INPUT_STREAM_FAIL) {
+	if (stream->state == LHA_INPUT_STREAM_FAIL) {
 		return 0;
 	}
 
@@ -171,27 +188,26 @@ int lha_input_stream_read(LHAInputStream *reader, void *buf, size_t buf_len)
 
 	total_bytes = 0;
 
-	if (reader->leadin_len > 0) {
-		if (buf_len < reader->leadin_len) {
+	if (stream->leadin_len > 0) {
+		if (buf_len < stream->leadin_len) {
 			n = buf_len;
 		} else {
-			n = reader->leadin_len;
+			n = stream->leadin_len;
 		}
 
-		memcpy(buf, reader->leadin, n);
-		empty_leadin(reader, n);
+		memcpy(buf, stream->leadin, n);
+		empty_leadin(stream, n);
 		total_bytes += n;
 	}
 
 	// Read from the input stream.
 
 	if (total_bytes < buf_len) {
-		n = fread((uint8_t *) buf + total_bytes,
-		          1, buf_len - total_bytes,
-		          reader->stream);
-		
-		if (n > 0) {
-			total_bytes += n;
+		result = do_read(stream, (uint8_t *) buf + total_bytes,
+		                 buf_len - total_bytes);
+
+		if (result > 0) {
+			total_bytes += (unsigned int) result;
 		}
 	}
 
@@ -200,16 +216,16 @@ int lha_input_stream_read(LHAInputStream *reader, void *buf, size_t buf_len)
 	return total_bytes == buf_len;
 }
 
-int lha_input_stream_read_byte(LHAInputStream *reader, uint8_t *result)
+int lha_input_stream_read_byte(LHAInputStream *stream, uint8_t *result)
 {
-	return lha_input_stream_read(reader, result, 1);
+	return lha_input_stream_read(stream, result, 1);
 }
 
-int lha_input_stream_read_short(LHAInputStream *reader, uint16_t *result)
+int lha_input_stream_read_short(LHAInputStream *stream, uint16_t *result)
 {
 	uint8_t buf[2];
-	
-	if (!lha_input_stream_read(reader, buf, 2)) {
+
+	if (!lha_input_stream_read(stream, buf, 2)) {
 		return 0;
 	}
 
@@ -218,11 +234,11 @@ int lha_input_stream_read_short(LHAInputStream *reader, uint16_t *result)
 	return 1;
 }
 
-int lha_input_stream_read_long(LHAInputStream *reader, uint32_t *result)
+int lha_input_stream_read_long(LHAInputStream *stream, uint32_t *result)
 {
 	uint8_t buf[4];
-	
-	if (!lha_input_stream_read(reader, buf, 4)) {
+
+	if (!lha_input_stream_read(stream, buf, 4)) {
 		return 0;
 	}
 
@@ -232,12 +248,106 @@ int lha_input_stream_read_long(LHAInputStream *reader, uint32_t *result)
 	return 1;
 }
 
-int lha_input_stream_skip(LHAInputStream *reader, size_t bytes)
+int lha_input_stream_skip(LHAInputStream *stream, size_t bytes)
 {
-	int result;
+	// If we have a dedicated skip function, use it; otherwise,
+	// the read function can be used to perform a skip.
 
-	result = fseek(reader->stream, (long) bytes, SEEK_CUR);
+	if (stream->type->skip != NULL) {
+		return stream->type->skip(stream->handle, bytes);
+	} else {
+		uint8_t data[32];
+		unsigned int len;
+		int result;
 
-	return result == 0;
+		while (bytes > 0) {
+
+			// Read as many bytes left as possible to fit in
+			// the buffer:
+
+			if (bytes > sizeof(data)) {
+				len = sizeof(data);
+			} else {
+				len = bytes;
+			}
+
+			result = do_read(stream, data, len);
+
+			if (result < 0) {
+				return 0;
+			}
+
+			bytes -= (unsigned int) result;
+		}
+
+		return 1;
+	}
+}
+
+// Read data from a FILE * source.
+
+static int file_source_read(void *handle, void *buf, size_t buf_len)
+{
+	size_t bytes_read;
+
+	bytes_read = fread(buf, 1, buf_len, handle);
+
+	// If an error occurs, zero is returned; however, it may also
+	// indicate end of file.
+
+	if (bytes_read == 0 && !feof(handle)) {
+		return -1;
+	}
+
+	return (int) bytes_read;
+}
+
+// Seek forward in a FILE * input stream.
+
+static int file_source_seek(void *handle, size_t bytes)
+{
+	return fseek(handle, (long) bytes, SEEK_CUR);
+}
+
+// Close a FILE * input stream.
+
+static void file_source_close(void *handle)
+{
+	fclose(handle);
+}
+
+// "Owned" file source - the stream will be closed when the input
+// stream is freed.
+
+static const LHAInputStreamType file_source_owned = {
+	file_source_read,
+	file_source_seek,
+	file_source_close
+};
+
+// "Unowned" file source - the stream is owned by the calling code.
+
+static const LHAInputStreamType file_source_unowned = {
+	file_source_read,
+	file_source_seek,
+	NULL
+};
+
+LHAInputStream *lha_input_stream_from(char *filename)
+{
+	FILE *fstream;
+
+	fstream = fopen(filename, "rb");
+
+	if (fstream == NULL) {
+		return NULL;
+	}
+
+	return lha_input_stream_new(&file_source_owned, fstream);
+}
+
+LHAInputStream *lha_input_stream_from_FILE(FILE *stream)
+{
+	return lha_input_stream_new(&file_source_unowned, stream);
 }
 

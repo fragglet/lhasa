@@ -2,7 +2,6 @@ Library:
  * -lh4-, -lh5-, -lh6-, -lh7- decompress.
  * Level 2, 3 header parsing.
  * Parse broken Amiga LHA 1.22 archives.
- * Make LHADecoder not dependent on stdc FILE functions.
  * Add LHAFile convenience class.
  * Compression and LHA file generation.
  * Decompressors for obscure algorithms (need to write compressors):
@@ -12,7 +11,6 @@ Library:
 
 Command line tool:
  * Extract mode.
- * Test mode.
  * Allow specific files to be extracted, including wildcards.
  * Create/update/modify archives.
 

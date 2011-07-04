@@ -61,7 +61,7 @@ static void do_command(ProgramMode mode, char *filename)
 		exit(-1);
 	}
 
-	stream = lha_input_stream_new(fstream);
+	stream = lha_input_stream_from_FILE(fstream);
 	reader = lha_reader_new(stream);
 
 	switch (mode) {

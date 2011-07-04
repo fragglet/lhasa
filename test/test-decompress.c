@@ -38,13 +38,11 @@ typedef struct {
 static void test_read_directory(char *filename,
                                 ExpectedFileDetails *expected)
 {
-	FILE *fstream;
 	LHAInputStream *stream;
 	LHAReader *reader;
 	LHAFileHeader *header;
 
-	fstream = fopen(filename, "rb");
-	stream = lha_input_stream_new(fstream);
+	stream = lha_input_stream_from(filename);
 	reader = lha_reader_new(stream);
 
 	header = lha_reader_next_file(reader);
@@ -63,7 +61,6 @@ static void test_read_directory(char *filename,
 
 	assert(lha_reader_next_file(reader) == NULL);
 
-	fclose(fstream);
 	lha_input_stream_free(stream);
 	lha_reader_free(reader);
 }
@@ -71,15 +68,13 @@ static void test_read_directory(char *filename,
 static void test_decompress(char *arcname, char *filename,
                             uint32_t expected_crc)
 {
-	FILE *fstream;
 	LHAInputStream *stream;
 	LHAReader *reader;
 	LHAFileHeader *header;
 	size_t bytes, total_bytes;
 	uint32_t crc;
 
-	fstream = fopen(arcname, "rb");
-	stream = lha_input_stream_new(fstream);
+	stream = lha_input_stream_from(arcname);
 	reader = lha_reader_new(stream);
 
 	// Loop through directory until we find the file.
@@ -108,20 +103,17 @@ static void test_decompress(char *arcname, char *filename,
 
 	assert(crc == expected_crc);
 
-	fclose(fstream);
-	lha_input_stream_free(stream);
 	lha_reader_free(reader);
+	lha_input_stream_free(stream);
 }
 
 static void test_crc_check(char *filename)
 {
-	FILE *fstream;
 	LHAInputStream *stream;
 	LHAReader *reader;
 	LHAFileHeader *header;
 
-	fstream = fopen(filename, "rb");
-	stream = lha_input_stream_new(fstream);
+	stream = lha_input_stream_from(filename);
 	reader = lha_reader_new(stream);
 
 	// Read all files in the directory, and check CRCs.
@@ -136,9 +128,8 @@ static void test_crc_check(char *filename)
 		assert(lha_reader_check(reader, NULL, NULL) != 0);
 	}
 
-	fclose(fstream);
-	lha_input_stream_free(stream);
 	lha_reader_free(reader);
+	lha_input_stream_free(stream);
 }
 
 // Run all tests for the specified file.
