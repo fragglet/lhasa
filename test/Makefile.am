@@ -3,6 +3,8 @@ AM_CFLAGS=$(TEST_CFLAGS) -I../lib -g
 LDADD=$(top_builddir)/lib/liblhasatest.a libtestframework.a
 
 COMPILED_TESTS=                       \
+	test-crc16                    \
+	test-decoder                  \
 	test-decompress
 
 UNCOMPILED_TESTS=                     \
