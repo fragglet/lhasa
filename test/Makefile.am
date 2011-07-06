@@ -12,7 +12,7 @@ UNCOMPILED_TESTS=                     \
 	test-crc-output
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
-EXTRA_DIST=archives output $(UNCOMPILED_TESTS)
+EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)
 
 check_PROGRAMS=$(COMPILED_TESTS)
 check_LIBRARIES=libtestframework.a
