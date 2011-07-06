@@ -18,8 +18,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "crc16.h"
 
@@ -171,17 +175,19 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 	return lha_decoder_read(reader->decoder, buf, buf_len);
 }
 
-int lha_reader_check(LHAReader *reader,
-                     LHADecoderProgressCallback callback,
-                     void *callback_data)
+// Decompress the current file, invoking the specified callback function
+// to monitor progress (if not NULL).  Decompressed data is written to
+// 'output' if it is not NULL.
+// Returns true if the file decompressed successfully.
+
+static int do_decompress(LHAReader *reader,
+                         FILE *output,
+                         LHADecoderProgressCallback callback,
+                         void *callback_data)
 {
 	uint8_t buf[64];
 	uint16_t crc;
 	unsigned int bytes, total_bytes;
-
-	if (reader->curr_file == NULL) {
-		return 0;
-	}
 
 	// Initialize decoder, and set progress callback.
 
@@ -201,6 +207,12 @@ int lha_reader_check(LHAReader *reader,
 	do {
 		bytes = lha_reader_read(reader, buf, sizeof(buf));
 
+		if (output != NULL) {
+			if (fwrite(buf, 1, bytes, output) < bytes) {
+				return 0;
+			}
+		}
+
 		lha_crc16_buf(&crc, buf, bytes);
 		total_bytes += bytes;
 
@@ -210,5 +222,102 @@ int lha_reader_check(LHAReader *reader,
 
 	return total_bytes == reader->curr_file->length
 	    && crc == reader->curr_file->crc;
+}
+
+int lha_reader_check(LHAReader *reader,
+                     LHADecoderProgressCallback callback,
+                     void *callback_data)
+{
+	if (reader->curr_file == NULL) {
+		return 0;
+	}
+
+	return do_decompress(reader, NULL, callback, callback_data);
+}
+
+// Open an output stream to decompress the current file.
+// The filename is constructed from the file header of the current file,
+// or 'filename' is used if it is not NULL.
+
+static FILE *open_output_file(LHAReader *reader, char *filename)
+{
+	FILE *fstream;
+	char *tmp_filename = NULL;
+	unsigned int filename_len;
+
+	// Construct filename?
+
+	if (filename == NULL) {
+		if (reader->curr_file->path != NULL) {
+			filename_len = strlen(reader->curr_file->filename)
+			         + 1 + strlen(reader->curr_file->path);
+
+			tmp_filename = malloc(filename_len);
+
+			if (tmp_filename == NULL) {
+				return NULL;
+			}
+
+			sprintf(tmp_filename, "%s/%s", reader->curr_file->path,
+			                      reader->curr_file->filename);
+
+			filename = tmp_filename;
+		} else {
+			filename = reader->curr_file->filename;
+		}
+	}
+
+	// Open file.  If it has a Unix permissions mask, we must go
+	// in a roundabout way to create it with the right permissions.
+	// TODO: Make this compile-dependent so that we can compile only
+	// using ANSI C.
+
+	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
+		int fileno;
+
+		fileno = open(filename, O_CREAT|O_WRONLY|O_TRUNC,
+		              reader->curr_file->unix_perms);
+
+		if (fileno < 0) {
+			fstream = NULL;
+		} else {
+			fstream = fdopen(fileno, "wb");
+
+			if (fstream == NULL) {
+				close(fileno);
+			}
+		}
+	} else {
+		fstream = fopen(filename, "wb");
+	}
+
+	free(tmp_filename);
+
+	return fstream;
+}
+
+int lha_reader_extract(LHAReader *reader,
+                       char *filename,
+                       LHADecoderProgressCallback callback,
+                       void *callback_data)
+{
+	FILE *fstream;
+	int result;
+
+	if (reader->curr_file == NULL) {
+		return 0;
+	}
+
+	fstream = open_output_file(reader, filename);
+
+	if (fstream == NULL) {
+		return 0;
+	}
+
+	result = do_decompress(reader, fstream, callback, callback_data);
+
+	fclose(fstream);
+
+	return result;
 }
 

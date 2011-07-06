@@ -91,5 +91,23 @@ int lha_reader_check(LHAReader *reader,
                      LHADecoderProgressCallback callback,
                      void *callback_data);
 
+/**
+ * Extract the contents of the current archived file.
+ *
+ * @param reader         The LHAReader structure.
+ * @param filename       Filename to extract the archived file to, or NULL
+ *                       to use the path and filename from the header.
+ * @param callback       Callback function to invoke to monitor progress (or
+ *                       NULL if progress does not need to be monitored).
+ * @param callback_data  Extra data to pass to the callback function.
+ * @return               Non-zero for success, or zero for failure (including
+ *                       CRC error).
+ */
+
+int lha_reader_extract(LHAReader *reader,
+                       char *filename,
+                       LHADecoderProgressCallback callback,
+                       void *callback_data);
+
 #endif /* #ifndef LHASA_LHA_READER_H */
 
