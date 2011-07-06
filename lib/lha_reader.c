@@ -250,7 +250,8 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	if (filename == NULL) {
 		if (reader->curr_file->path != NULL) {
 			filename_len = strlen(reader->curr_file->filename)
-			         + 1 + strlen(reader->curr_file->path);
+			             + strlen(reader->curr_file->path)
+			             + 1;
 
 			tmp_filename = malloc(filename_len);
 
@@ -258,7 +259,7 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 				return NULL;
 			}
 
-			sprintf(tmp_filename, "%s/%s", reader->curr_file->path,
+			sprintf(tmp_filename, "%s%s", reader->curr_file->path,
 			                      reader->curr_file->filename);
 
 			filename = tmp_filename;
