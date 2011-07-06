@@ -34,7 +34,8 @@ typedef enum
 	MODE_UNKNOWN,
 	MODE_LIST,
 	MODE_LIST_VERBOSE,
-	MODE_CRC_CHECK
+	MODE_CRC_CHECK,
+	MODE_EXTRACT
 } ProgramMode;
 
 static void help_page(char *progname)
@@ -43,7 +44,8 @@ static void help_page(char *progname)
 
 	printf("commands:\n"
 	       " l,v List / Verbose List\n"
-	       " t   Test file CRC in archive\n");
+	       " t   Test file CRC in archive\n"
+	       " x,e Extract from archive\n");
 	exit(-1);
 }
 
@@ -77,6 +79,10 @@ static void do_command(ProgramMode mode, char *filename)
 			test_file_crc(reader);
 			break;
 
+		case MODE_EXTRACT:
+			extract_archive(reader);
+			break;
+
 		case MODE_UNKNOWN:
 			break;
 	}
@@ -103,6 +109,8 @@ int main(int argc, char *argv[])
 		mode = MODE_LIST_VERBOSE;
 	} else if (!strcmp(argv[1], "t")) {
 		mode = MODE_CRC_CHECK;
+	} else if (!strcmp(argv[1], "e") || !strcmp(argv[1], "x")) {
+		mode = MODE_EXTRACT;
 	} else {
 		help_page(argv[0]);
 	}

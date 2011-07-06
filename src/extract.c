@@ -24,6 +24,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define MAX_PROGRESS_LEN 58
 
+typedef struct {
+	LHAFileHeader *header;
+	char *operation;
+} ProgressCallbackData;
+
 static void print_filename(LHAFileHeader *header, char *status)
 {
 	printf("\r%s%s\t- %s  ",
@@ -31,13 +36,13 @@ static void print_filename(LHAFileHeader *header, char *status)
 	       header->filename, status);
 }
 
-// Callback function invoked during CRC check.
+// Callback function invoked during decompression progress.
 
-static void crc_check_callback(unsigned int block,
-                               unsigned int num_blocks,
-                               void *data)
+static void progress_callback(unsigned int block,
+                              unsigned int num_blocks,
+                              void *data)
 {
-	LHAFileHeader *header = data;
+	ProgressCallbackData *progress = data;
 	unsigned int factor;
 	unsigned int i;
 
@@ -51,13 +56,13 @@ static void crc_check_callback(unsigned int block,
 	// First call to specify number of blocks?
 
 	if (block == 0) {
-		print_filename(header, "Testing  :");
+		print_filename(progress->header, progress->operation);
 
 		for (i = 0; i < num_blocks; ++i) {
 			printf(".");
 		}
 
-		print_filename(header, "Testing  :");
+		print_filename(progress->header, progress->operation);
 	} else if (((block + factor - 1) % factor) == 0) {
 		// Otherwise, signal progress:
 
@@ -72,15 +77,43 @@ static void crc_check_callback(unsigned int block,
 static void test_archived_file_crc(LHAReader *reader,
                                    LHAFileHeader *header)
 {
+	ProgressCallbackData progress;
 	int success;
 
-	success = lha_reader_check(reader, crc_check_callback, header);
+	progress.operation = "Testing  :";
+	progress.header = header;
+
+	success = lha_reader_check(reader, progress_callback, &progress);
 
 	if (success) {
 		print_filename(header, "Tested");
 		printf("\n");
 	} else {
 		print_filename(header, "CRC error");
+		printf("\n");
+
+		// TODO: Exit with error
+	}
+}
+
+// Extract an archived file.
+
+static void extract_archived_file(LHAReader *reader,
+                                  LHAFileHeader *header)
+{
+	ProgressCallbackData progress;
+	int success;
+
+	progress.operation = "Melting  :";
+	progress.header = header;
+
+	success = lha_reader_extract(reader, NULL, progress_callback, &progress);
+
+	if (success) {
+		print_filename(header, "Melted");
+		printf("\n");
+	} else {
+		print_filename(header, "Failure");
 		printf("\n");
 
 		// TODO: Exit with error
@@ -101,6 +134,23 @@ void test_file_crc(LHAReader *reader)
 		}
 
 		test_archived_file_crc(reader, header);
+	}
+}
+
+// lha -e / -x
+
+void extract_archive(LHAReader *reader)
+{
+	for (;;) {
+		LHAFileHeader *header;
+
+		header = lha_reader_next_file(reader);
+
+		if (header == NULL) {
+			break;
+		}
+
+		extract_archived_file(reader, header);
 	}
 }
 
