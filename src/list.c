@@ -66,10 +66,34 @@ static char *os_type_to_string(uint8_t os_type)
 	switch (os_type) {
 		case LHA_OS_TYPE_MSDOS:
 			return "[MS-DOS]";
+		case LHA_OS_TYPE_WIN95:
+			return "[Win9x]";
+		case LHA_OS_TYPE_WINNT:
+			return "[WinNT]";
 		case LHA_OS_TYPE_UNIX:
 			return "[Unix]";
 		case LHA_OS_TYPE_OS2:
 			return "[OS/2]";
+		case LHA_OS_TYPE_CPM:
+			return "[CP/M]";
+		case LHA_OS_TYPE_MACOS:
+			return "[Mac OS]";
+		case LHA_OS_TYPE_JAVA:
+			return "[Java]";
+		case LHA_OS_TYPE_FLEX:
+			return "[FLEX]";
+		case LHA_OS_TYPE_RUNSER:
+			return "[Runser]";
+		case LHA_OS_TYPE_TOWNSOS:
+			return "[TownsOS]";
+		case LHA_OS_TYPE_OS9:
+			return "[OS-9]";
+		case LHA_OS_TYPE_OS9_68K:
+			return "[OS-9/68K]";
+		case LHA_OS_TYPE_OS386:
+			return "[OS-386]";
+		case LHA_OS_TYPE_HUMAN68K:
+			return "[Human68K]";
 		case LHA_OS_TYPE_UNKNOWN:
 			return "[generic]";
 		default:

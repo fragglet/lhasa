@@ -27,10 +27,27 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_FILE_UNIX_PERMS            0x01
 #define LHA_FILE_UNIX_UID_GID          0x02
 
+// Common OS types:
+
 #define LHA_OS_TYPE_UNKNOWN            0x00
-#define LHA_OS_TYPE_MSDOS              'M'
-#define LHA_OS_TYPE_UNIX               'U'
-#define LHA_OS_TYPE_OS2                '2'
+#define LHA_OS_TYPE_MSDOS              'M'  /* Microsoft MS/DOS */
+#define LHA_OS_TYPE_WIN95              'w'  /* Microsoft Windows 95 */
+#define LHA_OS_TYPE_WINNT              'W'  /* Microsoft Windows NT */
+#define LHA_OS_TYPE_UNIX               'U'  /* Generic Unix */
+#define LHA_OS_TYPE_OS2                '2'  /* IBM OS/2 */
+#define LHA_OS_TYPE_MACOS              'm'  /* Apple classic Mac OS */
+
+// Obscure:
+
+#define LHA_OS_TYPE_JAVA               'J'  /* Java */
+#define LHA_OS_TYPE_CPM                'C'  /* Digital Research CP/M */
+#define LHA_OS_TYPE_FLEX               'F'  /* Digital Research FlexOS */
+#define LHA_OS_TYPE_RUNSER             'R'
+#define LHA_OS_TYPE_TOWNSOS            'T'  /* Fujitsu FM Towns */
+#define LHA_OS_TYPE_OS9                '9'  /* Microware OS-9 */
+#define LHA_OS_TYPE_OS9_68K            'K'  /* Microware OS-9 - 68k */
+#define LHA_OS_TYPE_OS386              '3'
+#define LHA_OS_TYPE_HUMAN68K           'H'  /* Sharp X68000 Human68K OS */
 
 typedef struct _LHAFileHeader LHAFileHeader;
 
