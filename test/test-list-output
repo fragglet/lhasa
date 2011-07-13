@@ -50,7 +50,7 @@ test_archive() {
 
 	# Normal list output:
 
-	../src/lha l archives/$archive > /tmp/l.txt
+	../src/test-lha l archives/$archive > /tmp/l.txt
 
 	if ! diff -u output/$archive-l.txt /tmp/l.txt; then
 		echo "Output not as expected for lha l $archive" >&2
@@ -61,7 +61,7 @@ test_archive() {
 
 	# Verbose output:
 
-	../src/lha v archives/$archive > /tmp/v.txt
+	../src/test-lha v archives/$archive > /tmp/v.txt
 
 	if ! diff -u output/$archive-v.txt /tmp/v.txt; then
 		echo "Output not as expected for lha v $archive" >&2

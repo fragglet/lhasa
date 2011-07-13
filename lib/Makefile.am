@@ -7,6 +7,7 @@ HEADER_FILES =                     \
 	lha_reader.h
 
 EXTRA_DIST =                                            \
+	gencov                                          \
 	bit_stream_reader.c
 
 SRC =                                                   \

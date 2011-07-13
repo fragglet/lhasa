@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+from re import match
+from os import rename, popen
+from os.path import exists
+from glob import glob
+
+def parse_stats(text):
+	m = match(r"(.*)% of (.*)", text)
+
+	pct = m.group(1)
+	lines = int(m.group(2))
+	cov_lines = int(float(pct) * lines / 100 + 0.5)
+	uncov_lines = lines - cov_lines
+
+	return (pct + "%", uncov_lines, cov_lines, lines)
+
+
+def gcov(filename):
+	s = popen("gcov %s" % filename)
+
+	results = {}
+	filename = None
+
+	# File 'lha_file_header.c'
+	# Lines executed:88.97% of 136
+
+	for line in s:
+		m = match(r"File '(.*)'", line)
+		if m:
+			filename = m.group(1)
+
+		m = match(r"Lines executed:(.*)", line)
+		if m:
+			results[filename] = parse_stats(m.group(1))
+
+	s.close()
+
+	return results
+
+def format_output(filename, stats):
+	print "  %-35s%7s%7s%7s%7s" % ((filename, ) + stats)
+
+print
+format_output("Filename", ("Percent", "Uncov", "Cov", "Total"))
+print " " + ("-" * 65)
+
+for filename in sorted(glob("*.c")):
+	gcno = filename.replace(".c", ".gcno")
+	gcda = filename.replace(".c", ".gcda")
+
+	xgcno = glob("*%s" % gcno)
+	xgcda = glob("*%s" % gcda)
+
+	if not xgcno or not xgcda:
+		continue
+
+	# Must rename eg. liblhasatest_a-foo.gcno to foo.gcno:
+
+	if not exists(gcno):
+		rename(xgcno[0], gcno)
+
+	if not exists(gcda):
+		rename(xgcda[0], gcda)
+
+	# Run gcov and parse output:
+
+	results = gcov(filename)
+
+	if len(results) > 0:
+		format_output(filename, results[filename])
+
+	for subfile in results.keys():
+		if subfile != filename:
+			format_output(" -> " + subfile, results[subfile])
+
+print
+

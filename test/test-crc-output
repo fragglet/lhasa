@@ -40,7 +40,7 @@ test_archive() {
 
 	# CRC test:
 
-	../src/lha t archives/$archive > /tmp/t.txt
+	../src/test-lha t archives/$archive > /tmp/t.txt
 
 	if ! diff -u output/$archive-t.txt /tmp/t.txt; then
 		echo "Output not as expected for lha t $archive" >&2
