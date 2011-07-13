@@ -20,6 +20,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <string.h>
 
+#include "endian.h"
 #include "ext_header.h"
 
 static int ext_header_unix_perms_decoder(LHAFileHeader *header,

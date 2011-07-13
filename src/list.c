@@ -29,8 +29,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 
-static float compression_percent(unsigned int compressed,
-                                 unsigned int uncompressed)
+static float compression_percent(size_t compressed, size_t uncompressed)
 {
 	float factor;
 
@@ -166,12 +165,12 @@ static ListColumn unix_uid_gid_column = {
 
 static void packed_column_print(LHAFileHeader *header)
 {
-	printf("%7i", header->compressed_length);
+	printf("%7lu", (unsigned long) header->compressed_length);
 }
 
 static void packed_column_footer(FileStatistics *stats)
 {
-	printf("%7i", stats->compressed_length);
+	printf("%7lu", (unsigned long) stats->compressed_length);
 }
 
 static ListColumn packed_column = {
@@ -184,12 +183,12 @@ static ListColumn packed_column = {
 
 static void size_column_print(LHAFileHeader *header)
 {
-	printf("%7i", header->length);
+	printf("%7lu", (unsigned long) header->length);
 }
 
 static void size_column_footer(FileStatistics *stats)
 {
-	printf("%7i", stats->length);
+	printf("%7lu", (unsigned long) stats->length);
 }
 
 static ListColumn size_column = {
