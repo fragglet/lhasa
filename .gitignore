@@ -2,6 +2,8 @@
 *.lo
 *.la
 *.a
+*.gcno
+*.gcda
 .deps
 .libs
 .gitignore
@@ -14,3 +16,6 @@ config.log
 config.status
 configure
 libtool
+config.h
+config.hin
+stamp-h1
