@@ -23,10 +23,22 @@ libtestframework_a_SOURCES=     \
 clean-local:
 	rm -f *.gcno *.gcda *.c.gcov
 
+if BUILD_COVERAGE
+
 # Delete .gcda files before running tests.
 
 check-am: check-prerun
 
 check-prerun:
-	rm -f ../lib/*.gcda
+	@rm -f $(top_builddir)/lib/*.gcda  \
+	       $(top_builddir)/src/*.gcda
+
+# Display coverage summary after running tests.
+
+check: check-postrun
+
+check-postrun:
+	@cd $(top_builddir); ./gencov lib/*.c src/*.c
+
+endif
 

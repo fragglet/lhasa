@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 from re import match
-from os import rename, popen
-from os.path import exists
+from os import rename, popen, getcwd, chdir
+from os.path import exists, dirname, basename
+from os.path import join as path_join
 from glob import glob
+import sys
 
 def parse_stats(text):
 	m = match(r"(.*)% of (.*)", text)
@@ -17,7 +19,18 @@ def parse_stats(text):
 
 
 def gcov(filename):
-	s = popen("gcov %s" % filename)
+
+	# gcov must be run from within the same directory as the source
+	# file that we are analysing.
+
+	old_wd = getcwd()
+	src_dir = dirname(filename)
+	chdir(src_dir)
+	s = popen("gcov %s" % basename(filename))
+	chdir(old_wd)
+
+	# Process output from gcov.
+	# This may cover multiple files when one .c file includes another.
 
 	results = {}
 	filename = None
@@ -32,7 +45,8 @@ def gcov(filename):
 
 		m = match(r"Lines executed:(.*)", line)
 		if m:
-			results[filename] = parse_stats(m.group(1))
+			full_path = path_join(src_dir, filename)
+			results[full_path] = parse_stats(m.group(1))
 
 	s.close()
 
@@ -45,12 +59,12 @@ print
 format_output("Filename", ("Percent", "Uncov", "Cov", "Total"))
 print " " + ("-" * 65)
 
-for filename in sorted(glob("*.c")):
+for filename in sorted(sys.argv[1:]):
 	gcno = filename.replace(".c", ".gcno")
 	gcda = filename.replace(".c", ".gcda")
 
-	xgcno = glob("*%s" % gcno)
-	xgcda = glob("*%s" % gcda)
+	xgcno = glob(path_join(dirname(gcno), "*" + basename(gcno)))
+	xgcda = glob(path_join(dirname(gcda), "*" + basename(gcda)))
 
 	if not xgcno or not xgcda:
 		continue

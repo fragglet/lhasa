@@ -28,18 +28,20 @@ fi
 
 # Support for coverage analysis via gcov:
 
-coverage=no
+coverage=false
 AC_ARG_ENABLE(coverage, 
 [  --enable-coverage       Enable coverage testing. ],
-[ coverage=yes ])
+[ coverage=true ])
 
-if [[ "$coverage" = "yes" ]]; then
+if $coverage; then
         if $is_gcc; then
                 TEST_CFLAGS="$TEST_CFLAGS -fprofile-arcs -ftest-coverage"
         else
                 AC_MSG_ERROR([Can only enable coverage when using gcc.])
         fi
 fi
+
+AM_CONDITIONAL(BUILD_COVERAGE, $coverage)
 
 # Support for running test cases using valgrind:
 
