@@ -195,6 +195,10 @@ static int do_decompress(LHAReader *reader,
 
 	open_decoder(reader);
 
+	if (reader->decoder == NULL) {
+		return 0;
+	}
+
 	if (callback != NULL) {
 		lha_decoder_monitor(reader->decoder, callback,
 		                    callback_data);
