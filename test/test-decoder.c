@@ -293,11 +293,20 @@ static void test_progress_feedback(void)
 	}
 }
 
+static void test_invalid_type(void)
+{
+	assert(lha_decoder_for_name("-lzx-") == NULL);
+	assert(lha_decoder_for_name("-----") == NULL);
+	assert(lha_decoder_for_name("abcde") == NULL);
+	assert(lha_decoder_for_name("") == NULL);
+}
+
 int main(int argc, char *argv[])
 {
 	test_decompress();
 	test_decompress_truncated();
 	test_progress_feedback();
+	test_invalid_type();
 
 	return 0;
 }
