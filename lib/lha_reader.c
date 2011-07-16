@@ -24,6 +24,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "crc16.h"
 
@@ -232,6 +234,12 @@ int lha_reader_check(LHAReader *reader,
 		return 0;
 	}
 
+	// CRC checking of directories is not necessary.
+
+	if (!strcmp(reader->curr_file->compress_method, LHA_COMPRESS_TYPE_DIR)) {
+		return 1;
+	}
+
 	return do_decompress(reader, NULL, callback, callback_data);
 }
 
@@ -297,6 +305,24 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	return fstream;
 }
 
+// "Extract" a directory - ie. perform a mkdir.
+
+static int extract_directory(LHAReader *reader)
+{
+	mode_t mode;
+
+	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
+		mode = reader->curr_file->unix_perms;
+	} else {
+		mode =  0777;
+	}
+
+	// TODO: Make this compile-dependent so that we can compile
+	// using ANSI C and on non-Unix platforms.
+
+	return mkdir(reader->curr_file->path, mode) == 0;
+}
+
 int lha_reader_extract(LHAReader *reader,
                        char *filename,
                        LHADecoderProgressCallback callback,
@@ -308,6 +334,14 @@ int lha_reader_extract(LHAReader *reader,
 	if (reader->curr_file == NULL) {
 		return 0;
 	}
+
+	// Directories are a special case:
+
+	if (!strcmp(reader->curr_file->compress_method, LHA_COMPRESS_TYPE_DIR)) {
+		return extract_directory(reader);
+	}
+
+	// Open output file and perform decompress:
 
 	fstream = open_output_file(reader, filename);
 

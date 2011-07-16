@@ -49,6 +49,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_OS_TYPE_OS386              '3'
 #define LHA_OS_TYPE_HUMAN68K           'H'  /* Sharp X68000 Human68K OS */
 
+// Compression type for a stored directory:
+
+#define LHA_COMPRESS_TYPE_DIR   "-lhd-"
+
 typedef struct _LHAFileHeader LHAFileHeader;
 
 struct _LHAFileHeader {

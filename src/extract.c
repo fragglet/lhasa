@@ -25,6 +25,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define MAX_PROGRESS_LEN 58
 
 typedef struct {
+	int invoked;
 	LHAFileHeader *header;
 	char *operation;
 } ProgressCallbackData;
@@ -45,6 +46,8 @@ static void progress_callback(unsigned int block,
 	ProgressCallbackData *progress = data;
 	unsigned int factor;
 	unsigned int i;
+
+	progress->invoked = 1;
 
 	// Scale factor for blocks, so that the line is never too long.  When
 	// MAX_PROGRESS_LEN is exceeded, the length is halved (factor=2), then
@@ -80,19 +83,22 @@ static void test_archived_file_crc(LHAReader *reader,
 	ProgressCallbackData progress;
 	int success;
 
+	progress.invoked = 0;
 	progress.operation = "Testing  :";
 	progress.header = header;
 
 	success = lha_reader_check(reader, progress_callback, &progress);
 
-	if (success) {
-		print_filename(header, "Tested");
-		printf("\n");
-	} else {
-		print_filename(header, "CRC error");
-		printf("\n");
+	if (progress.invoked) {
+		if (success) {
+			print_filename(header, "Tested");
+			printf("\n");
+		} else {
+			print_filename(header, "CRC error");
+			printf("\n");
 
-		// TODO: Exit with error
+			// TODO: Exit with error
+		}
 	}
 }
 
@@ -104,19 +110,26 @@ static void extract_archived_file(LHAReader *reader,
 	ProgressCallbackData progress;
 	int success;
 
+	progress.invoked = 0;
 	progress.operation = "Melting  :";
 	progress.header = header;
 
 	success = lha_reader_extract(reader, NULL, progress_callback, &progress);
 
-	if (success) {
-		print_filename(header, "Melted");
-		printf("\n");
-	} else {
-		print_filename(header, "Failure");
-		printf("\n");
+	if (progress.invoked) {
+		if (success) {
+			print_filename(header, "Melted");
+			printf("\n");
+		} else {
+			print_filename(header, "Failure");
+			printf("\n");
 
-		// TODO: Exit with error
+			// TODO: Exit with error
+		}
+	} else {
+		if (!success) {
+			// TODO - failure to extract directory
+		}
 	}
 }
 
