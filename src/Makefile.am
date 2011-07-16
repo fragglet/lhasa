@@ -15,3 +15,6 @@ test_lha_SOURCES=$(SOURCES)
 test_lha_CFLAGS=$(TEST_CFLAGS) -I$(top_builddir)/lib
 test_lha_LDADD=$(top_builddir)/lib/liblhasatest.a
 
+clean-local:
+	rm -f *.gcno *.gcda *.c.gcov
+

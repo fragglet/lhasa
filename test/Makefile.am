@@ -20,3 +20,13 @@ check_LIBRARIES=libtestframework.a
 libtestframework_a_SOURCES=     \
 	crc32.c crc32.h
 
+clean-local:
+	rm -f *.gcno *.gcda *.c.gcov
+
+# Delete .gcda files before running tests.
+
+check-am: check-prerun
+
+check-prerun:
+	rm -f ../lib/*.gcda
+

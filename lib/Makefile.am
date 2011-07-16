@@ -34,3 +34,6 @@ liblhasa_la_SOURCES=$(SRC) $(HEADER_FILES)
 headerfilesdir=$(includedir)/liblhasa-1.0
 headerfiles_HEADERS=$(HEADER_FILES)
 
+clean-local:
+	rm -f *.gcno *.gcda *.c.gcov
+
