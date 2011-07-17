@@ -30,8 +30,9 @@ if BUILD_COVERAGE
 check-am: check-prerun
 
 check-prerun:
-	@rm -f $(top_builddir)/lib/*.gcda  \
-	       $(top_builddir)/src/*.gcda
+	@rm -f $(top_builddir)/lib/*.gcda   \
+	       $(top_builddir)/src/*.gcda   \
+	       $(top_builddir)/test/*.gcda
 
 # Display coverage summary after running tests.
 

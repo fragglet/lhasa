@@ -4,6 +4,7 @@
 *.a
 *.gcno
 *.gcda
+*.c.gcov
 .deps
 .libs
 .gitignore

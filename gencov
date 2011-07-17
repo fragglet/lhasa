@@ -63,19 +63,19 @@ for filename in sorted(sys.argv[1:]):
 	gcno = filename.replace(".c", ".gcno")
 	gcda = filename.replace(".c", ".gcda")
 
-	xgcno = glob(path_join(dirname(gcno), "*" + basename(gcno)))
-	xgcda = glob(path_join(dirname(gcda), "*" + basename(gcda)))
-
-	if not xgcno or not xgcda:
-		continue
+	xgcno = glob(path_join(dirname(gcno), "*-" + basename(gcno)))
+	xgcda = glob(path_join(dirname(gcda), "*-" + basename(gcda)))
 
 	# Must rename eg. liblhasatest_a-foo.gcno to foo.gcno:
 
-	if not exists(gcno):
+	if len(xgcno) > 0:
 		rename(xgcno[0], gcno)
 
-	if not exists(gcda):
+	if len(xgcda) > 0:
 		rename(xgcda[0], gcda)
+
+	if not exists(gcno) or not exists(gcda):
+		continue
 
 	# Run gcov and parse output:
 
