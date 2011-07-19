@@ -359,22 +359,70 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	return fstream;
 }
 
-// "Extract" a directory - ie. perform a mkdir.
+// Extract directory, setting Unix permissions corresponding to
+// file headers.
+// TODO: Make this compile-dependent so that we can compile
+// using ANSI C and on non-Unix platforms.
 
-static int extract_directory(LHAReader *reader)
+static int extract_directory_unix(LHAFileHeader *header, char *path,
+                                  int set_perms)
 {
 	mode_t mode;
 
-	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
-		mode = reader->curr_file->unix_perms;
+	// Create directory. If there are permissions to be set, create
+	// the directory with minimal permissions limited to the running
+	// user. Otherwise use the default umask.
+
+	if (set_perms && (header->extra_flags & LHA_FILE_UNIX_PERMS)) {
+		mode = 0700;
 	} else {
-		mode =  0777;
+		mode = 0777;
 	}
 
-	// TODO: Make this compile-dependent so that we can compile
-	// using ANSI C and on non-Unix platforms.
+	if (mkdir(path, mode)) {
+		return 0;
+	}
 
-	return mkdir(reader->curr_file->path, mode) == 0;
+	// Don't set permissions?
+
+	if (!set_perms) {
+		return 1;
+	}
+
+	// Set owner and group:
+
+	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
+		if (chown(path, header->unix_uid, header->unix_gid)) {
+			rmdir(path);
+			return 0;
+		}
+	}
+
+	// Set permissions on directory:
+
+	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
+		if (chmod(path, header->unix_perms)) {
+			rmdir(path);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int extract_directory(LHAReader *reader, char *path)
+{
+	// If path is not specified, use the path from the file header.
+
+	if (path == NULL) {
+		path = reader->curr_file->path;
+	}
+
+	// Try to create directory setting Unix file permissions; if that
+	// fails, just perform a simple mkdir() ignoring file permissions:
+
+	return extract_directory_unix(reader->curr_file, path, 1)
+	    || extract_directory_unix(reader->curr_file, path, 0);
 }
 
 int lha_reader_extract(LHAReader *reader,
@@ -392,7 +440,7 @@ int lha_reader_extract(LHAReader *reader,
 	// Directories are a special case:
 
 	if (!strcmp(reader->curr_file->compress_method, LHA_COMPRESS_TYPE_DIR)) {
-		return extract_directory(reader);
+		return extract_directory(reader, filename);
 	}
 
 	// Open output file and perform decompress:
