@@ -142,7 +142,10 @@ static size_t decoder_callback(void *buf, size_t buf_len, void *user_data)
 	return lha_reader_read_compressed(user_data, buf, buf_len);
 }
 
-static void open_decoder(LHAReader *reader)
+// Create the decoder structure to decode the current file.
+// Returns true if the decoder was created successfully.
+
+static int open_decoder(LHAReader *reader)
 {
 	LHADecoderType *dtype;
 
@@ -151,13 +154,15 @@ static void open_decoder(LHAReader *reader)
 	dtype = lha_decoder_for_name(reader->curr_file->compress_method);
 
 	if (dtype == NULL) {
-		return;
+		return 0;
 	}
 
 	// Create decoder.
 
 	reader->decoder = lha_decoder_new(dtype, decoder_callback, reader,
 	                                  reader->curr_file->length);
+
+	return reader->decoder != NULL;
 }
 
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
@@ -165,9 +170,7 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 	// The first time this is called, we have to create a decoder.
 
 	if (reader->curr_file != NULL && reader->decoder == NULL) {
-		open_decoder(reader);
-
-		if (reader->decoder == NULL) {
+		if (!open_decoder(reader)) {
 			return 0;
 		}
 	}
@@ -178,26 +181,21 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 }
 
 // Decompress the current file, invoking the specified callback function
-// to monitor progress (if not NULL).  Decompressed data is written to
-// 'output' if it is not NULL.
+// to monitor progress (if not NULL). Assumes that open_decoder() has
+// already been called to initialize decode the file. Decompressed data
+// is written to 'output' if it is not NULL.
 // Returns true if the file decompressed successfully.
 
-static int do_decompress(LHAReader *reader,
-                         FILE *output,
-                         LHADecoderProgressCallback callback,
-                         void *callback_data)
+static int do_decode(LHAReader *reader,
+                     FILE *output,
+                     LHADecoderProgressCallback callback,
+                     void *callback_data)
 {
 	uint8_t buf[64];
 	uint16_t crc;
 	unsigned int bytes, total_bytes;
 
-	// Initialize decoder, and set progress callback.
-
-	open_decoder(reader);
-
-	if (reader->decoder == NULL) {
-		return 0;
-	}
+	// Set progress callback for decoder.
 
 	if (callback != NULL) {
 		lha_decoder_monitor(reader->decoder, callback,
@@ -244,7 +242,10 @@ int lha_reader_check(LHAReader *reader,
 		return 1;
 	}
 
-	return do_decompress(reader, NULL, callback, callback_data);
+	// Decode file.
+
+	return open_decoder(reader)
+	    && do_decode(reader, NULL, callback, callback_data);
 }
 
 // Open file, setting Unix permissions
@@ -304,7 +305,7 @@ static FILE *open_output_file_unix(LHAReader *reader, char *filename)
 	return fstream;
 }
 
-// Open an output stream to decompress the current file.
+// Open an output stream into which to decompress the current file.
 // The filename is constructed from the file header of the current file,
 // or 'filename' is used if it is not NULL.
 
@@ -443,7 +444,14 @@ int lha_reader_extract(LHAReader *reader,
 		return extract_directory(reader, filename);
 	}
 
-	// Open output file and perform decompress:
+	// Create decoder. If the file cannot be created, there is no
+	// need to even create an output file.
+
+	if (!open_decoder(reader)) {
+		return 0;
+	}
+
+	// Open output file and perform decode:
 
 	fstream = open_output_file(reader, filename);
 
@@ -451,7 +459,7 @@ int lha_reader_extract(LHAReader *reader,
 		return 0;
 	}
 
-	result = do_decompress(reader, fstream, callback, callback_data);
+	result = do_decode(reader, fstream, callback, callback_data);
 
 	fclose(fstream);
 
