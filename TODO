@@ -1,16 +1,21 @@
 Library:
+ * Error handling.
  * -lh4-, -lh5-, -lh6-, -lh7- decompress.
  * Level 2, 3 header parsing.
  * Parse broken Amiga LHA 1.22 archives.
+ * Extract:
+    * Set archived timestamp on extracted files.
+    * Add options API to control whether permissions, timestamp are set.
+    * Creation of parent directories on extract (+optional)
  * Add LHAFile convenience class.
  * Compression and LHA file generation.
  * Decompressors for obscure algorithms (need to write compressors):
     * -lh2-, -lh3- (experimental LHA?)
     * -lzs- (Old LArc)
     * -pm1- (Old PMArc)
+ * Conditional compile to remove POSIX dependency.  Add Windows build.
 
 Command line tool:
- * Extract mode.
  * Allow specific files to be extracted, including wildcards.
  * Create/update/modify archives.
 
