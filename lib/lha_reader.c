@@ -247,6 +247,63 @@ int lha_reader_check(LHAReader *reader,
 	return do_decompress(reader, NULL, callback, callback_data);
 }
 
+// Open file, setting Unix permissions
+// TODO: Make this compile-dependent so that we can compile only
+// using ANSI C.
+
+static FILE *open_output_file_unix(LHAReader *reader, char *filename)
+{
+	FILE *fstream;
+	int fileno;
+
+	// If we have file permissions, they must be set after the
+	// file is created and UID/GID have been set.  When open()ing
+	// the file, create it with minimal permissions granted only
+	// to the current user.
+
+	fileno = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0600);
+
+	if (fileno < 0) {
+		return NULL;
+	}
+
+	// Set owner and group.
+
+	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_UID_GID) {
+		if (fchown(fileno, reader->curr_file->unix_uid,
+		           reader->curr_file->unix_gid)) {
+			close(fileno);
+			remove(filename);
+			return NULL;
+		}
+	}
+
+	// Set file permissions.
+	// File permissiosn must be set *after* owner and group have
+	// been set; otherwise, we might briefly be granting permissions
+	// to the wrong group.
+
+	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
+		if (fchmod(fileno, reader->curr_file->unix_perms)) {
+			close(fileno);
+			remove(filename);
+			return NULL;
+		}
+	}
+
+	// Create stdc FILE handle.
+
+	fstream = fdopen(fileno, "wb");
+
+	if (fstream == NULL) {
+		close(fileno);
+		remove(filename);
+		return NULL;
+	}
+
+	return fstream;
+}
+
 // Open an output stream to decompress the current file.
 // The filename is constructed from the file header of the current file,
 // or 'filename' is used if it is not NULL.
@@ -280,27 +337,20 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 		}
 	}
 
-	// Open file.  If it has a Unix permissions mask, we must go
-	// in a roundabout way to create it with the right permissions.
-	// TODO: Make this compile-dependent so that we can compile only
-	// using ANSI C.
+	// If this file has Unix file permission headers, make sure
+	// the file is created using the correct permissions.
+	// If this fails, we fall back to creating a normal file.
 
-	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
-		int fileno;
-
-		fileno = open(filename, O_CREAT|O_WRONLY|O_TRUNC,
-		              reader->curr_file->unix_perms);
-
-		if (fileno < 0) {
-			fstream = NULL;
-		} else {
-			fstream = fdopen(fileno, "wb");
-
-			if (fstream == NULL) {
-				close(fileno);
-			}
-		}
+	if (reader->curr_file->extra_flags
+	      & (LHA_FILE_UNIX_PERMS | LHA_FILE_UNIX_UID_GID)) {
+		fstream = open_output_file_unix(reader, filename);
 	} else {
+		fstream = NULL;
+	}
+
+	// Create file normally via fopen():
+
+	if (fstream == NULL) {
 		fstream = fopen(filename, "wb");
 	}
 
