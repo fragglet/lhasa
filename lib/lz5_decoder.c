@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lzss_decoder.h"
+#include "lz5_decoder.h"
 
 // Parameters for ring buffer, used for storing history.  This acts
 // as the dictionary for copy operations.
@@ -41,7 +41,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define OUTPUT_BUFFER_SIZE (15 + THRESHOLD) * 8
 
-// LZSS decoder, for the -lz5- compression method used by LArc.
+// Decoder for the -lz5- compression method used by LArc.
 //
 // This processes "runs" of eight commands, each of which is either
 // "output a character" or "copy block".  The result of that run
@@ -52,12 +52,12 @@ typedef struct {
 	unsigned int ringbuf_pos;
 	LHADecoderCallback callback;
 	void *callback_data;
-} LHALZSSDecoder;
+} LHALZ5Decoder;
 
-static int lha_lzss_init(void *data, LHADecoderCallback callback,
-                         void *callback_data)
+static int lha_lz5_init(void *data, LHADecoderCallback callback,
+                        void *callback_data)
 {
-	LHALZSSDecoder *decoder = data;
+	LHALZ5Decoder *decoder = data;
 
 	memset(decoder->ringbuf, ' ', RING_BUFFER_SIZE);
 	decoder->ringbuf_pos = RING_BUFFER_SIZE - START_OFFSET;
@@ -69,7 +69,7 @@ static int lha_lzss_init(void *data, LHADecoderCallback callback,
 
 // Add a single byte to the output buffer.
 
-static void output_byte(LHALZSSDecoder *decoder, uint8_t *buf,
+static void output_byte(LHALZ5Decoder *decoder, uint8_t *buf,
                         size_t *buf_len, uint8_t b)
 {
 	buf[*buf_len] = b;
@@ -81,7 +81,7 @@ static void output_byte(LHALZSSDecoder *decoder, uint8_t *buf,
 
 // Output a "block" of data from the specified range in the ring buffer.
 
-static void output_block(LHALZSSDecoder *decoder,
+static void output_block(LHALZ5Decoder *decoder,
                          uint8_t *buf,
                          size_t *buf_len,
                          unsigned int start,
@@ -95,12 +95,12 @@ static void output_block(LHALZSSDecoder *decoder,
 	}
 }
 
-// Process a "run" of LZSS-compressed data (a control byte followed by
+// Process a "run" of LZ5-compressed data (a control byte followed by
 // eight "commands").
 
-static size_t lha_lzss_read(void *data, uint8_t *buf)
+static size_t lha_lz5_read(void *data, uint8_t *buf)
 {
-	LHALZSSDecoder *decoder = data;
+	LHALZ5Decoder *decoder = data;
 	uint8_t bitmap;
 	unsigned int bit;
 	size_t result;
@@ -147,11 +147,11 @@ static size_t lha_lzss_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType lha_lzss_decoder = {
-	lha_lzss_init,
+LHADecoderType lha_lz5_decoder = {
+	lha_lz5_init,
 	NULL,
-	lha_lzss_read,
-	sizeof(LHALZSSDecoder),
+	lha_lz5_read,
+	sizeof(LHALZ5Decoder),
 	OUTPUT_BUFFER_SIZE,
 	RING_BUFFER_SIZE
 };

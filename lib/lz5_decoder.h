@@ -18,12 +18,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#ifndef LHASA_LHA_LZSS_DECODER_H
-#define LHASA_LHA_LZSS_DECODER_H
+#ifndef LHASA_LHA_LZ5_DECODER_H
+#define LHASA_LHA_LZ5_DECODER_H
 
 #include "lha_decoder.h"
 
-extern LHADecoderType lha_lzss_decoder;
+extern LHADecoderType lha_lz5_decoder;
 
-#endif /* #ifndef LHASA_LHA_LZSS_DECODER_H */
+#endif /* #ifndef LHASA_LHA_LZ5_DECODER_H */
 

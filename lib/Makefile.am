@@ -20,7 +20,7 @@ SRC =                                                   \
 	lha_input_stream.c                              \
 	null_decoder.c          null_decoder.h          \
 	lh1_decoder.c           lh1_decoder.h           \
-	lzss_decoder.c          lzss_decoder.h          \
+	lz5_decoder.c           lz5_decoder.h           \
 	lha_reader.c                                    \
 	pma_decoder.c           pma_decoder.h
 
