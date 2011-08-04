@@ -42,18 +42,18 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define TREE_NODE_LEAF      0x80
 
 // Maximum number of bytes that might be placed in the output buffer
-// from a single call to lha_pma_decoder_read (largest copy size).
+// from a single call to lha_pm2_decoder_read (largest copy size).
 
 #define OUTPUT_BUFFER_SIZE  256
 
 typedef enum
 {
-	PMA_REBUILD_UNBUILT,          // At start of stream
-	PMA_REBUILD_BUILD1,           // After 1KiB
-	PMA_REBUILD_BUILD2,           // After 2KiB
-	PMA_REBUILD_BUILD3,           // After 4KiB
-	PMA_REBUILD_CONTINUING,       // 8KiB onwards...
-} PMARebuildState;
+	PM2_REBUILD_UNBUILT,          // At start of stream
+	PM2_REBUILD_BUILD1,           // After 1KiB
+	PM2_REBUILD_BUILD2,           // After 2KiB
+	PM2_REBUILD_BUILD3,           // After 4KiB
+	PM2_REBUILD_CONTINUING,       // 8KiB onwards...
+} PM2RebuildState;
 
 typedef struct
 {
@@ -67,7 +67,7 @@ typedef struct
 
 	// State of decode tree.
 
-	PMARebuildState tree_state;
+	PM2RebuildState tree_state;
 
 	// Number of bytes until we initiate a tree rebuild.
 
@@ -104,7 +104,7 @@ typedef struct
 
 	uint8_t offset_tree[17];
 
-} LHAPMADecoder;
+} LHAPM2Decoder;
 
 // Structure used to hold data needed to build the tree.
 
@@ -173,7 +173,7 @@ static const VariableLengthTable copy_decode[] = {
 
 // Initialize the history buffer.
 
-static void init_history(LHAPMADecoder *decoder)
+static void init_history(LHAPM2Decoder *decoder)
 {
 	unsigned int i;
 
@@ -210,7 +210,7 @@ static void init_history(LHAPMADecoder *decoder)
 
 // Look up an entry in the history chain, returning the code found.
 
-static uint8_t find_in_history(LHAPMADecoder *decoder, uint8_t count)
+static uint8_t find_in_history(LHAPM2Decoder *decoder, uint8_t count)
 {
 	unsigned int i;
 	uint8_t code;
@@ -239,7 +239,7 @@ static uint8_t find_in_history(LHAPMADecoder *decoder, uint8_t count)
 // Update history buffer, by moving the specified byte to the head
 // of the queue.
 
-static void update_history(LHAPMADecoder *decoder, uint8_t b)
+static void update_history(LHAPM2Decoder *decoder, uint8_t b)
 {
 	HistoryNode *node, *old_head;
 
@@ -271,10 +271,10 @@ static void update_history(LHAPMADecoder *decoder, uint8_t b)
 
 // Initialize PMA decoder.
 
-static int lha_pma_decoder_init(void *data, LHADecoderCallback callback,
+static int lha_pm2_decoder_init(void *data, LHADecoderCallback callback,
                                 void *callback_data)
 {
-	LHAPMADecoder *decoder = data;
+	LHAPM2Decoder *decoder = data;
 
 	bit_stream_reader_init(&decoder->bit_stream_reader,
 	                       callback, callback_data);
@@ -282,7 +282,7 @@ static int lha_pma_decoder_init(void *data, LHADecoderCallback callback,
 	// Tree has not been built yet.  It needs to be built on
 	// the first call to read().
 
-	decoder->tree_state = PMA_REBUILD_UNBUILT;
+	decoder->tree_state = PM2_REBUILD_UNBUILT;
 	decoder->tree_rebuild_remaining = 0;
 
 	// Initialize ring buffer contents.
@@ -471,7 +471,7 @@ static void display_tree(uint8_t *tree, unsigned int node, int offset)
 // Read the list of code lengths to use for the code tree and construct
 // the code_tree structure.
 
-static int read_code_tree(LHAPMADecoder *decoder)
+static int read_code_tree(LHAPM2Decoder *decoder)
 {
 	uint8_t code_lengths[31];
 	int num_codes, min_code_length, length_bits, val;
@@ -543,7 +543,7 @@ static int read_code_tree(LHAPMADecoder *decoder)
 // Read the code lengths for the offset tree and construct the offset
 // tree lookup table.
 
-static int read_offset_tree(LHAPMADecoder *decoder,
+static int read_offset_tree(LHAPM2Decoder *decoder,
                             unsigned int num_offsets)
 {
 	uint8_t offset_lengths[8];
@@ -599,50 +599,50 @@ static int read_offset_tree(LHAPMADecoder *decoder,
 // Rebuild the decode trees used to compress data.  This is called when
 // decoder->tree_rebuild_remaining reaches zero.
 
-static void rebuild_tree(LHAPMADecoder *decoder)
+static void rebuild_tree(LHAPM2Decoder *decoder)
 {
 	switch (decoder->tree_state) {
 
 		// Initial tree build, from start of stream:
 
-		case PMA_REBUILD_UNBUILT:
+		case PM2_REBUILD_UNBUILT:
 			read_code_tree(decoder);
 			read_offset_tree(decoder, 5);
-			decoder->tree_state = PMA_REBUILD_BUILD1;
+			decoder->tree_state = PM2_REBUILD_BUILD1;
 			decoder->tree_rebuild_remaining = 1024;
 			break;
 
 		// Tree rebuild after 1KiB of data has been read:
 
-		case PMA_REBUILD_BUILD1:
+		case PM2_REBUILD_BUILD1:
 			read_offset_tree(decoder, 6);
-			decoder->tree_state = PMA_REBUILD_BUILD2;
+			decoder->tree_state = PM2_REBUILD_BUILD2;
 			decoder->tree_rebuild_remaining = 1024;
 			break;
 
 		// Tree rebuild after 2KiB of data has been read:
 
-		case PMA_REBUILD_BUILD2:
+		case PM2_REBUILD_BUILD2:
 			read_offset_tree(decoder, 7);
-			decoder->tree_state = PMA_REBUILD_BUILD3;
+			decoder->tree_state = PM2_REBUILD_BUILD3;
 			decoder->tree_rebuild_remaining = 2048;
 			break;
 
 		// Tree rebuild after 4KiB of data has been read:
 
-		case PMA_REBUILD_BUILD3:
+		case PM2_REBUILD_BUILD3:
 			if (read_bit(&decoder->bit_stream_reader) == 1) {
 				read_code_tree(decoder);
 			}
 			read_offset_tree(decoder, 8);
-			decoder->tree_state = PMA_REBUILD_CONTINUING;
+			decoder->tree_state = PM2_REBUILD_CONTINUING;
 			decoder->tree_rebuild_remaining = 4096;
 			break;
 
 		// Tree rebuild after 8KiB of data has been read,
 		// and every 4KiB after that:
 
-		case PMA_REBUILD_CONTINUING:
+		case PM2_REBUILD_CONTINUING:
 			if (read_bit(&decoder->bit_stream_reader) == 1) {
 				read_code_tree(decoder);
 				read_offset_tree(decoder, 8);
@@ -656,7 +656,7 @@ static void rebuild_tree(LHAPMADecoder *decoder)
 // from the root node until we reach a leaf.  The leaf value is
 // returned.
 
-static int read_from_tree(LHAPMADecoder *decoder, uint8_t *tree)
+static int read_from_tree(LHAPM2Decoder *decoder, uint8_t *tree)
 {
 	uint8_t code;
 	int bit;
@@ -681,7 +681,7 @@ static int read_from_tree(LHAPMADecoder *decoder, uint8_t *tree)
 	return (int) (code & ~TREE_NODE_LEAF);
 }
 
-static void output_byte(LHAPMADecoder *decoder, uint8_t *buf,
+static void output_byte(LHAPM2Decoder *decoder, uint8_t *buf,
                         size_t *buf_len, uint8_t b)
 {
 	// Add to history ring buffer.
@@ -711,7 +711,7 @@ static void output_byte(LHAPMADecoder *decoder, uint8_t *buf,
 // Read a variable length code, given the header bits already read.
 // Returns the decoded value, or -1 for error.
 
-static int decode_variable_length(LHAPMADecoder *decoder,
+static int decode_variable_length(LHAPM2Decoder *decoder,
                                   const VariableLengthTable *table,
                                   unsigned int header)
 {
@@ -729,7 +729,7 @@ static int decode_variable_length(LHAPMADecoder *decoder,
 // Read a single byte from the input stream and add it to the output
 // buffer.
 
-static void read_single_byte(LHAPMADecoder *decoder, unsigned int code,
+static void read_single_byte(LHAPM2Decoder *decoder, unsigned int code,
                              uint8_t *buf, size_t *buf_len)
 {
 	int offset;
@@ -747,7 +747,7 @@ static void read_single_byte(LHAPMADecoder *decoder, unsigned int code,
 
 // Calculate how many bytes from history to copy:
 
-static int history_get_count(LHAPMADecoder *decoder, unsigned int code)
+static int history_get_count(LHAPM2Decoder *decoder, unsigned int code)
 {
 	// How many bytes to copy?  A small value represents the
 	// literal number of bytes to copy; larger values are a header
@@ -762,7 +762,7 @@ static int history_get_count(LHAPMADecoder *decoder, unsigned int code)
 
 // Calculate the offset within history at which to start copying:
 
-static int history_get_offset(LHAPMADecoder *decoder, unsigned int code)
+static int history_get_offset(LHAPM2Decoder *decoder, unsigned int code)
 {
 	unsigned int bits;
 	int result, val;
@@ -817,7 +817,7 @@ static int history_get_offset(LHAPMADecoder *decoder, unsigned int code)
 	return result;
 }
 
-static void copy_from_history(LHAPMADecoder *decoder, unsigned int code,
+static void copy_from_history(LHAPM2Decoder *decoder, unsigned int code,
                               uint8_t *buf, size_t *buf_len)
 {
 	int to_copy, offset;
@@ -854,15 +854,15 @@ static void copy_from_history(LHAPMADecoder *decoder, unsigned int code,
 // Decode data and store it into buf[], returning the number of
 // bytes decoded.
 
-static size_t lha_pma_decoder_read(void *data, uint8_t *buf)
+static size_t lha_pm2_decoder_read(void *data, uint8_t *buf)
 {
-	LHAPMADecoder *decoder = data;
+	LHAPM2Decoder *decoder = data;
 	size_t result;
 	int code;
 
 	// On first pass through, build initial lookup trees.
 
-	if (decoder->tree_state == PMA_REBUILD_UNBUILT) {
+	if (decoder->tree_state == PM2_REBUILD_UNBUILT) {
 
 		// First bit in stream is discarded?
 
@@ -888,11 +888,11 @@ static size_t lha_pma_decoder_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType lha_pma_decoder = {
-	lha_pma_decoder_init,
+LHADecoderType lha_pm2_decoder = {
+	lha_pm2_decoder_init,
 	NULL,
-	lha_pma_decoder_read,
-	sizeof(LHAPMADecoder),
+	lha_pm2_decoder_read,
+	sizeof(LHAPM2Decoder),
 	OUTPUT_BUFFER_SIZE,
 	RING_BUFFER_SIZE
 };

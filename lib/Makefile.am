@@ -22,7 +22,7 @@ SRC =                                                   \
 	lh1_decoder.c           lh1_decoder.h           \
 	lz5_decoder.c           lz5_decoder.h           \
 	lha_reader.c                                    \
-	pma_decoder.c           pma_decoder.h
+	pm2_decoder.c           pm2_decoder.h
 
 liblhasatest_a_CFLAGS=$(TEST_CFLAGS) -DALLOC_TESTING -I../test -g
 liblhasatest_a_SOURCES=$(SRC) $(HEADER_FILES)

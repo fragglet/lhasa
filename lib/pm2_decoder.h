@@ -18,12 +18,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#ifndef LHASA_PMA_DECODER_H
-#define LHASA_PMA_DECODER_H
+#ifndef LHASA_PM2_DECODER_H
+#define LHASA_PM2_DECODER_H
 
 #include "lha_decoder.h"
 
-extern LHADecoderType lha_pma_decoder;
+extern LHADecoderType lha_pm2_decoder;
 
-#endif /* #ifndef LHASA_PMA_DECODER_H */
+#endif /* #ifndef LHASA_PM2_DECODER_H */
 

@@ -27,7 +27,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "null_decoder.h"
 #include "lz5_decoder.h"
 #include "lh1_decoder.h"
-#include "pma_decoder.h"
+#include "pm2_decoder.h"
 
 static struct {
 	char *name;
@@ -38,7 +38,7 @@ static struct {
 	{ "-lh0-", &lha_null_decoder },
 	{ "-lh1-", &lha_lh1_decoder },
 	{ "-pm0-", &lha_null_decoder },
-	{ "-pm2-", &lha_pma_decoder },
+	{ "-pm2-", &lha_pm2_decoder },
 };
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,
