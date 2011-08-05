@@ -34,9 +34,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Threshold offset.  In the copy operation, the copy length is a 4-bit
 // value, giving a range 0..15.  The threshold offsets this so that it
-// is interpreted as 3..18 - a more useful range.
+// is interpreted as 2..17 - a more useful range.
 
-#define THRESHOLD 3
+#define THRESHOLD 2
 
 // Size of output buffer.  Must be large enough to hold the results of
 // the maximum copy operation.

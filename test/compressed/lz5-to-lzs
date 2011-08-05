@@ -59,7 +59,7 @@ def output_cmd_copy(distance, count):
 	pos = (output_pos - distance + 2048) % 2048
 	output_bit(0)
 	output_bits(pos, 11)
-	output_bits(count - 3, 4)
+	output_bits(count - 2, 4)
 
 	output_pos += count
 
@@ -82,13 +82,19 @@ def process_run():
 		else:
 			c = sys.stdin.read(2)
 			pos = ord(c[0]) | ((ord(c[1]) & 0xf0) << 4)
-			count = ord(c[1]) & 0xf
+			count = (ord(c[1]) & 0xf) + 3
 			distance = history_pos - pos
 
 			if pos > history_pos:
 				distance = history_pos + 4096 - pos
 
-			print >>sys.stderr, "copy: %i, %i" % (distance, count + 3)
+			print >>sys.stderr, "copy: %i, %i" % (distance, count)
+
+			for i in range(count):
+				b = history[(pos + i) % 4096]
+				print >> sys.stderr, "\t%s" % b
+				history[history_pos] = b
+				history_pos = (history_pos + 1) % 4096
 
 			# Normally we can translate this to a -lzs- copy
 			# command; however, if the distance to the copy
@@ -96,18 +102,24 @@ def process_run():
 			# translate the copy into a sequence of byte output
 			# commands instead.
 
-			if distance < 2048:
-				output_cmd_copy(distance, count + 3)
-			else:
-				for i in range(count + 3):
+			if distance >= 2048:
+				for i in range(count):
 					b = history[(pos + i) % 4096]
 					output_cmd_byte(ord(b))
 
-			for i in range(count + 3):
-				b = history[(pos + i) % 4096]
-				print >> sys.stderr, "\t%s" % b
-				history[history_pos] = b
-				history_pos = (history_pos + 1) % 4096
+			# Maximum size of a copy for -lz5- is 18 bytes, but
+			# maximum for -lzs- is 17 bytes. If we get an 18
+			# byte copy we therefore need to convert to 17
+			# byte copy + single byte output.
+
+			elif count == 18:
+
+				b = history[(pos + 17) % 4096]
+				print >>sys.stderr, "\tcopy too long (%i, %i): last char %s" % (pos, count, b)
+				output_cmd_copy(distance, 17)
+				output_cmd_byte(ord(b))
+			else:
+				output_cmd_copy(distance, count)
 
 
 while True:
