@@ -21,6 +21,7 @@ SRC =                                                   \
 	null_decoder.c          null_decoder.h          \
 	lh1_decoder.c           lh1_decoder.h           \
 	lz5_decoder.c           lz5_decoder.h           \
+	lzs_decoder.c           lzs_decoder.h           \
 	lha_reader.c                                    \
 	pm2_decoder.c           pm2_decoder.h
 

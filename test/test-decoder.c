@@ -58,6 +58,7 @@ static DecoderTestData files[] = {
 
 	// LArc:
 	{ "compressed/lh0.bin", "-lz4-", 18092, 0x4e46f4a1 },
+	{ "compressed/lzs.bin", "-lzs-", 18092, 0x4e46f4a1 },
 	{ "compressed/lz5.bin", "-lz5-", 18092, 0x4e46f4a1 },
 
 	// PMarc:
