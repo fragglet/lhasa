@@ -356,6 +356,8 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	memset(header, 0, sizeof(LHAFileHeader));
 
+	header->_refcount = 1;
+
 	// Read the raw header data and perform checksum.
 
 	header->raw_data = header + 1;
@@ -389,10 +391,29 @@ fail:
 
 void lha_file_header_free(LHAFileHeader *header)
 {
+	// Sanity check:
+
+	if (header->_refcount == 0) {
+		return;
+	}
+
+	// Count down references and only free when all have been removed.
+
+	--header->_refcount;
+
+	if (header->_refcount > 0) {
+		return;
+	}
+
 	free(header->filename);
 	free(header->path);
 	free(header->unix_username);
 	free(header->unix_group);
 	free(header);
+}
+
+void lha_file_header_add_ref(LHAFileHeader *header)
+{
+	++header->_refcount;
 }
 

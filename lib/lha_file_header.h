@@ -56,6 +56,14 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 typedef struct _LHAFileHeader LHAFileHeader;
 
 struct _LHAFileHeader {
+
+	// Internal fields, do not touch!
+
+	unsigned int _refcount;
+	LHAFileHeader *_next;
+
+	// Decoded fields:
+
 	char compress_method[6];
 	size_t compressed_length;
 	size_t length;
@@ -96,6 +104,15 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream);
  */
 
 void lha_file_header_free(LHAFileHeader *header);
+
+/**
+ * Add a reference to the specified file header, to stop it from being
+ * freed.
+ *
+ * @param header         The file header to add a reference to.
+ */
+
+void lha_file_header_add_ref(LHAFileHeader *header);
 
 #endif /* #ifndef LHASA_LHA_FILE_HEADER_H */
 
