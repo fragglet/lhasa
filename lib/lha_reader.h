@@ -56,16 +56,6 @@ void lha_reader_free(LHAReader *reader);
 LHAFileHeader *lha_reader_next_file(LHAReader *reader);
 
 /**
- * Read some of the compressed data for the current archived file.
- *
- * @param reader     The LHAReader structure.
- * @param buf        Pointer to the buffer in which to store the data.
- * @param buf_len    Size of the buffer, in bytes.
- */
-
-size_t lha_reader_read_compressed(LHAReader *reader, void *buf, size_t buf_len);
-
-/**
  * Read some of the data for the current archived file, decompressing
  * as appropriate.
  *

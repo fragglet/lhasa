@@ -18,11 +18,12 @@ SRC =                                                   \
 	lha_decoder.c           lha_decoder.h           \
 	lha_file_header.c                               \
 	lha_input_stream.c                              \
+	lha_basic_reader.c      lha_basic_reader.h      \
+	lha_reader.c                                    \
 	null_decoder.c          null_decoder.h          \
 	lh1_decoder.c           lh1_decoder.h           \
 	lz5_decoder.c           lz5_decoder.h           \
 	lzs_decoder.c           lzs_decoder.h           \
-	lha_reader.c                                    \
 	pm2_decoder.c           pm2_decoder.h
 
 liblhasatest_a_CFLAGS=$(TEST_CFLAGS) -DALLOC_TESTING -I../test -g

@@ -30,152 +30,95 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "crc16.h"
 
 #include "lha_decoder.h"
+#include "lha_basic_reader.h"
 #include "lha_reader.h"
 
 struct _LHAReader {
-	LHAInputStream *stream;
+	LHABasicReader *reader;
 	LHAFileHeader *curr_file;
 	LHADecoder *decoder;
-	size_t curr_file_remaining;
-	int eof;
 };
 
 LHAReader *lha_reader_new(LHAInputStream *stream)
 {
+	LHABasicReader *basic_reader;
 	LHAReader *reader;
+
+	basic_reader = lha_basic_reader_new(stream);
+
+	if (basic_reader == NULL)
+	{
+		return NULL;
+	}
 
 	reader = malloc(sizeof(LHAReader));
 
 	if (reader == NULL) {
+		lha_basic_reader_free(basic_reader);
 		return NULL;
 	}
 
-	reader->stream = stream;
+	reader->reader = basic_reader;
 	reader->curr_file = NULL;
-	reader->curr_file_remaining = 0;
 	reader->decoder = NULL;
-	reader->eof = 0;
 
 	return reader;
 }
 
 void lha_reader_free(LHAReader *reader)
 {
-	if (reader->curr_file != NULL) {
-		lha_file_header_free(reader->curr_file);
-	}
-
 	if (reader->decoder != NULL) {
 		lha_decoder_free(reader->decoder);
 	}
 
+	lha_basic_reader_free(reader->reader);
 	free(reader);
 }
 
 LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 {
-	if (reader->eof) {
-		return NULL;
-	}
-
-	// Free a decoder if we have one.
+	// Free the current decoder if there is one.
 
 	if (reader->decoder != NULL) {
 		lha_decoder_free(reader->decoder);
 		reader->decoder = NULL;
 	}
 
-	// Free the current file header and skip over any remaining
-	// compressed data that hasn't been read yet.
-
-	if (reader->curr_file != NULL) {
-		lha_file_header_free(reader->curr_file);
-
-		lha_input_stream_skip(reader->stream,
-		                      reader->curr_file_remaining);
-	}
-
-	// Read the header for the next file.
-
-	reader->curr_file = lha_file_header_read(reader->stream);
-
-	if (reader->curr_file == NULL) {
-		reader->eof = 1;
-		return NULL;
-	}
-
-	reader->curr_file_remaining = reader->curr_file->compressed_length;
+	reader->curr_file = lha_basic_reader_next_file(reader->reader);
 
 	return reader->curr_file;
 }
 
-size_t lha_reader_read_compressed(LHAReader *reader, void *buf, size_t buf_len)
-{
-	size_t bytes;
-
-	if (reader->eof || reader->curr_file_remaining == 0) {
-		return 0;
-	}
-
-	// Read up to the number of bytes of compressed data remaining.
-
-	if (buf_len > reader->curr_file_remaining) {
-		bytes = reader->curr_file_remaining;
-	} else {
-		bytes = buf_len;
-	}
-
-	if (!lha_input_stream_read(reader->stream, buf, bytes)) {
-		reader->eof = 1;
-		return 0;
-	}
-
-	// Update counter and return success.
-
-	reader->curr_file_remaining -= bytes;
-
-	return bytes;
-}
-
-static size_t decoder_callback(void *buf, size_t buf_len, void *user_data)
-{
-	return lha_reader_read_compressed(user_data, buf, buf_len);
-}
-
-// Create the decoder structure to decode the current file.
-// Returns true if the decoder was created successfully.
+// Create the decoder structure to decompress the data from the
+// current file. Returns 1 for success.
 
 static int open_decoder(LHAReader *reader)
 {
-	LHADecoderType *dtype;
-
-	// Look up the decoder to use for this compression method.
-
-	dtype = lha_decoder_for_name(reader->curr_file->compress_method);
-
-	if (dtype == NULL) {
+	if (lha_basic_reader_curr_file(reader->reader) == NULL) {
 		return 0;
 	}
 
-	// Create decoder.
+	reader->decoder = lha_basic_reader_decode(reader->reader);
 
-	reader->decoder = lha_decoder_new(dtype, decoder_callback, reader,
-	                                  reader->curr_file->length);
+	if (reader->decoder == NULL) {
+		return 0;
+	}
 
-	return reader->decoder != NULL;
+	return 1;
 }
 
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 {
-	// The first time this is called, we have to create a decoder.
+	// The first time that we try to read the current file, we
+	// must create the decoder to decompress it.
 
-	if (reader->curr_file != NULL && reader->decoder == NULL) {
+	if (reader->decoder == NULL) {
 		if (!open_decoder(reader)) {
 			return 0;
 		}
 	}
 
-	// Read from decoder and return result.
+	// Read from decoder and return the result.
 
 	return lha_decoder_read(reader->decoder, buf, buf_len);
 }
