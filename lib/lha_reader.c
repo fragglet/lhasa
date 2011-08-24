@@ -35,8 +35,28 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 struct _LHAReader {
 	LHABasicReader *reader;
+
+	// The current file that we are processing (last file returned
+	// by lha_reader_next_file).
+
 	LHAFileHeader *curr_file;
+
+	// Pointer to decoder being used to decompress the current file,
+	// or NULL if we have not yet started decompression.
+
 	LHADecoder *decoder;
+
+	// Policy used to extract directories.
+
+	LHAReaderDirPolicy dir_policy;
+
+	// Directories that have been created by lha_reader_extract but
+	// have not yet had their metadata set. This is a linked list
+	// using the _next field in LHAFileHeader.
+	// In the case of LHA_READER_DIR_END_OF_DIR this is a stack;
+	// in the case of LHA_READER_DIR_END_OF_FILE it is a list.
+
+	LHAFileHeader *dir_stack;
 };
 
 LHAReader *lha_reader_new(LHAInputStream *stream)
@@ -61,6 +81,8 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 	reader->reader = basic_reader;
 	reader->curr_file = NULL;
 	reader->decoder = NULL;
+	reader->dir_stack = NULL;
+	reader->dir_policy = LHA_READER_DIR_END_OF_DIR;
 
 	return reader;
 }
@@ -73,6 +95,12 @@ void lha_reader_free(LHAReader *reader)
 
 	lha_basic_reader_free(reader->reader);
 	free(reader);
+}
+
+void lha_reader_set_dir_policy(LHAReader *reader,
+                               LHAReaderDirPolicy policy)
+{
+	reader->dir_policy = policy;
 }
 
 LHAFileHeader *lha_reader_next_file(LHAReader *reader)
