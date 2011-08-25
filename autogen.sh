@@ -3,7 +3,7 @@
 mkdir -p autotools
 
 aclocal
-libtoolize
+libtoolize || glibtoolize
 autoheader
 automake -a 
 autoconf
