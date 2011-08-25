@@ -33,6 +33,27 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_basic_reader.h"
 #include "lha_reader.h"
 
+typedef enum {
+
+	// Initial state at start of stream:
+
+	CURR_FILE_START,
+
+	// Current file is a "normal" file (or directory) read from
+	// the input stream.
+
+	CURR_FILE_NORMAL,
+
+	// Current file is a directory that has been popped from the
+	// directory stack.
+
+	CURR_FILE_FAKE_DIR,
+
+	// End of input stream has been reached.
+
+	CURR_FILE_EOF,
+} CurrFileType;
+
 struct _LHAReader {
 	LHABasicReader *reader;
 
@@ -40,6 +61,7 @@ struct _LHAReader {
 	// by lha_reader_next_file).
 
 	LHAFileHeader *curr_file;
+	CurrFileType curr_file_type;
 
 	// Pointer to decoder being used to decompress the current file,
 	// or NULL if we have not yet started decompression.
@@ -80,6 +102,7 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 
 	reader->reader = basic_reader;
 	reader->curr_file = NULL;
+	reader->curr_file_type = CURR_FILE_START;
 	reader->decoder = NULL;
 	reader->dir_stack = NULL;
 	reader->dir_policy = LHA_READER_DIR_END_OF_DIR;
@@ -89,8 +112,18 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 
 void lha_reader_free(LHAReader *reader)
 {
+	LHAFileHeader *header;
+
 	if (reader->decoder != NULL) {
 		lha_decoder_free(reader->decoder);
+	}
+
+	// Free any file headers in the stack.
+
+	while (reader->dir_stack != NULL) {
+		header = reader->dir_stack;
+		reader->dir_stack = header->_next;
+		lha_file_header_free(header);
 	}
 
 	lha_basic_reader_free(reader->reader);
@@ -103,6 +136,55 @@ void lha_reader_set_dir_policy(LHAReader *reader,
 	reader->dir_policy = policy;
 }
 
+// Returns true if the top directory in the stack should be popped off.
+
+static int end_of_top_dir(LHAReader *reader)
+{
+	LHAFileHeader *input;
+
+	// No directories to pop?
+
+	if (reader->dir_stack == NULL) {
+		return 0;
+	}
+
+	// Once the end of the input stream is reached, all that is
+	// left to do is pop off the remaining directories.
+
+	input = lha_basic_reader_curr_file(reader->reader);
+
+	if (input == NULL) {
+		return 1;
+	}
+
+	switch (reader->dir_policy) {
+
+		// Shouldn't happen?
+
+		case LHA_READER_DIR_PLAIN:
+		default:
+			return 1;
+
+		// Don't process directories until we reach the end of
+		// the input stream.
+
+		case LHA_READER_DIR_END_OF_FILE:
+			return 0;
+
+		// Once we reach a file from the input that is not within
+		// the directory at the top of the stack, we have reached
+		// the end of that directory, so we can pop it off.
+
+		case LHA_READER_DIR_END_OF_DIR:
+			return input->path == NULL
+			     || strncmp(input->path,
+			               reader->dir_stack->path,
+			               strlen(reader->dir_stack->path)) != 0;
+	}
+}
+
+// Read the next file from the input stream.
+
 LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 {
 	// Free the current decoder if there is one.
@@ -112,7 +194,36 @@ LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 		reader->decoder = NULL;
 	}
 
-	reader->curr_file = lha_basic_reader_next_file(reader->reader);
+	// No point continuing once the end of the input stream has
+	// been reached.
+
+	if (reader->curr_file_type == CURR_FILE_EOF) {
+		return NULL;
+	}
+
+	// Advance to the next file from the input stream?
+	// Don't advance until we've done the fake directories first.
+
+	if (reader->curr_file_type == CURR_FILE_START
+	 || reader->curr_file_type == CURR_FILE_NORMAL) {
+		lha_basic_reader_next_file(reader->reader);
+	}
+
+	// Pop off all appropriate directories from the stack first.
+
+	if (end_of_top_dir(reader)) {
+		reader->curr_file = reader->dir_stack;
+		reader->dir_stack = reader->dir_stack->_next;
+		reader->curr_file_type = CURR_FILE_FAKE_DIR;
+	} else {
+		reader->curr_file = lha_basic_reader_curr_file(reader->reader);
+
+		if (reader->curr_file != NULL) {
+			reader->curr_file_type = CURR_FILE_NORMAL;
+		} else {
+			reader->curr_file_type = CURR_FILE_EOF;
+		}
+	}
 
 	return reader->curr_file;
 }
@@ -122,7 +233,9 @@ LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 
 static int open_decoder(LHAReader *reader)
 {
-	if (lha_basic_reader_curr_file(reader->reader) == NULL) {
+	// Can only read from a normal file.
+
+	if (reader->curr_file_type != CURR_FILE_NORMAL) {
 		return 0;
 	}
 
@@ -203,7 +316,7 @@ int lha_reader_check(LHAReader *reader,
                      LHADecoderProgressCallback callback,
                      void *callback_data)
 {
-	if (reader->curr_file == NULL) {
+	if (reader->curr_file_type != CURR_FILE_NORMAL) {
 		return 0;
 	}
 
@@ -331,13 +444,12 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	return fstream;
 }
 
-// Extract directory, setting Unix permissions corresponding to
-// file headers.
+
+// Create a directory.
 // TODO: Make this compile-dependent so that we can compile
 // using ANSI C and on non-Unix platforms.
 
-static int extract_directory_unix(LHAFileHeader *header, char *path,
-                                  int set_perms)
+static int create_directory_unix(LHAFileHeader *header, char *path)
 {
 	mode_t mode;
 
@@ -345,27 +457,25 @@ static int extract_directory_unix(LHAFileHeader *header, char *path,
 	// the directory with minimal permissions limited to the running
 	// user. Otherwise use the default umask.
 
-	if (set_perms && (header->extra_flags & LHA_FILE_UNIX_PERMS)) {
+	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
 		mode = 0700;
 	} else {
 		mode = 0777;
 	}
 
-	if (mkdir(path, mode)) {
-		return 0;
-	}
+	return mkdir(path, mode) == 0;
+}
 
-	// Don't set permissions?
+// Second stage of directory extraction: set metadata.
 
-	if (!set_perms) {
-		return 1;
-	}
+static int set_directory_metadata(LHAFileHeader *header, char *path)
+{
+	// TODO: modification date/time
 
 	// Set owner and group:
 
 	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
 		if (chown(path, header->unix_uid, header->unix_gid)) {
-			rmdir(path);
 			return 0;
 		}
 	}
@@ -374,7 +484,6 @@ static int extract_directory_unix(LHAFileHeader *header, char *path,
 
 	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
 		if (chmod(path, header->unix_perms)) {
-			rmdir(path);
 			return 0;
 		}
 	}
@@ -384,30 +493,45 @@ static int extract_directory_unix(LHAFileHeader *header, char *path,
 
 static int extract_directory(LHAReader *reader, char *path)
 {
+	LHAFileHeader *header;
+
+	header = reader->curr_file;
+
 	// If path is not specified, use the path from the file header.
 
 	if (path == NULL) {
-		path = reader->curr_file->path;
+		path = header->path;
 	}
 
-	// Try to create directory setting Unix file permissions; if that
-	// fails, just perform a simple mkdir() ignoring file permissions:
+	// Create the directory.
 
-	return extract_directory_unix(reader->curr_file, path, 1)
-	    || extract_directory_unix(reader->curr_file, path, 0);
+	if (!create_directory_unix(header, path)) {
+		return 0;
+	}
+
+	// The directory has been created, but the metadata has not yet
+	// been applied. It depends on the directory policy how this
+	// is handled. If we are using LHA_READER_DIR_PLAIN, set
+	// metadata now. Otherwise, save the directory for later.
+
+	if (reader->dir_policy == LHA_READER_DIR_PLAIN) {
+		set_directory_metadata(header, path);
+	} else {
+		lha_file_header_add_ref(header);
+		header->_next = reader->dir_stack;
+		reader->dir_stack = header;
+	}
+
+	return 1;
 }
 
-int lha_reader_extract(LHAReader *reader,
-                       char *filename,
-                       LHADecoderProgressCallback callback,
-                       void *callback_data)
+static int extract_normal(LHAReader *reader,
+                          char *filename,
+                          LHADecoderProgressCallback callback,
+                          void *callback_data)
 {
 	FILE *fstream;
 	int result;
-
-	if (reader->curr_file == NULL) {
-		return 0;
-	}
 
 	// Directories are a special case:
 
@@ -435,5 +559,28 @@ int lha_reader_extract(LHAReader *reader,
 	fclose(fstream);
 
 	return result;
+}
+
+int lha_reader_extract(LHAReader *reader,
+                       char *filename,
+                       LHADecoderProgressCallback callback,
+                       void *callback_data)
+{
+	switch (reader->curr_file_type) {
+
+		case CURR_FILE_NORMAL:
+			return extract_normal(reader, filename, callback,
+			                      callback_data);
+
+		case CURR_FILE_FAKE_DIR:
+			set_directory_metadata(reader->curr_file, filename);
+			return 1;
+
+		case CURR_FILE_START:
+		case CURR_FILE_EOF:
+			break;
+	}
+
+	return 0;
 }
 
