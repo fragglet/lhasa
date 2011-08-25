@@ -452,7 +452,6 @@ static int set_file_timestamp(LHAFileHeader *header, char *path)
 
 	times.actime = (time_t) header->timestamp;
 	times.modtime = (time_t) header->timestamp;
-	printf("set %s ts=%i\n", path, header->timestamp);
 
 	return utime(path, &times) == 0;
 }
