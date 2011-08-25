@@ -85,6 +85,9 @@ for filename in sorted(sys.argv[1:]):
 		format_output(filename, results[filename])
 
 	for subfile in results.keys():
+		if subfile.endswith(".h"):
+			continue
+
 		if subfile != filename:
 			format_output(" -> " + subfile, results[subfile])
 
