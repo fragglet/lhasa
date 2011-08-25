@@ -24,6 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <utime.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -396,31 +397,6 @@ static FILE *open_output_file_unix(LHAReader *reader, char *filename)
 static FILE *open_output_file(LHAReader *reader, char *filename)
 {
 	FILE *fstream;
-	char *tmp_filename = NULL;
-	unsigned int filename_len;
-
-	// Construct filename?
-
-	if (filename == NULL) {
-		if (reader->curr_file->path != NULL) {
-			filename_len = strlen(reader->curr_file->filename)
-			             + strlen(reader->curr_file->path)
-			             + 1;
-
-			tmp_filename = malloc(filename_len);
-
-			if (tmp_filename == NULL) {
-				return NULL;
-			}
-
-			sprintf(tmp_filename, "%s%s", reader->curr_file->path,
-			                      reader->curr_file->filename);
-
-			filename = tmp_filename;
-		} else {
-			filename = reader->curr_file->filename;
-		}
-	}
 
 	// If this file has Unix file permission headers, make sure
 	// the file is created using the correct permissions.
@@ -438,8 +414,6 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	if (fstream == NULL) {
 		fstream = fopen(filename, "wb");
 	}
-
-	free(tmp_filename);
 
 	return fstream;
 }
@@ -466,11 +440,30 @@ static int create_directory_unix(LHAFileHeader *header, char *path)
 	return mkdir(path, mode) == 0;
 }
 
+// Set timestamp for the specified file / directory.
+
+static int set_file_timestamp(LHAFileHeader *header, char *path)
+{
+	struct utimbuf times;
+
+	if (header->timestamp == 0) {
+		return 0;
+	}
+
+	times.actime = (time_t) header->timestamp;
+	times.modtime = (time_t) header->timestamp;
+	printf("set %s ts=%i\n", path, header->timestamp);
+
+	return utime(path, &times) == 0;
+}
+
 // Second stage of directory extraction: set metadata.
 
 static int set_directory_metadata(LHAFileHeader *header, char *path)
 {
-	// TODO: modification date/time
+	// Set timestamp:
+
+	set_file_timestamp(header, path);
 
 	// Set owner and group:
 
@@ -525,19 +518,13 @@ static int extract_directory(LHAReader *reader, char *path)
 	return 1;
 }
 
-static int extract_normal(LHAReader *reader,
-                          char *filename,
-                          LHADecoderProgressCallback callback,
-                          void *callback_data)
+static int extract_file(LHAReader *reader, char *filename,
+                        LHADecoderProgressCallback callback,
+                        void *callback_data)
 {
 	FILE *fstream;
+	char *tmp_filename = NULL;
 	int result;
-
-	// Directories are a special case:
-
-	if (!strcmp(reader->curr_file->compress_method, LHA_COMPRESS_TYPE_DIR)) {
-		return extract_directory(reader, filename);
-	}
 
 	// Create decoder. If the file cannot be created, there is no
 	// need to even create an output file.
@@ -546,19 +533,65 @@ static int extract_normal(LHAReader *reader,
 		return 0;
 	}
 
+	// Construct filename?
+
+	if (filename == NULL) {
+		size_t filename_len;
+
+		if (reader->curr_file->path != NULL) {
+			filename_len = strlen(reader->curr_file->filename)
+			             + strlen(reader->curr_file->path)
+			             + 1;
+
+			tmp_filename = malloc(filename_len);
+
+			if (tmp_filename == NULL) {
+				return 0;
+			}
+
+			sprintf(tmp_filename, "%s%s", reader->curr_file->path,
+			                      reader->curr_file->filename);
+
+			filename = tmp_filename;
+		} else {
+			filename = reader->curr_file->filename;
+		}
+	}
+
 	// Open output file and perform decode:
 
 	fstream = open_output_file(reader, filename);
 
 	if (fstream == NULL) {
-		return 0;
+		result = 0;
+	} else {
+		result = do_decode(reader, fstream, callback, callback_data);
+		fclose(fstream);
 	}
 
-	result = do_decode(reader, fstream, callback, callback_data);
+	// Set timestamp on file:
 
-	fclose(fstream);
+	if (result) {
+		set_file_timestamp(reader->curr_file, filename);
+	}
+
+	free(tmp_filename);
 
 	return result;
+}
+
+static int extract_normal(LHAReader *reader,
+                          char *filename,
+                          LHADecoderProgressCallback callback,
+                          void *callback_data)
+{
+	// Directories are a special case:
+
+	if (!strcmp(reader->curr_file->compress_method, LHA_COMPRESS_TYPE_DIR)) {
+		return extract_directory(reader, filename);
+	} else {
+		return extract_file(reader, filename, callback, callback_data);
+	}
 }
 
 int lha_reader_extract(LHAReader *reader,
@@ -573,6 +606,9 @@ int lha_reader_extract(LHAReader *reader,
 			                      callback_data);
 
 		case CURR_FILE_FAKE_DIR:
+			if (filename == NULL) {
+				filename = reader->curr_file->path;
+			}
 			set_directory_metadata(reader->curr_file, filename);
 			return 1;
 
