@@ -21,7 +21,7 @@ TEST_CFLAGS=""
 # Turn on all warnings for gcc.  Turn off optimisation for the test build.
 
 if $is_gcc; then
-	WARNINGS="-Wall -Wsign-compare -Wconversion"
+	WARNINGS="-Wall -Wsign-compare"
 	CFLAGS="$CFLAGS $WARNINGS"
 	TEST_CFLAGS="$TEST_CFLAGS $WARNINGS -O0"
 fi
