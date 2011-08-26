@@ -123,3 +123,6 @@ test_archive lha_amiga_212/level1.lzh
 test_archive lha_amiga_212/lh1.lzh
 test_archive lha_amiga_212/lh6.lzh
 
+test_archive generated/lzs/lzs.lzs
+test_archive generated/lzs/long.lzs
+
