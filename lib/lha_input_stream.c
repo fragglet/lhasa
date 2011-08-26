@@ -92,9 +92,10 @@ static int file_header_match(uint8_t *buf)
 		return 1;
 	}
 
-	// LArc algorithm (lz4, lz5)?
+	// LArc algorithm (lz4, lz5, lzs)?
 
-	if (!strncmp((char *) buf + 3, "lz", 2) && isdigit(buf[5])) {
+	if (!strncmp((char *) buf + 3, "lz", 2)
+	 && (buf[5] == '4' || buf[5] == '5' || buf[5] == 's')) {
 		return 1;
 	}
 
