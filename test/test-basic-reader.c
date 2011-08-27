@@ -94,28 +94,158 @@ static void test_read_directory(void)
 {
 	check_directory_for("archives/larc333/lz4.lzs",       "gpl-2.gz");
 	check_directory_for("archives/larc333/lz5.lzs",       "gpl-2");
+
 	check_directory_for("archives/lha213/lh0.lzh",        "gpl-2.gz");
 	check_directory_for("archives/lha213/lh5.lzh",        "gpl-2");
+
 	check_directory_for("archives/lha255e/lh0.lzh",       "gpl-2.gz");
 	check_directory_for("archives/lha255e/lh5.lzh",       "gpl-2");
+
 	check_directory_for("archives/lha_amiga_122/lh0.lzh", "gpl-2.gz");
 	check_directory_for("archives/lha_amiga_122/lh1.lzh", "gpl-2");
 	check_directory_for("archives/lha_amiga_122/lh4.lzh", "gpl-2");
 	check_directory_for("archives/lha_amiga_122/lh5.lzh", "gpl-2");
 	check_directory_for("archives/lha_amiga_212/lh1.lzh", "gpl-2");
 	check_directory_for("archives/lha_amiga_212/lh6.lzh", "gpl-2");
+
 	check_directory_for("archives/lha_unix114i/lh0.lzh",  "gpl-2.gz");
 	check_directory_for("archives/lha_unix114i/lh5.lzh",  "gpl-2");
 	check_directory_for("archives/lha_unix114i/lh6.lzh",  "gpl-2");
 	check_directory_for("archives/lha_unix114i/lh7.lzh",  "gpl-2");
+
 	check_directory_for("archives/lharc113/lh0.lzh",      "gpl-2.gz");
 	check_directory_for("archives/lharc113/lh1.lzh",      "gpl-2");
+
+	check_directory_for("archives/pmarc2/pm0.pma",        "gpl-2.gz");
+	check_directory_for("archives/pmarc2/pm2.pma",        "gpl-2.");
+}
+
+static void test_read_sfx(void)
+{
+	check_directory_for("archives/larc333/sfx.com",       "gpl-2.gz");
+	check_directory_for("archives/lha213/sfx.exe",        "gpl-2");
+	check_directory_for("archives/lha255e/sfx.exe",       "gpl-2");
+	// TODO: check_directory_for("archives/lha_amiga_122/sfx.run", "");
+	check_directory_for("archives/lharc113/sfx.com",      "gpl-2");
+	check_directory_for("archives/pmarc2/sfx.com",        "gpl-2.");
+}
+
+// Check CRC of compressed data.
+
+static void check_crc_for(char *filename, uint32_t expected_crc,
+                          size_t expected_len)
+{
+	LHAInputStream *stream;
+	LHABasicReader *reader;
+	LHAFileHeader *header;
+	uint8_t buf[16];
+	uint32_t crc;
+	size_t len;
+
+	reader = reader_for_file(filename, &stream);
+
+	// Get the first archived file:
+
+	header = lha_basic_reader_next_file(reader);
+	assert(header != NULL);
+
+	// Read all the compressed data:
+
+	crc = 0; len = 0;
+
+	for (;;) {
+		size_t count;
+
+		count = lha_basic_reader_read_compressed(reader, buf,
+		                                         sizeof(buf));
+
+		if (count == 0) {
+			break;
+		}
+
+		len += count;
+
+		crc32_buf(&crc, buf, count);
+	}
+
+	// Check final CRC / length:
+
+	assert(crc == expected_crc);
+	assert(len == expected_len);
+
+	lha_basic_reader_free(reader);
+	lha_input_stream_free(stream);
+}
+
+static void test_read_compressed(void)
+{
+	check_crc_for("archives/larc333/lz5.lzs",  0x2c1539b5, 8480);
+	check_crc_for("archives/lha213/lh0.lzh",   0xe4690583, 6829);
+	check_crc_for("archives/lha213/lh5.lzh",   0x45b943c8, 7004);
+
+	check_crc_for("archives/lha213/sfx.exe",   0x45b943c8, 7004);
+	check_crc_for("archives/pmarc2/sfx.com",   0x3751177e, 7098);
+}
+
+static void check_decode_for(char *filename)
+{
+	LHAInputStream *stream;
+	LHABasicReader *reader;
+	LHAFileHeader *header;
+	LHADecoder *decoder;
+
+	reader = reader_for_file(filename, &stream);
+
+	// Get the first archived file:
+
+	header = lha_basic_reader_next_file(reader);
+	assert(header != NULL);
+
+	// Check that it is possible to create a decoder for this file.
+
+	decoder = lha_basic_reader_decode(reader);
+	assert(decoder != NULL);
+	lha_decoder_free(decoder);
+	lha_input_stream_free(stream);
+}
+
+static void test_decode(void)
+{
+	check_decode_for("archives/larc333/lz4.lzs");
+	check_decode_for("archives/larc333/lz5.lzs");
+
+	check_decode_for("archives/lha213/lh0.lzh");
+	//check_decode_for("archives/lha213/lh5.lzh");
+
+	check_decode_for("archives/lha255e/lh0.lzh");
+	//check_decode_for("archives/lha255e/lh5.lzh");
+
+	//check_decode_for("archives/lha_amiga_122/lh0.lzh");
+	//check_decode_for("archives/lha_amiga_122/lh1.lzh");
+	//check_decode_for("archives/lha_amiga_122/lh4.lzh");
+	//check_decode_for("archives/lha_amiga_122/lh5.lzh");
+	//check_decode_for("archives/lha_amiga_212/lh1.lzh");
+	//check_decode_for("archives/lha_amiga_212/lh6.lzh");
+
+	check_decode_for("archives/lha_unix114i/lh0.lzh");
+	//check_decode_for("archives/lha_unix114i/lh5.lzh");
+	//check_decode_for("archives/lha_unix114i/lh6.lzh");
+	//check_decode_for("archives/lha_unix114i/lh7.lzh");
+
+	check_decode_for("archives/lharc113/lh0.lzh");
+	check_decode_for("archives/lharc113/lh1.lzh");
+
+	check_decode_for("archives/pmarc2/pm0.pma");
+	check_decode_for("archives/pmarc2/pm2.pma");
 }
 
 int main(int argc, char *argv[])
 {
 	test_create_free();
 	test_read_directory();
+	test_read_sfx();
+	test_read_compressed();
+	test_decode();
 
 	return 0;
 }
