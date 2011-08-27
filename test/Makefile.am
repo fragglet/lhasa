@@ -4,6 +4,7 @@ LDADD=$(top_builddir)/lib/liblhasatest.a libtestframework.a
 
 COMPILED_TESTS=                       \
 	test-crc16                    \
+	test-basic-reader             \
 	test-decoder                  \
 	test-decompress
 

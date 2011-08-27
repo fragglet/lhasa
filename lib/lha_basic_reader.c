@@ -141,6 +141,10 @@ LHADecoder *lha_basic_reader_decode(LHABasicReader *reader)
 {
 	LHADecoderType *dtype;
 
+	if (reader->curr_file == NULL) {
+		return NULL;
+	}
+
 	// Look up the decoder to use for this compression method.
 
 	dtype = lha_decoder_for_name(reader->curr_file->compress_method);

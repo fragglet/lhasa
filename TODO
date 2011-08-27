@@ -4,9 +4,6 @@ Library:
  * Level 2, 3 header parsing.
  * Parse broken Amiga LHA 1.22 archives.
  * Extract:
-    * Preserve permissions/timestamp when extracting directories
-      (use same technique as GNU tar).
-    * Set archived timestamp on extracted files.
     * Add options API to control whether permissions, timestamp are set.
     * Creation of parent directories on extract (+optional)
  * Add LHAFile convenience class.
