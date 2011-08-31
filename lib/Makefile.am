@@ -7,7 +7,8 @@ HEADER_FILES =                     \
 	lha_reader.h
 
 EXTRA_DIST =                                            \
-	bit_stream_reader.c
+	bit_stream_reader.c                             \
+	lh_new_decoder.c
 
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
@@ -22,6 +23,7 @@ SRC =                                                   \
 	lha_reader.c                                    \
 	null_decoder.c          null_decoder.h          \
 	lh1_decoder.c           lh1_decoder.h           \
+	lh5_decoder.c                                   \
 	lz5_decoder.c           lz5_decoder.h           \
 	lzs_decoder.c           lzs_decoder.h           \
 	pm2_decoder.c           pm2_decoder.h
