@@ -12,11 +12,11 @@ EXTRA_DIST =                                            \
 
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
-	endian.c                endian.h                \
 	ext_common.c                                    \
 	ext_unix.c                                      \
 	ext_header.c            ext_header.h            \
 	lha_decoder.c           lha_decoder.h           \
+	lha_endian.c            lha_endian.h            \
 	lha_file_header.c                               \
 	lha_input_stream.c                              \
 	lha_basic_reader.c      lha_basic_reader.h      \

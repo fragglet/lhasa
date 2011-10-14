@@ -18,8 +18,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#ifndef LHASA_ENDIAN_H
-#define LHASA_ENDIAN_H
+#ifndef LHASA_LHA_ENDIAN_H
+#define LHASA_LHA_ENDIAN_H
 
 #include <inttypes.h>
 
@@ -41,5 +41,5 @@ uint16_t lha_decode_uint16(uint8_t *buf);
 
 uint32_t lha_decode_uint32(uint8_t *buf);
 
-#endif /* #ifndef LHASA_ENDIAN_H */
+#endif /* #ifndef LHASA_LHA_ENDIAN_H */
 

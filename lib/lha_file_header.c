@@ -23,7 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <ctype.h>
 #include <time.h>
 
-#include "endian.h"
+#include "lha_endian.h"
 #include "lha_file_header.h"
 #include "ext_header.h"
 

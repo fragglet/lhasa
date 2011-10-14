@@ -18,7 +18,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#include "endian.h"
+#include "lha_endian.h"
 
 uint16_t lha_decode_uint16(uint8_t *buf)
 {
