@@ -356,12 +356,14 @@ static FILE *open_output_file_unix(LHAReader *reader, char *filename)
 	// Set owner and group.
 
 	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_UID_GID) {
+#ifndef _WIN32
 		if (fchown(fileno, reader->curr_file->unix_uid,
 		           reader->curr_file->unix_gid)) {
 			close(fileno);
 			remove(filename);
 			return NULL;
 		}
+#endif
 	}
 
 	// Set file permissions.
@@ -370,11 +372,13 @@ static FILE *open_output_file_unix(LHAReader *reader, char *filename)
 	// to the wrong group.
 
 	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
+#ifndef _WIN32
 		if (fchmod(fileno, reader->curr_file->unix_perms)) {
 			close(fileno);
 			remove(filename);
 			return NULL;
 		}
+#endif
 	}
 
 	// Create stdc FILE handle.
@@ -437,7 +441,11 @@ static int create_directory_unix(LHAFileHeader *header, char *path)
 		mode = 0777;
 	}
 
+#ifdef _WIN32
+	return mkdir(path) == 0;
+#else
 	return mkdir(path, mode) == 0;
+#endif
 }
 
 // Set timestamp for the specified file / directory.
@@ -467,17 +475,21 @@ static int set_directory_metadata(LHAFileHeader *header, char *path)
 	// Set owner and group:
 
 	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
+#ifndef _WIN32
 		if (chown(path, header->unix_uid, header->unix_gid)) {
 			return 0;
 		}
+#endif
 	}
 
 	// Set permissions on directory:
 
 	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
+#ifndef _WIN32
 		if (chmod(path, header->unix_perms)) {
 			return 0;
 		}
+#endif
 	}
 
 	return 1;

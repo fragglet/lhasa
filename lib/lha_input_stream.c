@@ -290,13 +290,14 @@ int lha_input_stream_skip(LHAInputStream *stream, size_t bytes)
 static int file_source_read(void *handle, void *buf, size_t buf_len)
 {
 	size_t bytes_read;
+	FILE *fh = handle;
 
-	bytes_read = fread(buf, 1, buf_len, handle);
+	bytes_read = fread(buf, 1, buf_len, fh);
 
 	// If an error occurs, zero is returned; however, it may also
 	// indicate end of file.
 
-	if (bytes_read == 0 && !feof(handle)) {
+	if (bytes_read == 0 && !feof(fh)) {
 		return -1;
 	}
 
