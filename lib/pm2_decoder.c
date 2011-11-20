@@ -120,20 +120,13 @@ typedef struct
 
 	unsigned int tree_allocated;
 
-	// Circular buffer of available tree entries.  These are
-	// indices into tree[], and either reference a tree node's
-	// child pointer (left or right) or the root node pointer.
-	// As we add leaves to the tree, they are read from here.
-
-	uint8_t entries[32];
-
 	// The next tree entry.
+	// As entries are allocated sequentially, the range from
+	// next_entry..tree_allocated-1 constitutes the indices into
+	// the tree that are available to be filled in. By the
+	// end of the tree build, next_entry should = tree_allocated.
 
 	unsigned int next_entry;
-
-	// The number of entries in the queue.
-
-	unsigned int entries_len;
 } TreeBuildData;
 
 typedef struct
@@ -304,35 +297,6 @@ static int lha_pm2_decoder_init(void *data, LHADecoderCallback callback,
 	return 1;
 }
 
-// Add an entry to the tree entry queue.
-
-static void add_queue_entry(TreeBuildData *build, uint8_t index)
-{
-	if (build->entries_len >= 32) {
-		return;
-	}
-
-	build->entries[(build->next_entry + build->entries_len) % 32] = index;
-	++build->entries_len;
-}
-
-// Read an entry from the tree entry queue.
-
-static uint8_t read_queue_entry(TreeBuildData *build)
-{
-	uint8_t result;
-
-	if (build->entries_len == 0) {
-		return 0;
-	}
-
-	result = build->entries[build->next_entry];
-	build->next_entry = (build->next_entry + 1) % 32;
-	--build->entries_len;
-
-	return result;
-}
-
 // "Expand" the list of queue entries. This generates a new child
 // node at each of the entries currently in the queue, adding the
 // children of those nodes into the queue to replace them.
@@ -341,32 +305,46 @@ static uint8_t read_queue_entry(TreeBuildData *build)
 
 static void expand_queue(TreeBuildData *build)
 {
-	unsigned int num_nodes, i;
-	uint8_t node, entry_index;
+	unsigned int end_offset;
+	unsigned int new_nodes;
 
-	num_nodes = build->entries_len;
+	// Sanity check that there is enough space in the tree for
+	// all the new nodes.
 
-	for (i = 0; i < num_nodes; ++i) {
+	new_nodes = (build->tree_allocated - build->next_entry) * 2;
 
-		if (build->tree_allocated >= build->tree_len) {
-			return;
-		}
-
-		// Allocate a new node.
-
-		node = (uint8_t) build->tree_allocated;
-		build->tree_allocated += 2;
-
-		// Add into tree at the next available location.
-
-		entry_index = read_queue_entry(build);
-		build->tree[entry_index] = node;
-
-		// Add child pointers of this node.
-
-		add_queue_entry(build, node);
-		add_queue_entry(build, (uint8_t) (node + 1));
+	if (build->tree_allocated + new_nodes > build->tree_len) {
+		return;
 	}
+
+	// Go through all entries currently in the allocated range, and
+	// allocate a subnode for each.
+
+	end_offset = build->tree_allocated;
+
+	while (build->next_entry < end_offset) {
+		build->tree[build->next_entry] = build->tree_allocated;
+		build->tree_allocated += 2;
+		++build->next_entry;
+	}
+}
+
+// Read the next entry from the queue of entries waiting to be used.
+
+static unsigned int read_next_entry(TreeBuildData *build)
+{
+	unsigned int result;
+
+	// Sanity check.
+
+	if (build->next_entry >= build->tree_allocated) {
+		return 0;
+	}
+
+	result = build->next_entry;
+	++build->next_entry;
+
+	return result;
 }
 
 // Add all codes to the tree that have the specified length.
@@ -389,7 +367,7 @@ static int add_codes_with_length(TreeBuildData *build,
 		// Does this code belong at this depth in the tree?
 
 		if (code_lengths[i] == code_len) {
-			node = read_queue_entry(build);
+			node = read_next_entry(build);
 
 			build->tree[node] = (uint8_t) i | TREE_NODE_LEAF;
 		}
@@ -420,9 +398,7 @@ static void build_tree(uint8_t *tree, size_t tree_len,
 	// Start with a single entry in the queue - the root node
 	// pointer.
 
-	build.entries[0] = 0;
 	build.next_entry = 0;
-	build.entries_len = 1;
 
 	// We always have the root ...
 
