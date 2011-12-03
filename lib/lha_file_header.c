@@ -105,7 +105,8 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 	// should be translated to lower case.
 
 	if (header->os_type == LHA_OS_TYPE_UNKNOWN
-	 || header->os_type == LHA_OS_TYPE_MSDOS) {
+	 || header->os_type == LHA_OS_TYPE_MSDOS
+	 || header->os_type == LHA_OS_TYPE_OS2) {
 		is_allcaps = 1;
 
 		for (i = 0; i < data_len; ++i) {
