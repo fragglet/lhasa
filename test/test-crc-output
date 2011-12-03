@@ -93,7 +93,15 @@ test_archive lha_unix114i/lh0.lzh
 #test_archive lha_unix114i/lh7.lzh
 #test_archive lha_unix114i/subdir.lzh
 
-#test_archive lha_os2_208/example.lzh
+test_archive lha_os2_208/lh0.lzh
+#test_archive lha_os2_208/lh5.lzh
+test_archive lha_os2_208/lfn.lzh
+test_archive lha_os2_208/subdir.lzh
+test_archive lha_os2_208/lh1.lzh
+#test_archive lha_os2_208/h3_lh0.lzh     TODO - Level 3 decode
+#test_archive lha_os2_208/h3_lh5.lzh
+#test_archive lha_os2_208/h3_lfn.lzh
+#test_archive lha_os2_208/h3_subdir.lzh
 
 #test_archive pmarc2/pm0.pma
 #test_archive pmarc2/pm2.pma
