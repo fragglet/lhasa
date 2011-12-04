@@ -32,19 +32,28 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "bit_stream_reader.c"
 
+// Include tree decoder.
+
+typedef uint8_t TreeElement;
+#include "tree_decode.c"
+
 // Size of the ring buffer (in bytes) used to store past history
 // for copies.
 
-#define RING_BUFFER_SIZE    8192
-
-// Upper bit is set in a node value to indicate a leaf.
-
-#define TREE_NODE_LEAF      0x80
+#define RING_BUFFER_SIZE      8192
 
 // Maximum number of bytes that might be placed in the output buffer
 // from a single call to lha_pm2_decoder_read (largest copy size).
 
-#define OUTPUT_BUFFER_SIZE  256
+#define OUTPUT_BUFFER_SIZE    256
+
+// Number of tree elements in the code tree.
+
+#define CODE_TREE_ELEMENTS    65
+
+// Number of tree elements in the offset tree.
+
+#define OFFSET_TREE_ELEMENTS  17
 
 typedef enum
 {
@@ -93,7 +102,7 @@ typedef struct
 	// code_tree[n] and code_tree[n + 1].  code_tree[0] is the
 	// root node.
 
-	uint8_t code_tree[65];
+	TreeElement code_tree[CODE_TREE_ELEMENTS];
 
 	// If zero, we don't need an offset tree:
 
@@ -102,32 +111,9 @@ typedef struct
 	// Array representing huffman tree used to look up offsets.
 	// Same format as code_tree[].
 
-	uint8_t offset_tree[17];
+	TreeElement offset_tree[OFFSET_TREE_ELEMENTS];
 
 } LHAPM2Decoder;
-
-// Structure used to hold data needed to build the tree.
-
-typedef struct
-{
-	// The tree data and its size (must not be exceeded)
-
-	uint8_t *tree;
-	unsigned int tree_len;
-
-	// Counter used to allocate entries from the tree.
-	// Every time a new node is allocated, this increase by 2.
-
-	unsigned int tree_allocated;
-
-	// The next tree entry.
-	// As entries are allocated sequentially, the range from
-	// next_entry..tree_allocated-1 constitutes the indices into
-	// the tree that are available to be filled in. By the
-	// end of the tree build, next_entry should = tree_allocated.
-
-	unsigned int next_entry;
-} TreeBuildData;
 
 typedef struct
 {
@@ -289,160 +275,11 @@ static int lha_pm2_decoder_init(void *data, LHADecoderCallback callback,
 
 	// Initialize the lookup trees to a known state.
 
-	memset(&decoder->code_tree, TREE_NODE_LEAF,
-	       sizeof(decoder->code_tree));
-	memset(&decoder->offset_tree, TREE_NODE_LEAF,
-	       sizeof(decoder->offset_tree));
+	init_tree(decoder->code_tree, CODE_TREE_ELEMENTS);
+	init_tree(decoder->offset_tree, OFFSET_TREE_ELEMENTS);
 
 	return 1;
 }
-
-// "Expand" the list of queue entries. This generates a new child
-// node at each of the entries currently in the queue, adding the
-// children of those nodes into the queue to replace them.
-// The effect of this is to add an extra level to the tree, and
-// to increase the tree depth of the indices in the queue.
-
-static void expand_queue(TreeBuildData *build)
-{
-	unsigned int end_offset;
-	unsigned int new_nodes;
-
-	// Sanity check that there is enough space in the tree for
-	// all the new nodes.
-
-	new_nodes = (build->tree_allocated - build->next_entry) * 2;
-
-	if (build->tree_allocated + new_nodes > build->tree_len) {
-		return;
-	}
-
-	// Go through all entries currently in the allocated range, and
-	// allocate a subnode for each.
-
-	end_offset = build->tree_allocated;
-
-	while (build->next_entry < end_offset) {
-		build->tree[build->next_entry] = build->tree_allocated;
-		build->tree_allocated += 2;
-		++build->next_entry;
-	}
-}
-
-// Read the next entry from the queue of entries waiting to be used.
-
-static unsigned int read_next_entry(TreeBuildData *build)
-{
-	unsigned int result;
-
-	// Sanity check.
-
-	if (build->next_entry >= build->tree_allocated) {
-		return 0;
-	}
-
-	result = build->next_entry;
-	++build->next_entry;
-
-	return result;
-}
-
-// Add all codes to the tree that have the specified length.
-// Returns non-zero if there are any entries in code_lengths[] still
-// waiting to be added to the tree.
-
-static int add_codes_with_length(TreeBuildData *build,
-                                 uint8_t *code_lengths,
-                                 unsigned int num_code_lengths,
-                                 unsigned int code_len)
-{
-	unsigned int i;
-	unsigned int node;
-	int codes_remaining;
-
-	codes_remaining = 0;
-
-	for (i = 0; i < num_code_lengths; ++i) {
-
-		// Does this code belong at this depth in the tree?
-
-		if (code_lengths[i] == code_len) {
-			node = read_next_entry(build);
-
-			build->tree[node] = (uint8_t) i | TREE_NODE_LEAF;
-		}
-
-		// More work to be done after this pass?
-
-		else if (code_lengths[i] > code_len) {
-			codes_remaining = 1;
-		}
-	}
-
-	return codes_remaining;
-}
-
-// Build a tree, given the specified array of codes indicating the
-// required depth within the tree at which each code should be
-// located.
-
-static void build_tree(uint8_t *tree, size_t tree_len,
-                       uint8_t *code_lengths, unsigned int num_code_lengths)
-{
-	TreeBuildData build;
-	unsigned int code_len;
-
-	build.tree = tree;
-	build.tree_len = tree_len;
-
-	// Start with a single entry in the queue - the root node
-	// pointer.
-
-	build.next_entry = 0;
-
-	// We always have the root ...
-
-	build.tree_allocated = 1;
-
-	// Iterate over each possible code length.
-	// Note: code_len == 0 is deliberately skipped over, as 0
-	// indicates "not used".
-
-	code_len = 0;
-
-	do {
-		// Advance to the next code length by allocating extra
-		// nodes to the tree - the slots waiting in the queue
-		// will now be one level deeper in the tree (and the
-		// codes 1 bit longer).
-
-		expand_queue(&build);
-		++code_len;
-
-		// Add all codes that have this length.
-
-	} while (add_codes_with_length(&build, code_lengths,
-		                       num_code_lengths, code_len));
-}
-
-/*
-static void display_tree(uint8_t *tree, unsigned int node, int offset)
-{
-	unsigned int i;
-
-	if (node & TREE_NODE_LEAF) {
-		for (i = 0; i < offset; ++i) putchar(' ');
-		printf("leaf %i\n", node & ~TREE_NODE_LEAF);
-	} else {
-		for (i = 0; i < offset; ++i) putchar(' ');
-		printf("0 ->\n");
-		display_tree(tree, tree[node], offset + 4);
-		for (i = 0; i < offset; ++i) putchar(' ');
-		printf("1 ->\n");
-		display_tree(tree, tree[node + 1], offset + 4);
-	}
-}
-*/
 
 // Read the list of code lengths to use for the code tree and construct
 // the code_tree structure.
@@ -475,8 +312,7 @@ static int read_code_tree(LHAPM2Decoder *decoder)
 	// Minimum length of zero means a tree containing a single code.
 
 	if (min_code_length == 0) {
-		decoder->code_tree[0]
-		  = (uint8_t) (TREE_NODE_LEAF | (num_codes - 1));
+		set_tree_single(decoder->code_tree, num_codes - 1);
 		return 1;
 	}
 
@@ -559,8 +395,7 @@ static int read_offset_tree(LHAPM2Decoder *decoder,
 	// If there was a single code, this is a single node tree.
 
 	if (num_codes == 1) {
-		decoder->offset_tree[0]
-		  = (uint8_t) (single_offset | TREE_NODE_LEAF);
+		set_tree_single(decoder->offset_tree, single_offset);
 		return 1;
 	}
 
@@ -626,35 +461,6 @@ static void rebuild_tree(LHAPM2Decoder *decoder)
 			decoder->tree_rebuild_remaining = 4096;
 			break;
 	}
-}
-
-// Read bits from the input stream, traversing the specified tree
-// from the root node until we reach a leaf.  The leaf value is
-// returned.
-
-static int read_from_tree(LHAPM2Decoder *decoder, uint8_t *tree)
-{
-	uint8_t code;
-	int bit;
-
-	// Start from root.
-
-	code = tree[0];
-
-	while ((code & TREE_NODE_LEAF) == 0) {
-
-		bit = read_bit(&decoder->bit_stream_reader);
-
-		if (bit < 0) {
-			return -1;
-		}
-
-		code = tree[code + (unsigned int) bit];
-	}
-
-	// Mask off leaf bit to get the plain code.
-
-	return (int) (code & ~TREE_NODE_LEAF);
 }
 
 static void output_byte(LHAPM2Decoder *decoder, uint8_t *buf,
@@ -760,7 +566,8 @@ static int history_get_offset(LHAPM2Decoder *decoder, unsigned int code)
 
 	else if (code < 20) {
 
-		val = read_from_tree(decoder, decoder->offset_tree);
+		val = read_from_tree(&decoder->bit_stream_reader,
+		                     decoder->offset_tree);
 
 		if (val < 0) {
 			return -1;
@@ -848,7 +655,7 @@ static size_t lha_pm2_decoder_read(void *data, uint8_t *buf)
 
 	result = 0;
 
-	code = read_from_tree(decoder, decoder->code_tree);
+	code = read_from_tree(&decoder->bit_stream_reader, decoder->code_tree);
 
 	if (code < 0) {
 		return 0;

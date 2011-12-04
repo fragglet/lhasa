@@ -8,7 +8,8 @@ HEADER_FILES =                     \
 
 EXTRA_DIST =                                            \
 	bit_stream_reader.c                             \
-	lh_new_decoder.c
+	lh_new_decoder.c                                \
+	tree_decode.c
 
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
