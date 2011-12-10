@@ -28,11 +28,18 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // Maximum length of the self-extractor header.
 // If we don't find an LHA file header after this many bytes, give up.
 
-#define MAX_SFX_HEADER_LEN 4096
+#define MAX_SFX_HEADER_LEN 8192
 
 // Size of the lead-in buffer used to skip the self-extractor.
 
-#define LEADIN_BUFFER_LEN 16
+#define LEADIN_BUFFER_LEN 24
+
+// Magic string to detect an Amiga LhASFX self-extracting file.
+// This type of self-extractor is special because the program itself
+// contains a mini-LHA file that must be skipped over to get to
+// the real one.
+
+#define AMIGA_LHASFX_ID "LhASFX V1.2,"
 
 typedef enum {
 	LHA_INPUT_STREAM_INIT,
@@ -133,9 +140,11 @@ static int skip_sfx(LHAInputStream *stream)
 {
 	size_t filepos;
 	unsigned int i;
+	int skip_files;
 	int read;
 
 	filepos = 0;
+	skip_files = 0;
 
 	while (filepos < MAX_SFX_HEADER_LEN) {
 
@@ -152,10 +161,21 @@ static int skip_sfx(LHAInputStream *stream)
 
 		// Check the lead-in buffer for a file header.
 
-		for (i = 0; i + 7 < stream->leadin_len; ++i) {
+		for (i = 0; i + 12 < stream->leadin_len; ++i) {
 			if (file_header_match(stream->leadin + i)) {
-				empty_leadin(stream, i);
-				return 1;
+				if (skip_files == 0) {
+					empty_leadin(stream, i);
+					return 1;
+				} else {
+					--skip_files;
+				}
+			}
+
+			// Detect Amiga self-extractor.
+
+			if (!memcmp(stream->leadin + i, AMIGA_LHASFX_ID,
+			            strlen(AMIGA_LHASFX_ID))) {
+				skip_files = 1;
 			}
 		}
 
