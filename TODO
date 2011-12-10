@@ -16,6 +16,12 @@ Library:
 Command line tool:
  * Allow specific files to be extracted, including wildcards.
  * Create/update/modify archives.
+ * Options: 
+   - q (quiet mode)
+   - n (not executable)
+   - f (don't prompt for overwrite)
+   - w (extract directory)
+   - i (ignore directory path)
 
 Testing:
  * Valgrind.
