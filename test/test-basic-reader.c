@@ -126,8 +126,9 @@ static void test_read_sfx(void)
 	check_directory_for("archives/larc333/sfx.com",       "gpl-2.gz");
 	check_directory_for("archives/lha213/sfx.exe",        "gpl-2");
 	check_directory_for("archives/lha255e/sfx.exe",       "gpl-2");
-	// TODO: check_directory_for("archives/lha_amiga_122/sfx.run", "");
+	check_directory_for("archives/lha_amiga_122/sfx.run", "gpl-2");
 	check_directory_for("archives/lharc113/sfx.com",      "gpl-2");
+	check_directory_for("archives/lharc_atari_313a/sfx.tos", "gpl2");
 	check_directory_for("archives/pmarc2/sfx.com",        "gpl-2.");
 }
 
@@ -216,22 +217,22 @@ static void test_decode(void)
 	check_decode_for("archives/larc333/lz5.lzs");
 
 	check_decode_for("archives/lha213/lh0.lzh");
-	//check_decode_for("archives/lha213/lh5.lzh");
+	check_decode_for("archives/lha213/lh5.lzh");
 
 	check_decode_for("archives/lha255e/lh0.lzh");
-	//check_decode_for("archives/lha255e/lh5.lzh");
+	check_decode_for("archives/lha255e/lh5.lzh");
 
-	//check_decode_for("archives/lha_amiga_122/lh0.lzh");
-	//check_decode_for("archives/lha_amiga_122/lh1.lzh");
-	//check_decode_for("archives/lha_amiga_122/lh4.lzh");
-	//check_decode_for("archives/lha_amiga_122/lh5.lzh");
-	//check_decode_for("archives/lha_amiga_212/lh1.lzh");
-	//check_decode_for("archives/lha_amiga_212/lh6.lzh");
+	check_decode_for("archives/lha_amiga_122/lh0.lzh");
+	check_decode_for("archives/lha_amiga_122/lh1.lzh");
+	check_decode_for("archives/lha_amiga_122/lh4.lzh");
+	check_decode_for("archives/lha_amiga_122/lh5.lzh");
+	check_decode_for("archives/lha_amiga_212/lh1.lzh");
+	check_decode_for("archives/lha_amiga_212/lh6.lzh");
 
 	check_decode_for("archives/lha_unix114i/lh0.lzh");
-	//check_decode_for("archives/lha_unix114i/lh5.lzh");
-	//check_decode_for("archives/lha_unix114i/lh6.lzh");
-	//check_decode_for("archives/lha_unix114i/lh7.lzh");
+	check_decode_for("archives/lha_unix114i/lh5.lzh");
+	check_decode_for("archives/lha_unix114i/lh6.lzh");
+	check_decode_for("archives/lha_unix114i/lh7.lzh");
 
 	check_decode_for("archives/lharc113/lh0.lzh");
 	check_decode_for("archives/lharc113/lh1.lzh");
