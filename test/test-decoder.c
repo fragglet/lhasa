@@ -55,6 +55,9 @@ static DecoderTestData files[] = {
 	// LHA:
 	{ "compressed/lh0.bin", "-lh0-", 18092, 0x4e46f4a1 },
 	{ "compressed/lh1.bin", "-lh1-", 18092, 0x4e46f4a1 },
+	{ "compressed/lh5.bin", "-lh5-", 18092, 0x4e46f4a1 },
+	{ "compressed/lh6.bin", "-lh6-", 18092, 0x4e46f4a1 },
+	{ "compressed/lh7.bin", "-lh7-", 18092, 0x4e46f4a1 },
 
 	// LArc:
 	{ "compressed/lh0.bin", "-lz4-", 18092, 0x4e46f4a1 },
