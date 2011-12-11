@@ -82,9 +82,12 @@ for filename in sorted(sys.argv[1:]):
 	results = gcov(filename)
 
 	if len(results) > 0:
-		format_output(filename, results[filename])
+		if filename in results:
+			format_output(filename, results[filename])
+		else:
+			format_output(filename, ("", "", "", ""))
 
-	for subfile in results.keys():
+	for subfile in sorted(results.keys()):
 		if subfile.endswith(".h"):
 			continue
 
