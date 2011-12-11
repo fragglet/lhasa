@@ -126,6 +126,19 @@ test_archive lha_amiga_212/level1.lzh
 test_archive lha_amiga_212/lh1.lzh
 test_archive lha_amiga_212/lh6.lzh
 
+test_archive lharc_atari_313a/lh0.lzh
+test_archive lharc_atari_313a/lh5.lzh
+test_archive lharc_atari_313a/lz5.lzh
+test_archive lharc_atari_313a/subdir.lzh
+test_archive lharc_atari_313a/sfx.tos
+test_archive lharc_atari_313a/shorter.lzh
+test_archive lharc_atari_313a/h1_lh5.lzh
+test_archive lharc_atari_313a/h1_lz5.lzh
+test_archive lharc_atari_313a/h1_subdir.lzh
+#test_archive lharc_atari_313a/h2_lh5.lzh        TODO - Level 2 decode
+#test_archive lharc_atari_313a/h2_lz5.lzh
+#test_archive lharc_atari_313a/h2_subdir.lzh
+
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs
 

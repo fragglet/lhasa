@@ -36,6 +36,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_OS_TYPE_UNIX               'U'  /* Generic Unix */
 #define LHA_OS_TYPE_OS2                '2'  /* IBM OS/2 */
 #define LHA_OS_TYPE_MACOS              'm'  /* Apple classic Mac OS */
+#define LHA_OS_TYPE_ATARI              'a'  /* Atari ST */
 
 // Obscure:
 

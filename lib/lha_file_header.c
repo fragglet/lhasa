@@ -106,6 +106,7 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 
 	if (header->os_type == LHA_OS_TYPE_UNKNOWN
 	 || header->os_type == LHA_OS_TYPE_MSDOS
+	 || header->os_type == LHA_OS_TYPE_ATARI
 	 || header->os_type == LHA_OS_TYPE_OS2) {
 		is_allcaps = 1;
 
