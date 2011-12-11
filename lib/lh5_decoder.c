@@ -25,13 +25,17 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // the older -lh1-. -lh4- seems to be identical to -lh5-.
 //
 
-// All function names and types will contain the algorithm name:
-
-#define TRANSFORM_NAME(x) TRANSFORM_NAME2(lh5, x)
-
 // 16 KiB history ring buffer:
 
-#define RING_BUFFER_SIZE 16384
+#define HISTORY_BITS    14   /* 2^14 = 16384 */
+
+// Number of bits to encode HISTORY_BITS:
+
+#define OFFSET_BITS     4
+
+// Name of the variable for the encoder:
+
+#define DECODER_NAME lh5_decoder
 
 // The actual algorithm code is contained in lh_new_decoder.c, which
 // acts as a template for -lh4-, -lh5-, -lh6- and -lh7-.
