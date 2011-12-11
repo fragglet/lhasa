@@ -23,6 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <assert.h>
 
 #include "lha_basic_reader.h"
+#include "crc32.h"
 
 static LHABasicReader *reader_for_file(char *filename, LHAInputStream **stream)
 {
