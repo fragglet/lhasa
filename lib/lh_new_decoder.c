@@ -556,6 +556,6 @@ LHADecoderType DECODER_NAME = {
 	lha_lh_new_read,
 	sizeof(LHANewDecoder),
 	OUTPUT_BUFFER_SIZE,
-	RING_BUFFER_SIZE
+	RING_BUFFER_SIZE / 2
 };
 

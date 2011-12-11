@@ -78,23 +78,23 @@ test_archive lharc113/subdir.lzh
 test_archive lharc113/long.lzh
 
 test_archive lha213/lh0.lzh
-#test_archive lha213/lh5.lzh
-#test_archive lha213/sfx.exe
-#test_archive lha213/subdir.lzh
+test_archive lha213/lh5.lzh
+test_archive lha213/sfx.exe
+test_archive lha213/subdir.lzh
 
 test_archive lha255e/lh0.lzh
-#test_archive lha255e/lh5.lzh
-#test_archive lha255e/sfx.exe
-#test_archive lha255e/subdir.lzh
+test_archive lha255e/lh5.lzh
+test_archive lha255e/sfx.exe
+test_archive lha255e/subdir.lzh
 
 test_archive lha_unix114i/lh0.lzh
-#test_archive lha_unix114i/lh5.lzh
+test_archive lha_unix114i/lh5.lzh
 #test_archive lha_unix114i/lh6.lzh
 #test_archive lha_unix114i/lh7.lzh
 #test_archive lha_unix114i/subdir.lzh
 
 test_archive lha_os2_208/lh0.lzh
-#test_archive lha_os2_208/lh5.lzh
+test_archive lha_os2_208/lh5.lzh
 test_archive lha_os2_208/lfn.lzh
 test_archive lha_os2_208/subdir.lzh
 test_archive lha_os2_208/lh1.lzh
@@ -116,14 +116,14 @@ test_archive lha_amiga_122/lh0.lzh
 test_archive lha_amiga_122/lh1.lzh
 #test_archive lha_amiga_122/lh4_long.lzh
 #test_archive lha_amiga_122/lh4.lzh
-#test_archive lha_amiga_122/lh5.lzh
+test_archive lha_amiga_122/lh5.lzh
 #test_archive lha_amiga_122/subdir.lzh
 #test_archive lha_amiga_122/sfx.run
 
 #test_archive lha_amiga_212/level0.lzh
 #test_archive lha_amiga_212/level1.lzh
 #test_archive lha_amiga_212/level2.lzh   TODO - Level 2 decode
-#test_archive lha_amiga_212/lh1.lzh
+test_archive lha_amiga_212/lh1.lzh
 #test_archive lha_amiga_212/lh6.lzh
 
 test_archive generated/lzs/lzs.lzs
