@@ -30,6 +30,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lh1_decoder.h"
 #include "lh5_decoder.h"
 #include "lh6_decoder.h"
+#include "lh7_decoder.h"
 #include "pm2_decoder.h"
 
 static struct {
@@ -44,6 +45,7 @@ static struct {
 	{ "-lh4-", &lha_lh5_decoder },
 	{ "-lh5-", &lha_lh5_decoder },
 	{ "-lh6-", &lha_lh6_decoder },
+	{ "-lh7-", &lha_lh7_decoder },
 	{ "-pm0-", &lha_null_decoder },
 	{ "-pm2-", &lha_pm2_decoder },
 };
