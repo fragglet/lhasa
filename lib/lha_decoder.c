@@ -28,6 +28,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lz5_decoder.h"
 #include "lzs_decoder.h"
 #include "lh1_decoder.h"
+#include "lh5_decoder.h"
 #include "pm2_decoder.h"
 
 static struct {
@@ -39,6 +40,7 @@ static struct {
 	{ "-lzs-", &lha_lzs_decoder },
 	{ "-lh0-", &lha_null_decoder },
 	{ "-lh1-", &lha_lh1_decoder },
+	{ "-lh5-", &lha_lh5_decoder },
 	{ "-pm0-", &lha_null_decoder },
 	{ "-pm2-", &lha_pm2_decoder },
 };

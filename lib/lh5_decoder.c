@@ -35,7 +35,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Name of the variable for the encoder:
 
-#define DECODER_NAME lh5_decoder
+#define DECODER_NAME lha_lh5_decoder
 
 // The actual algorithm code is contained in lh_new_decoder.c, which
 // acts as a template for -lh4-, -lh5-, -lh6- and -lh7-.
