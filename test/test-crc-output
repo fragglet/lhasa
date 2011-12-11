@@ -89,7 +89,7 @@ test_archive lha255e/subdir.lzh
 
 test_archive lha_unix114i/lh0.lzh
 test_archive lha_unix114i/lh5.lzh
-#test_archive lha_unix114i/lh6.lzh
+test_archive lha_unix114i/lh6.lzh
 #test_archive lha_unix114i/lh7.lzh
 #test_archive lha_unix114i/subdir.lzh
 
@@ -124,7 +124,7 @@ test_archive lha_amiga_212/level0.lzh
 test_archive lha_amiga_212/level1.lzh
 #test_archive lha_amiga_212/level2.lzh   TODO - Level 2 decode
 test_archive lha_amiga_212/lh1.lzh
-#test_archive lha_amiga_212/lh6.lzh
+test_archive lha_amiga_212/lh6.lzh
 
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs
