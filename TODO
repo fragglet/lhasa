@@ -1,6 +1,5 @@
 Library:
  * Better error handling.
- * -lh4-, -lh5-, -lh6-, -lh7- decompress.
  * Level 2, 3 header parsing.
  * Parse broken Amiga LHA 1.22 archives.
  * Extract:
@@ -16,7 +15,7 @@ Library:
 Command line tool:
  * Allow specific files to be extracted, including wildcards.
  * Create/update/modify archives.
- * Options: 
+ * Options:
    - q (quiet mode)
    - n (not executable)
    - f (don't prompt for overwrite)
