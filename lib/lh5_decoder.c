@@ -37,6 +37,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define DECODER_NAME lha_lh5_decoder
 
+// Generate a second decoder for lh4 that just has a different
+// block size.
+
+#define DECODER2_NAME lha_lh4_decoder
+
 // The actual algorithm code is contained in lh_new_decoder.c, which
 // acts as a template for -lh4-, -lh5-, -lh6- and -lh7-.
 

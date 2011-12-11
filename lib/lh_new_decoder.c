@@ -559,3 +559,16 @@ LHADecoderType DECODER_NAME = {
 	RING_BUFFER_SIZE / 2
 };
 
+// This is a hack for -lh4-:
+
+#ifdef DECODER2_NAME
+LHADecoderType DECODER2_NAME = {
+	lha_lh_new_init,
+	NULL,
+	lha_lh_new_read,
+	sizeof(LHANewDecoder),
+	OUTPUT_BUFFER_SIZE,
+	RING_BUFFER_SIZE / 4
+};
+#endif
+

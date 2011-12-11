@@ -42,7 +42,7 @@ static struct {
 	{ "-lzs-", &lha_lzs_decoder },
 	{ "-lh0-", &lha_null_decoder },
 	{ "-lh1-", &lha_lh1_decoder },
-	{ "-lh4-", &lha_lh5_decoder },
+	{ "-lh4-", &lha_lh4_decoder },
 	{ "-lh5-", &lha_lh5_decoder },
 	{ "-lh6-", &lha_lh6_decoder },
 	{ "-lh7-", &lha_lh7_decoder },

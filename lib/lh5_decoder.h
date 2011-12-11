@@ -23,6 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_decoder.h"
 
+extern LHADecoderType lha_lh4_decoder;
 extern LHADecoderType lha_lh5_decoder;
 
 #endif /* #ifndef LHASA_LHA_LH5_DECODER_H */
