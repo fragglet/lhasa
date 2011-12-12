@@ -4,6 +4,8 @@ Archives generated using the Unix LHA tool, from the Debian package
 lh0.lzh      - Archive containing uncompressed (stored) file.
 lh5.lzh      - Archive containing compressed file (-lh5-: -o5 option)
 lh6.lzh      - Archive containing compressed file (-lh6-: -o6 option)
+lh6_long.lzh - Large -lh6- compressed file.
 lh7.lzh      - Archive containing compressed file (-lh7-: -o7 option)
+lh7_long.lzh - Large -lh7- compressed file.
 subdir.lzh   - Archive containing subdirectories.
 
