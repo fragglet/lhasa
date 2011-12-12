@@ -70,7 +70,7 @@ static void init_tree(TreeElement *tree, size_t tree_len)
 
 // Set tree to always decode to a single code.
 
-static void set_tree_single(TreeElement *tree, uint8_t code)
+static void set_tree_single(TreeElement *tree, TreeElement code)
 {
 	tree[0] = (TreeElement) code | TREE_NODE_LEAF;
 }
