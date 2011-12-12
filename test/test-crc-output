@@ -79,7 +79,7 @@ test_archive lharc113/long.lzh
 
 test_archive lha213/lh0.lzh
 test_archive lha213/lh5.lzh
-test_archive lha213/lh5_long.lzh
+#test_archive lha213/lh5_long.lzh
 test_archive lha213/sfx.exe
 test_archive lha213/subdir.lzh
 
