@@ -85,6 +85,7 @@ test_archive lharc113/long.lzh
 
 test_archive lha213/lh0.lzh
 test_archive lha213/lh5.lzh
+test_archive lha213/lh5_long.lzh
 test_archive lha213/sfx.exe
 test_archive lha213/subdir.lzh
 
@@ -96,7 +97,9 @@ test_archive lha255e/subdir.lzh
 test_archive lha_unix114i/lh0.lzh
 test_archive lha_unix114i/lh5.lzh
 test_archive lha_unix114i/lh6.lzh
+test_archive lha_unix114i/lh6_long.lzh
 test_archive lha_unix114i/lh7.lzh
+test_archive lha_unix114i/lh7_long.lzh
 test_archive lha_unix114i/subdir.lzh
 
 test_archive lha_os2_208/lh0.lzh
