@@ -234,19 +234,16 @@ static int read_skip_count(LHANewDecoder *decoder, int skiprange)
 
 	// skiprange=0 => 1 code.
 
-	if (skiprange == 0)
-	{
+	if (skiprange == 0) {
 		result = 1;
 	}
 
 	// skiprange=1 => 3-18 codes.
 
-	else if (skiprange == 1)
-	{
+	else if (skiprange == 1) {
 		result = read_bits(&decoder->bit_stream_reader, 4);
 
-		if (result < 0)
-		{
+		if (result < 0) {
 			return -1;
 		}
 
@@ -255,12 +252,10 @@ static int read_skip_count(LHANewDecoder *decoder, int skiprange)
 
 	// skiprange=2 => 20+ codes.
 
-	else
-	{
+	else {
 		result = read_bits(&decoder->bit_stream_reader, 9);
 
-		if (result < 0)
-		{
+		if (result < 0) {
 			return -1;
 		}
 

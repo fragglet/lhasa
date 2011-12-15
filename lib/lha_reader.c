@@ -178,7 +178,7 @@ static int end_of_top_dir(LHAReader *reader)
 
 		case LHA_READER_DIR_END_OF_DIR:
 			return input->path == NULL
-			     || strncmp(input->path,
+			    || strncmp(input->path,
 			               reader->dir_stack->path,
 			               strlen(reader->dir_stack->path)) != 0;
 	}

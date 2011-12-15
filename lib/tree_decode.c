@@ -200,7 +200,7 @@ static void build_tree(TreeElement *tree, size_t tree_len,
 		// Add all codes that have this length.
 
 	} while (add_codes_with_length(&build, code_lengths,
-		                       num_code_lengths, code_len));
+	                               num_code_lengths, code_len));
 }
 
 /*
