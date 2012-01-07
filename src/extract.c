@@ -18,6 +18,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+
 #include "lha_reader.h"
 
 // Maximum number of dots in progress output:
@@ -102,6 +106,83 @@ static void test_archived_file_crc(LHAReader *reader,
 	}
 }
 
+// Check that the specified directory exists, and create it if it
+// does not.
+
+static int check_parent_directory(char *path)
+{
+	struct stat fs;
+
+	if (stat(path, &fs) == 0) {
+		// Check it's a directory:
+
+		if ((fs.st_mode & S_IFDIR) == 0) {
+			fprintf(stderr, "Parent path %s is not a directory!\n",
+			        path);
+			return 0;
+		}
+	} else if (errno == ENOENT) {
+		// Create the missing directory:
+
+		if (mkdir(path, 0755) != 0) {
+			fprintf(stderr,
+			        "Failed to create parent directory %s: %s\n",
+			        path, strerror(errno));
+			return 0;
+		}
+	} else {
+		fprintf(stderr, "Failed to stat %s: %s\n",
+		        path, strerror(errno));
+		return 0;
+	}
+
+	return 1;
+}
+
+// Given a directory, ensure that it and all its parent directories
+// exist.
+
+static int make_parent_directories(char *path)
+{
+	int result;
+	char *p;
+
+	result = 1;
+	path = strdup(path);
+
+	// Iterate through the string, finding each path separator. At
+	// each place, temporarily chop off the end of the path to get
+	// each parent directory in turn.
+
+	p = path;
+
+	do {
+		p = strchr(p, '/');
+
+		// Terminate string here.
+
+		if (p != NULL) {
+			*p = '\0';
+		}
+
+		if (!check_parent_directory(path)) {
+			result = 0;
+			break;
+		}
+
+		// Restore path separator and advance to next parent dir.
+
+		if (p != NULL) {
+			*p = '/';
+			++p;
+		}
+	} while (p != NULL);
+
+	free(path);
+
+	return result;
+}
+
 // Extract an archived file.
 
 static void extract_archived_file(LHAReader *reader,
@@ -109,6 +190,12 @@ static void extract_archived_file(LHAReader *reader,
 {
 	ProgressCallbackData progress;
 	int success;
+
+	// Create parent directories for file:
+
+	if (header->path != NULL && !make_parent_directories(header->path)) {
+		return;
+	}
 
 	progress.invoked = 0;
 	progress.operation = "Melting  :";
