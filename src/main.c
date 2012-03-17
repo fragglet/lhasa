@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 
+#include "filter.h"
 #include "extract.h"
 #include "list.h"
 
@@ -49,11 +50,13 @@ static void help_page(char *progname)
 	exit(-1);
 }
 
-static void do_command(ProgramMode mode, char *filename)
+static void do_command(ProgramMode mode, char *filename,
+                       char **filters, unsigned int num_filters)
 {
 	FILE *fstream;
 	LHAInputStream *stream;
 	LHAReader *reader;
+	LHAFilter filter;
 
 	fstream = fopen(filename, "rb");
 
@@ -65,22 +68,23 @@ static void do_command(ProgramMode mode, char *filename)
 
 	stream = lha_input_stream_from_FILE(fstream);
 	reader = lha_reader_new(stream);
+	lha_filter_init(&filter, reader, filters, num_filters);
 
 	switch (mode) {
 		case MODE_LIST:
-			list_file_basic(reader, fstream);
+			list_file_basic(&filter, fstream);
 			break;
 
 		case MODE_LIST_VERBOSE:
-			list_file_verbose(reader, fstream);
+			list_file_verbose(&filter, fstream);
 			break;
 
 		case MODE_CRC_CHECK:
-			test_file_crc(reader);
+			test_file_crc(&filter);
 			break;
 
 		case MODE_EXTRACT:
-			extract_archive(reader);
+			extract_archive(&filter);
 			break;
 
 		case MODE_UNKNOWN:
@@ -115,7 +119,7 @@ int main(int argc, char *argv[])
 		help_page(argv[0]);
 	}
 
-	do_command(mode, argv[2]);
+	do_command(mode, argv[2], argv + 3, argc - 3);
 
 	return 0;
 }

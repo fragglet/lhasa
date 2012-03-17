@@ -4,6 +4,7 @@ check_PROGRAMS=test-lha
 
 SOURCES =                                 \
 	main.c                            \
+	filter.c      filter.h            \
 	list.c        list.h              \
 	extract.c     extract.h
 

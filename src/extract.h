@@ -21,8 +21,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_EXTRACT_H
 #define LHASA_EXTRACT_H
 
-void test_file_crc(LHAReader *reader);
-void extract_archive(LHAReader *reader);
+void test_file_crc(LHAFilter *filter);
+void extract_archive(LHAFilter *filter);
 
 #endif /* #ifndef LHASA_EXTRACT_H */
 

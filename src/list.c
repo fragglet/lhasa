@@ -28,6 +28,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/stat.h>
 
 #include "lha_reader.h"
+#include "filter.h"
 
 static float compression_percent(size_t compressed, size_t uncompressed)
 {
@@ -417,7 +418,7 @@ static unsigned int read_file_timestamp(FILE *fstream)
 // List contents of file, using the specified columns.
 // Different columns are provided for basic and verbose modes.
 
-static void list_file_contents(LHAReader *reader, FILE *fstream,
+static void list_file_contents(LHAFilter *filter, FILE *fstream,
                                ListColumn **columns)
 {
 	FileStatistics stats;
@@ -433,7 +434,7 @@ static void list_file_contents(LHAReader *reader, FILE *fstream,
 	for (;;) {
 		LHAFileHeader *header;
 
-		header = lha_reader_next_file(reader);
+		header = lha_filter_next_file(filter);
 
 		if (header == NULL) {
 			break;
@@ -462,9 +463,9 @@ static ListColumn *normal_column_headers[] = {
 
 // lha -l command.
 
-void list_file_basic(LHAReader *reader, FILE *fstream)
+void list_file_basic(LHAFilter *filter, FILE *fstream)
 {
-	list_file_contents(reader, fstream, normal_column_headers);
+	list_file_contents(filter, fstream, normal_column_headers);
 }
 
 static ListColumn *verbose_column_headers[] = {
@@ -481,8 +482,8 @@ static ListColumn *verbose_column_headers[] = {
 
 // lha -v command.
 
-void list_file_verbose(LHAReader *reader, FILE *fstream)
+void list_file_verbose(LHAFilter *filter, FILE *fstream)
 {
-	list_file_contents(reader, fstream, verbose_column_headers);
+	list_file_contents(filter, fstream, verbose_column_headers);
 }
 

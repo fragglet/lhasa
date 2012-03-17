@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <errno.h>
 #include <sys/stat.h>
 
-#include "lha_reader.h"
+#include "filter.h"
 
 // Maximum number of dots in progress output:
 
@@ -222,35 +222,35 @@ static void extract_archived_file(LHAReader *reader,
 
 // lha -t command.
 
-void test_file_crc(LHAReader *reader)
+void test_file_crc(LHAFilter *filter)
 {
 	for (;;) {
 		LHAFileHeader *header;
 
-		header = lha_reader_next_file(reader);
+		header = lha_filter_next_file(filter);
 
 		if (header == NULL) {
 			break;
 		}
 
-		test_archived_file_crc(reader, header);
+		test_archived_file_crc(filter->reader, header);
 	}
 }
 
 // lha -e / -x
 
-void extract_archive(LHAReader *reader)
+void extract_archive(LHAFilter *filter)
 {
 	for (;;) {
 		LHAFileHeader *header;
 
-		header = lha_reader_next_file(reader);
+		header = lha_filter_next_file(filter);
 
 		if (header == NULL) {
 			break;
 		}
 
-		extract_archived_file(reader, header);
+		extract_archived_file(filter->reader, header);
 	}
 }
 

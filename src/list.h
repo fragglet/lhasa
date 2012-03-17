@@ -21,8 +21,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_LIST_H
 #define LHASA_LIST_H
 
-void list_file_basic(LHAReader *reader, FILE *fstream);
-void list_file_verbose(LHAReader *reader, FILE *fstream);
+void list_file_basic(LHAFilter *filter, FILE *fstream);
+void list_file_verbose(LHAFilter *filter, FILE *fstream);
 
 #endif /* #ifndef LHASA_LIST_H */
 
