@@ -18,9 +18,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
+#include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "filter.h"
 
@@ -183,6 +186,104 @@ static int make_parent_directories(char *path)
 	return result;
 }
 
+// Prompt the user with a message, and return the first character of
+// the typed response.
+
+static char prompt_user(char *message)
+{
+	char result;
+	int c;
+
+	printf("%s", message);
+	fflush(stdout);
+
+	// Read characters until a newline is found, saving the first
+	// character entered.
+
+	result = 0;
+
+	do {
+		c = getchar();
+
+		if (c < 0) {
+			exit(-1);
+		}
+
+		if (result == 0) {
+			result = c;
+		}
+	} while (c != '\n');
+
+	return result;
+}
+
+static int confirm_file_overwrite(LHAFileHeader *header,
+                                  char *fullpath)
+{
+	char response;
+
+	for (;;) {
+		printf("%s ", fullpath);
+
+		response = prompt_user("OverWrite ?(Yes/[No]/All/Skip) ");
+
+		switch (tolower(response)) {
+			case 'y':
+				return 1;
+			case 'n':
+			case '\n':
+				return 0;
+			case 'a':
+				// TODO - overwrite all
+				return 1;
+			case 's':
+				// TODO - skip all
+				return 0;
+			default:
+				break;
+		}
+	}
+
+	return 0;
+}
+
+// Check the specified file header. If the file already exists, prompt
+// for whether it should be overwritten. Returns true if the file
+// should continue to be extracted.
+
+static int check_file_overwrite(LHAFileHeader *header)
+{
+	struct stat statbuf;
+	char *fullpath;
+	int result;
+
+	if (header->path != NULL) {
+		fullpath = malloc(strlen(header->path)
+		                  + strlen(header->filename) + 1);
+		strcpy(fullpath, header->path);
+		strcat(fullpath, header->filename);
+	} else {
+		fullpath = header->path;
+	}
+
+	if (stat(fullpath, &statbuf) == 0) {
+		// File already exists. Confirm overwrite.
+
+		result = confirm_file_overwrite(header, fullpath);
+	} else {
+		// TODO: Check errno, continue with extract when
+		// file not found; otherwise print an error.
+		fprintf(stderr, "check_file_overwrite: %i\n", errno);
+		result = 1;
+	}
+
+	if (header->path != NULL) {
+		free(fullpath);
+	}
+
+	return result;
+}
+
 // Extract an archived file.
 
 static void extract_archived_file(LHAReader *reader,
@@ -190,6 +291,11 @@ static void extract_archived_file(LHAReader *reader,
 {
 	ProgressCallbackData progress;
 	int success;
+
+	if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0
+	 && !check_file_overwrite(header)) {
+		return;
+	}
 
 	// Create parent directories for file:
 
