@@ -13,11 +13,10 @@ Library:
  * Conditional compile to remove POSIX dependency.  Add Windows build.
 
 Command line tool:
- * Allow specific files to be extracted, including wildcards.
  * Create/update/modify archives.
  * Options:
    - q (quiet mode)
-   - n (not executable)
+   - n (don't execute command)
    - f (don't prompt for overwrite)
    - w (extract directory)
    - i (ignore directory path)
