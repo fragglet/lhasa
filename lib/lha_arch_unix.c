@@ -1,0 +1,113 @@
+/*
+
+Copyright (c) 2012, Simon Howard
+
+Permission to use, copy, modify, and/or distribute this software
+for any purpose with or without fee is hereby granted, provided
+that the above copyright notice and this permission notice appear
+in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+ */
+
+//
+// Architecture-specific files for compilation on Unix.
+//
+
+#include "lha_arch.h"
+
+#if LHA_ARCH == LHA_ARCH_UNIX
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <utime.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+int lha_arch_mkdir(char *path, unsigned int unix_perms)
+{
+	return mkdir(path, unix_perms) == 0;
+}
+
+int lha_arch_chown(char *filename, int unix_uid, int unix_gid)
+{
+	return chown(filename, unix_uid, unix_gid) == 0;
+}
+
+int lha_arch_chmod(char *filename, int unix_perms)
+{
+	return chmod(filename, unix_perms) == 0;
+}
+
+int lha_arch_utime(char *filename, unsigned int timestamp)
+{
+	struct utimbuf times;
+
+	times.actime = (time_t) timestamp;
+	times.modtime = (time_t) timestamp;
+
+	return utime(filename, &times) == 0;
+}
+
+FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
+{
+	FILE *fstream;
+	int fileno;
+
+	// If we have file permissions, they must be set after the
+	// file is created and UID/GID have been set.  When open()ing
+	// the file, create it with minimal permissions granted only
+	// to the current user.
+
+	fileno = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0600);
+
+	if (fileno < 0) {
+		return NULL;
+	}
+
+	// Set owner and group.
+
+	if (unix_uid >= 0) {
+		if (fchown(fileno, unix_uid, unix_gid) != 0) {
+			close(fileno);
+			remove(filename);
+			return NULL;
+		}
+	}
+
+	// Set file permissions.
+	// File permissiosn must be set *after* owner and group have
+	// been set; otherwise, we might briefly be granting permissions
+	// to the wrong group.
+
+	if (unix_perms >= 0) {
+		if (fchmod(fileno, unix_perms) != 0) {
+			close(fileno);
+			remove(filename);
+			return NULL;
+		}
+	}
+
+	// Create stdc FILE handle.
+
+	fstream = fdopen(fileno, "wb");
+
+	if (fstream == NULL) {
+		close(fileno);
+		remove(filename);
+		return NULL;
+	}
+
+	return fstream;
+}
+
+#endif /* LHA_ARCH_UNIX */
+

@@ -22,14 +22,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <utime.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #include "crc16.h"
 
+#include "lha_arch.h"
 #include "lha_decoder.h"
 #include "lha_basic_reader.h"
 #include "lha_reader.h"
@@ -333,103 +328,68 @@ int lha_reader_check(LHAReader *reader,
 	    && do_decode(reader, NULL, callback, callback_data);
 }
 
-// Open file, setting Unix permissions
-// TODO: Make this compile-dependent so that we can compile only
-// using ANSI C.
-
-static FILE *open_output_file_unix(LHAReader *reader, char *filename)
-{
-	FILE *fstream;
-	int fileno;
-
-	// If we have file permissions, they must be set after the
-	// file is created and UID/GID have been set.  When open()ing
-	// the file, create it with minimal permissions granted only
-	// to the current user.
-
-	fileno = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0600);
-
-	if (fileno < 0) {
-		return NULL;
-	}
-
-	// Set owner and group.
-
-	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_UID_GID) {
-#ifndef _WIN32
-		if (fchown(fileno, reader->curr_file->unix_uid,
-		           reader->curr_file->unix_gid)) {
-			close(fileno);
-			remove(filename);
-			return NULL;
-		}
-#endif
-	}
-
-	// Set file permissions.
-	// File permissiosn must be set *after* owner and group have
-	// been set; otherwise, we might briefly be granting permissions
-	// to the wrong group.
-
-	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
-#ifndef _WIN32
-		if (fchmod(fileno, reader->curr_file->unix_perms)) {
-			close(fileno);
-			remove(filename);
-			return NULL;
-		}
-#endif
-	}
-
-	// Create stdc FILE handle.
-
-	fstream = fdopen(fileno, "wb");
-
-	if (fstream == NULL) {
-		close(fileno);
-		remove(filename);
-		return NULL;
-	}
-
-	return fstream;
-}
-
 // Open an output stream into which to decompress the current file.
 // The filename is constructed from the file header of the current file,
 // or 'filename' is used if it is not NULL.
 
 static FILE *open_output_file(LHAReader *reader, char *filename)
 {
-	FILE *fstream;
+	int unix_uid = -1, unix_gid = -1, unix_perms = -1;
 
-	// If this file has Unix file permission headers, make sure
-	// the file is created using the correct permissions.
-	// If this fails, we fall back to creating a normal file.
-
-	if (reader->curr_file->extra_flags
-	      & (LHA_FILE_UNIX_PERMS | LHA_FILE_UNIX_UID_GID)) {
-		fstream = open_output_file_unix(reader, filename);
-	} else {
-		fstream = NULL;
+	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_UID_GID) {
+		unix_uid = reader->curr_file->unix_uid;
+		unix_gid = reader->curr_file->unix_gid;
 	}
 
-	// Create file normally via fopen():
-
-	if (fstream == NULL) {
-		fstream = fopen(filename, "wb");
+	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
+		unix_perms = reader->curr_file->unix_perms;
 	}
 
-	return fstream;
+	return lha_arch_fopen(filename, unix_uid, unix_gid, unix_perms);
 }
 
+// Second stage of directory extraction: set metadata.
 
-// Create a directory.
-// TODO: Make this compile-dependent so that we can compile
-// using ANSI C and on non-Unix platforms.
-
-static int create_directory_unix(LHAFileHeader *header, char *path)
+static int set_directory_metadata(LHAFileHeader *header, char *path)
 {
-	mode_t mode;
+	// Set timestamp:
+
+	if (header->timestamp != 0) {
+		lha_arch_utime(path, header->timestamp);
+	}
+
+	// Set owner and group:
+
+	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
+		if (!lha_arch_chown(path, header->unix_uid,
+		                    header->unix_gid)) {
+			return 0;
+		}
+	}
+
+	// Set permissions on directory:
+
+	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
+		if (!lha_arch_chmod(path, header->unix_perms)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int extract_directory(LHAReader *reader, char *path)
+{
+	LHAFileHeader *header;
+	unsigned int mode;
+
+	header = reader->curr_file;
+
+	// If path is not specified, use the path from the file header.
+
+	if (path == NULL) {
+		path = header->path;
+	}
 
 	// Create directory. If there are permissions to be set, create
 	// the directory with minimal permissions limited to the running
@@ -441,77 +401,9 @@ static int create_directory_unix(LHAFileHeader *header, char *path)
 		mode = 0777;
 	}
 
-#ifdef _WIN32
-	return mkdir(path) == 0;
-#else
-	return mkdir(path, mode) == 0;
-#endif
-}
-
-// Set timestamp for the specified file / directory.
-
-static int set_file_timestamp(LHAFileHeader *header, char *path)
-{
-	struct utimbuf times;
-
-	if (header->timestamp == 0) {
+	 if (!lha_arch_mkdir(path, mode)) {
 		return 0;
-	}
-
-	times.actime = (time_t) header->timestamp;
-	times.modtime = (time_t) header->timestamp;
-
-	return utime(path, &times) == 0;
-}
-
-// Second stage of directory extraction: set metadata.
-
-static int set_directory_metadata(LHAFileHeader *header, char *path)
-{
-	// Set timestamp:
-
-	set_file_timestamp(header, path);
-
-	// Set owner and group:
-
-	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
-#ifndef _WIN32
-		if (chown(path, header->unix_uid, header->unix_gid)) {
-			return 0;
-		}
-#endif
-	}
-
-	// Set permissions on directory:
-
-	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
-#ifndef _WIN32
-		if (chmod(path, header->unix_perms)) {
-			return 0;
-		}
-#endif
-	}
-
-	return 1;
-}
-
-static int extract_directory(LHAReader *reader, char *path)
-{
-	LHAFileHeader *header;
-
-	header = reader->curr_file;
-
-	// If path is not specified, use the path from the file header.
-
-	if (path == NULL) {
-		path = header->path;
-	}
-
-	// Create the directory.
-
-	if (!create_directory_unix(header, path)) {
-		return 0;
-	}
+	 }
 
 	// The directory has been created, but the metadata has not yet
 	// been applied. It depends on the directory policy how this
@@ -582,8 +474,8 @@ static int extract_file(LHAReader *reader, char *filename,
 
 	// Set timestamp on file:
 
-	if (result) {
-		set_file_timestamp(reader->curr_file, filename);
+	if (result && reader->curr_file->timestamp != 0) {
+		lha_arch_utime(filename, reader->curr_file->timestamp);
 	}
 
 	free(tmp_filename);
