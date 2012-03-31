@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2011, Simon Howard
+Copyright (c) 2011, 2012, Simon Howard
 
 Permission to use, copy, modify, and/or distribute this software
 for any purpose with or without fee is hereby granted, provided
