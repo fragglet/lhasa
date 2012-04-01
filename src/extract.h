@@ -21,8 +21,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_EXTRACT_H
 #define LHASA_EXTRACT_H
 
-void test_file_crc(LHAFilter *filter);
-void extract_archive(LHAFilter *filter);
+#include "filter.h"
+#include "options.h"
+
+void test_file_crc(LHAFilter *filter, LHAOptions *options);
+void extract_archive(LHAFilter *filter, LHAOptions *options);
 
 #endif /* #ifndef LHASA_EXTRACT_H */
 

@@ -25,7 +25,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "filter.h"
+#include "extract.h"
 
 // Maximum number of dots in progress output:
 
@@ -218,9 +218,19 @@ static char prompt_user(char *message)
 }
 
 static int confirm_file_overwrite(LHAFileHeader *header,
-                                  char *fullpath)
+                                  char *fullpath,
+                                  LHAOptions *options)
 {
 	char response;
+
+	switch (options->overwrite_policy) {
+		case LHA_OVERWRITE_PROMPT:
+			break;
+		case LHA_OVERWRITE_SKIP:
+			return 0;
+		case LHA_OVERWRITE_ALL:
+			return 1;
+	}
 
 	for (;;) {
 		printf("%s ", fullpath);
@@ -234,10 +244,10 @@ static int confirm_file_overwrite(LHAFileHeader *header,
 			case '\n':
 				return 0;
 			case 'a':
-				// TODO - overwrite all
+				options->overwrite_policy = LHA_OVERWRITE_ALL;
 				return 1;
 			case 's':
-				// TODO - skip all
+				options->overwrite_policy = LHA_OVERWRITE_SKIP;
 				return 0;
 			default:
 				break;
@@ -251,7 +261,7 @@ static int confirm_file_overwrite(LHAFileHeader *header,
 // for whether it should be overwritten. Returns true if the file
 // should continue to be extracted.
 
-static int check_file_overwrite(LHAFileHeader *header)
+static int check_file_overwrite(LHAFileHeader *header, LHAOptions *options)
 {
 	struct stat statbuf;
 	char *fullpath;
@@ -269,11 +279,10 @@ static int check_file_overwrite(LHAFileHeader *header)
 	if (stat(fullpath, &statbuf) == 0) {
 		// File already exists. Confirm overwrite.
 
-		result = confirm_file_overwrite(header, fullpath);
+		result = confirm_file_overwrite(header, fullpath, options);
 	} else {
 		// TODO: Check errno, continue with extract when
 		// file not found; otherwise print an error.
-		fprintf(stderr, "check_file_overwrite: %i\n", errno);
 		result = 1;
 	}
 
@@ -287,13 +296,14 @@ static int check_file_overwrite(LHAFileHeader *header)
 // Extract an archived file.
 
 static void extract_archived_file(LHAReader *reader,
-                                  LHAFileHeader *header)
+                                  LHAFileHeader *header,
+                                  LHAOptions *options)
 {
 	ProgressCallbackData progress;
 	int success;
 
 	if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0
-	 && !check_file_overwrite(header)) {
+	 && !check_file_overwrite(header, options)) {
 		return;
 	}
 
@@ -328,7 +338,7 @@ static void extract_archived_file(LHAReader *reader,
 
 // lha -t command.
 
-void test_file_crc(LHAFilter *filter)
+void test_file_crc(LHAFilter *filter, LHAOptions *options)
 {
 	for (;;) {
 		LHAFileHeader *header;
@@ -345,7 +355,7 @@ void test_file_crc(LHAFilter *filter)
 
 // lha -e / -x
 
-void extract_archive(LHAFilter *filter)
+void extract_archive(LHAFilter *filter, LHAOptions *options)
 {
 	for (;;) {
 		LHAFileHeader *header;
@@ -356,7 +366,7 @@ void extract_archive(LHAFilter *filter)
 			break;
 		}
 
-		extract_archived_file(filter->reader, header);
+		extract_archived_file(filter->reader, header, options);
 	}
 }
 

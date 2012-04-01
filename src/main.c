@@ -26,10 +26,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 
-#include "filter.h"
 #include "extract.h"
 #include "list.h"
-#include "options.h"
 
 typedef enum {
 	MODE_UNKNOWN,
@@ -87,11 +85,11 @@ static void do_command(ProgramMode mode, char *filename,
 			break;
 
 		case MODE_CRC_CHECK:
-			test_file_crc(&filter);
+			test_file_crc(&filter, options);
 			break;
 
 		case MODE_EXTRACT:
-			extract_archive(&filter);
+			extract_archive(&filter, options);
 			break;
 
 		case MODE_UNKNOWN:
