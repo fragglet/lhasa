@@ -34,14 +34,22 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 typedef struct {
 	int invoked;
 	LHAFileHeader *header;
+	LHAOptions *options;
 	char *operation;
 } ProgressCallbackData;
 
-static void print_filename(LHAFileHeader *header, char *status)
+static void print_filename(LHAFileHeader *header, int use_path, char *status)
 {
 	printf("\r%s%s\t- %s  ",
-	       header->path != NULL ? header->path : "",
+	       use_path && header->path != NULL ? header->path : "",
 	       header->filename, status);
+}
+
+static void print_filename_brief(LHAFileHeader *header, int use_path)
+{
+	printf("\r%s%s :",
+	       use_path && header->path != NULL ? header->path : "",
+	       header->filename);
 }
 
 // Callback function invoked during decompression progress.
@@ -56,6 +64,22 @@ static void progress_callback(unsigned int block,
 
 	progress->invoked = 1;
 
+	// If the quiet mode options are specified, print a limited amount
+	// of information without a progress bar (level 1) or no message
+	// at all (level 2).
+
+	if (progress->options->quiet >= 2) {
+		return;
+	} else if (progress->options->quiet == 1) {
+		if (block == 0) {
+			print_filename_brief(progress->header,
+			                     progress->options->use_path);
+			fflush(stdout);
+		}
+
+		return;
+	}
+
 	// Scale factor for blocks, so that the line is never too long.  When
 	// MAX_PROGRESS_LEN is exceeded, the length is halved (factor=2), then
 	// progressively larger scale factors are applied.
@@ -66,13 +90,17 @@ static void progress_callback(unsigned int block,
 	// First call to specify number of blocks?
 
 	if (block == 0) {
-		print_filename(progress->header, progress->operation);
+		print_filename(progress->header,
+		               progress->options->use_path,
+		               progress->operation);
 
 		for (i = 0; i < num_blocks; ++i) {
 			printf(".");
 		}
 
-		print_filename(progress->header, progress->operation);
+		print_filename(progress->header,
+		               progress->options->use_path,
+		               progress->operation);
 	} else if (((block + factor - 1) % factor) == 0) {
 		// Otherwise, signal progress:
 
@@ -85,27 +113,31 @@ static void progress_callback(unsigned int block,
 // Perform CRC check of an archived file.
 
 static void test_archived_file_crc(LHAReader *reader,
-                                   LHAFileHeader *header)
+                                   LHAFileHeader *header,
+                                   LHAOptions *options)
 {
 	ProgressCallbackData progress;
 	int success;
 
 	progress.invoked = 0;
 	progress.operation = "Testing  :";
+	progress.options = options;
 	progress.header = header;
 
 	success = lha_reader_check(reader, progress_callback, &progress);
 
-	if (progress.invoked) {
+	if (progress.invoked && options->quiet < 2) {
 		if (success) {
-			print_filename(header, "Tested");
+			print_filename(header, options->use_path, "Tested");
 			printf("\n");
 		} else {
-			print_filename(header, "CRC error");
+			print_filename(header, options->use_path, "CRC error");
 			printf("\n");
-
-			// TODO: Exit with error
 		}
+	}
+
+	if (!success) {
+		// TODO: Exit with error
 	}
 }
 
@@ -267,13 +299,13 @@ static int check_file_overwrite(LHAFileHeader *header, LHAOptions *options)
 	char *fullpath;
 	int result;
 
-	if (header->path != NULL) {
+	if (options->use_path && header->path != NULL) {
 		fullpath = malloc(strlen(header->path)
 		                  + strlen(header->filename) + 1);
 		strcpy(fullpath, header->path);
 		strcat(fullpath, header->filename);
 	} else {
-		fullpath = header->path;
+		fullpath = header->filename;
 	}
 
 	if (stat(fullpath, &statbuf) == 0) {
@@ -286,7 +318,7 @@ static int check_file_overwrite(LHAFileHeader *header, LHAOptions *options)
 		result = 1;
 	}
 
-	if (header->path != NULL) {
+	if (options->use_path && header->path != NULL) {
 		free(fullpath);
 	}
 
@@ -300,6 +332,7 @@ static void extract_archived_file(LHAReader *reader,
                                   LHAOptions *options)
 {
 	ProgressCallbackData progress;
+	char *filename;
 	int success;
 
 	if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0
@@ -309,30 +342,38 @@ static void extract_archived_file(LHAReader *reader,
 
 	// Create parent directories for file:
 
-	if (header->path != NULL && !make_parent_directories(header->path)) {
-		return;
+	if (options->use_path && header->path != NULL) {
+		if (!make_parent_directories(header->path)) {
+			return;
+		}
 	}
 
 	progress.invoked = 0;
 	progress.operation = "Melting  :";
+	progress.options = options;
 	progress.header = header;
 
-	success = lha_reader_extract(reader, NULL, progress_callback, &progress);
+	if (options->use_path) {
+		filename = NULL;
+	} else {
+		filename = header->filename;
+	}
 
-	if (progress.invoked) {
+	success = lha_reader_extract(reader, filename,
+	                             progress_callback, &progress);
+
+	if (progress.invoked && options->quiet < 2) {
 		if (success) {
-			print_filename(header, "Melted");
+			print_filename(header, options->use_path, "Melted");
 			printf("\n");
 		} else {
-			print_filename(header, "Failure");
+			print_filename(header, options->use_path, "Failure");
 			printf("\n");
+		}
+	}
 
-			// TODO: Exit with error
-		}
-	} else {
-		if (!success) {
-			// TODO - failure to extract directory
-		}
+	if (!success) {
+		// TODO: Exit with error
 	}
 }
 
@@ -349,7 +390,7 @@ void test_file_crc(LHAFilter *filter, LHAOptions *options)
 			break;
 		}
 
-		test_archived_file_crc(filter->reader, header);
+		test_archived_file_crc(filter->reader, header, options);
 	}
 }
 

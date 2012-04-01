@@ -153,6 +153,20 @@ static int parse_options(char *arg, LHAOptions *options)
 				options->dry_run = 1;
 				break;
 
+			// Quiet mode parsing. The quiet 'level' can be
+			// specified - if the level is omitted, level 2
+			// is implied. All quiet mode options imply
+			// -f (overwrite without confirmation).
+			case 'q':
+				if (arg[1] >= '0' && arg[1] <= '9') {
+					++arg;
+					options->quiet = *arg - '0';
+				} else {
+					options->quiet = 2;
+				}
+				options->overwrite_policy = LHA_OVERWRITE_ALL;
+				break;
+
 			// Verbose mode.
 			case 'v':
 				options->verbose = 1;

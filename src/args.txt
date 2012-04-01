@@ -23,6 +23,9 @@ even if they are inappropriate for the mode, eg. "lha lf".
               in test mode, behavior is similar to extract mode, but
               level 2 behavior is similar to level 0.
 
+              all quiet modes imply 'f', disabling overwrite without
+              confirmation.
+
   f         - Force overwrite. When extracting, existing files are
               overwritten with no confirmation.
 
