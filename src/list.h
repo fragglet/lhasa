@@ -21,8 +21,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_LIST_H
 #define LHASA_LIST_H
 
-void list_file_basic(LHAFilter *filter, FILE *fstream);
-void list_file_verbose(LHAFilter *filter, FILE *fstream);
+#include "filter.h"
+#include "options.h"
+
+void list_file_basic(LHAFilter *filter, LHAOptions *options, FILE *fstream);
+void list_file_verbose(LHAFilter *filter, LHAOptions *options, FILE *fstream);
 
 #endif /* #ifndef LHASA_LIST_H */
 

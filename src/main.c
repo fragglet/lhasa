@@ -77,11 +77,11 @@ static void do_command(ProgramMode mode, char *filename,
 
 	switch (mode) {
 		case MODE_LIST:
-			list_file_basic(&filter, fstream);
+			list_file_basic(&filter, options, fstream);
 			break;
 
 		case MODE_LIST_VERBOSE:
-			list_file_verbose(&filter, fstream);
+			list_file_verbose(&filter, options, fstream);
 			break;
 
 		case MODE_CRC_CHECK:
