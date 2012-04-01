@@ -29,9 +29,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "filter.h"
 #include "extract.h"
 #include "list.h"
+#include "options.h"
 
-typedef enum
-{
+typedef enum {
 	MODE_UNKNOWN,
 	MODE_LIST,
 	MODE_LIST_VERBOSE,
@@ -41,16 +41,23 @@ typedef enum
 
 static void help_page(char *progname)
 {
-	printf("usage: %s [-]{lv} archive_file\n", progname);
+	printf(
+	"Lhasa command line LHA tool  - Copyright (C) 2011,2012 Simon Howard\n"
+	"usage: %s [-]{lvtxe[q{num}][finv]}[w=<dir>] archive_file [file...]\n"
+	"commands:                        options:\n"
+	" l,v List / Verbose List          f  Force overwrite (no prompt)\n"
+	" t   Test file CRC in archive     i  Ignore directory path\n"
+	" x,e Extract from archive         n  Perform dry run\n"
+	"                                  q{num}  Quiet mode\n"
+	"                                  v  Verbose\n"
+	"                                  w=<dir> Specify extract directory\n"
+	, progname);
 
-	printf("commands:\n"
-	       " l,v List / Verbose List\n"
-	       " t   Test file CRC in archive\n"
-	       " x,e Extract from archive\n");
 	exit(-1);
 }
 
 static void do_command(ProgramMode mode, char *filename,
+                       LHAOptions *options,
                        char **filters, unsigned int num_filters)
 {
 	FILE *fstream;
@@ -97,29 +104,130 @@ static void do_command(ProgramMode mode, char *filename,
 	fclose(fstream);
 }
 
+static void init_options(LHAOptions *options)
+{
+	options->overwrite_policy = LHA_OVERWRITE_PROMPT;
+	options->quiet = 0;
+	options->verbose = 0;
+	options->dry_run = 0;
+	options->extract_path = NULL;
+	options->use_path = 1;
+}
+
+// Determine the program mode from the first character of the command
+// argument.
+
+static ProgramMode mode_for_char(char c)
+{
+	switch (c) {
+		case 'l':
+			return MODE_LIST;
+		case 'v':
+			return MODE_LIST_VERBOSE;
+		case 't':
+			return MODE_CRC_CHECK;
+		case 'e':
+		case 'x':
+			return MODE_EXTRACT;
+		default:
+			return MODE_UNKNOWN;
+	}
+}
+
+// Parse the option flags from the command argument.
+
+static int parse_options(char *arg, LHAOptions *options)
+{
+	for (; *arg != '\0'; ++arg) {
+		switch (*arg) {
+			// Force overwrite of existing files.
+			case 'f':
+				options->overwrite_policy = LHA_OVERWRITE_ALL;
+				break;
+
+			// -i option turns off paths for extract.
+			case 'i':
+				options->use_path = 0;
+				break;
+
+			// Dry run?
+			case 'n':
+				options->dry_run = 1;
+				break;
+
+			// Verbose mode.
+			case 'v':
+				options->verbose = 1;
+				break;
+
+			// Specify extract directory: must be last option
+			// specified. Optional '=' separator.
+			case 'w':
+				++arg;
+				if (*arg == '=') {
+					++arg;
+				}
+				options->extract_path = arg;
+				break;
+
+			default:
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+/**
+ * Parse the command line options, initializing the options structure
+ * used by the main program code.
+ *
+ * @param cmd        The 'command' argument (first command line option).
+ * @param mode       Pointer to variable to store program mode.
+ * @param options    Pointer to options structure to initialize.
+ * @return           Non-zero if successful.
+ */
+
+static int parse_command_line(char *cmd, ProgramMode *mode,
+                              LHAOptions *options)
+{
+	init_options(options);
+
+	// Parse program mode argument. Initial '-' is ignored.
+
+	if (*cmd == '-') {
+		++cmd;
+	}
+
+	*mode = mode_for_char(*cmd);
+
+	if (*mode == MODE_UNKNOWN) {
+		return 0;
+	}
+
+	// Parse remaining options.
+
+	if (!parse_options(cmd + 1, options)) {
+		return 0;
+	}
+
+	return 1;
+}
+
 int main(int argc, char *argv[])
 {
 	ProgramMode mode;
+	LHAOptions options;
 
-	if (argc < 3) {
+	// Parse the command line options.
+
+	if (argc < 3 || !parse_command_line(argv[1], &mode, &options)) {
 		help_page(argv[0]);
 	}
 
-	mode = MODE_UNKNOWN;
+	// Run the command.
 
-	if (!strcmp(argv[1], "l")) {
-		mode = MODE_LIST;
-	} else if (!strcmp(argv[1], "v")) {
-		mode = MODE_LIST_VERBOSE;
-	} else if (!strcmp(argv[1], "t")) {
-		mode = MODE_CRC_CHECK;
-	} else if (!strcmp(argv[1], "e") || !strcmp(argv[1], "x")) {
-		mode = MODE_EXTRACT;
-	} else {
-		help_page(argv[0]);
-	}
-
-	do_command(mode, argv[2], argv + 3, argc - 3);
+	do_command(mode, argv[2], &options, argv + 3, argc - 3);
 
 	return 0;
 }
