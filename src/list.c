@@ -307,16 +307,67 @@ static ListColumn short_name_column = {
 	name_column_print
 };
 
+// "Separate line" filename display. Used when the 'v' option
+// is added.
+
+static void whole_line_name_column_print(LHAFileHeader *header)
+{
+	if (header->path != NULL) {
+		printf("%s", header->path);
+	}
+	printf("%s\n", header->filename);
+}
+
+static ListColumn whole_line_name_column = {
+	"", 0,
+	whole_line_name_column_print
+};
+
+// Header level column. Used when the 'v' option is added.
+
+static void header_level_column_print(LHAFileHeader *header)
+{
+	printf(" [%i]", header->header_level);
+}
+
+static ListColumn header_level_column = {
+	"", 0,
+	header_level_column_print
+};
+
+// Get the last "real" column in a list of columns. This is the last
+// column with a width > 0. Beyond this last column it isn't necessary
+// to print any more whitespace.
+
+static ListColumn *last_column(ListColumn **columns)
+{
+	ListColumn *last;
+	unsigned int i;
+
+	last = NULL;
+
+	for (i = 0; columns[i] != NULL; ++i) {
+		if (columns[i]->width != 0) {
+			last = columns[i];
+		}
+	}
+
+	return last;
+}
+
 // Print the names of the column headings at the top of the file list.
 
 static void print_list_headings(ListColumn **columns)
 {
+	ListColumn *last;
 	unsigned int i, j;
+
+	last = last_column(columns);
 
 	for (i = 0; columns[i] != NULL; ++i) {
 		j = (unsigned) printf("%s", columns[i]->name);
 
-		if (columns[i + 1] != NULL) {
+		if (columns[i]->width > 0 && columns[i] != last) {
 			for (; j < columns[i]->width + 1; ++j) {
 				printf(" ");
 			}
@@ -330,14 +381,17 @@ static void print_list_headings(ListColumn **columns)
 
 static void print_list_separators(ListColumn **columns)
 {
+	ListColumn *last;
 	unsigned int i, j;
+
+	last = last_column(columns);
 
 	for (i = 0; columns[i] != NULL; ++i) {
 		for (j = 0; j < columns[i]->width; ++j) {
 			printf("-");
 		}
 
-		if (columns[i + 1] != NULL) {
+		if (columns[i]->width != 0 && columns[i] != last) {
 			printf(" ");
 		}
 	}
@@ -349,12 +403,15 @@ static void print_list_separators(ListColumn **columns)
 
 static void print_columns(ListColumn **columns, LHAFileHeader *header)
 {
+	ListColumn *last;
 	unsigned int i;
+
+	last = last_column(columns);
 
 	for (i = 0; columns[i] != NULL; ++i) {
 		columns[i]->handler(header);
 
-		if (columns[i + 1] != NULL) {
+		if (columns[i]->width != 0 && columns[i] != last) {
 			printf(" ");
 		}
 	}
@@ -388,7 +445,7 @@ static void print_footers(ListColumn **columns, FileStatistics *stats)
 	for (i = 0; i < num_columns; ++i) {
 		if (columns[i]->footer != NULL) {
 			columns[i]->footer(stats);
-		} else if (columns[i + 1] != NULL) {
+		} else if (i + 1 < num_columns) {
 			len = strlen(columns[i]->name);
 
 			for (j = 0; j < len; ++j) {
@@ -396,7 +453,7 @@ static void print_footers(ListColumn **columns, FileStatistics *stats)
 			}
 		}
 
-		if (i + 1 < num_columns) {
+		if (columns[i]->width != 0 && i + 1 < num_columns) {
 			printf(" ");
 		}
 	}
@@ -455,6 +512,8 @@ static void list_file_contents(LHAFilter *filter, FILE *fstream,
 	}
 }
 
+// Used for lha -l:
+
 static ListColumn *normal_column_headers[] = {
 	&permission_column,
 	&unix_uid_gid_column,
@@ -465,12 +524,35 @@ static ListColumn *normal_column_headers[] = {
 	NULL
 };
 
+// Used for lha -lv:
+
+static ListColumn *normal_column_headers_verbose[] = {
+	&whole_line_name_column,
+	&permission_column,
+	&unix_uid_gid_column,
+	&size_column,
+	&ratio_column,
+	&timestamp_column,
+	&header_level_column,
+	NULL
+};
+
 // lha -l command.
 
 void list_file_basic(LHAFilter *filter, LHAOptions *options, FILE *fstream)
 {
-	list_file_contents(filter, fstream, options, normal_column_headers);
+	ListColumn **headers;
+
+	if (options->verbose) {
+		headers = normal_column_headers_verbose;
+	} else {
+		headers = normal_column_headers;
+	}
+
+	list_file_contents(filter, fstream, options, headers);
 }
+
+// Used for lha -v:
 
 static ListColumn *verbose_column_headers[] = {
 	&permission_column,
@@ -484,10 +566,33 @@ static ListColumn *verbose_column_headers[] = {
 	NULL
 };
 
+// Used for lha -vv:
+
+static ListColumn *verbose_column_headers_verbose[] = {
+	&whole_line_name_column,
+	&permission_column,
+	&unix_uid_gid_column,
+	&packed_column,
+	&size_column,
+	&ratio_column,
+	&method_crc_column,
+	&timestamp_column,
+	&header_level_column,
+	NULL
+};
+
 // lha -v command.
 
 void list_file_verbose(LHAFilter *filter, LHAOptions *options, FILE *fstream)
 {
-	list_file_contents(filter, fstream, options, verbose_column_headers);
+	ListColumn **headers;
+
+	if (options->verbose) {
+		headers = verbose_column_headers_verbose;
+	} else {
+		headers = verbose_column_headers;
+	}
+
+	list_file_contents(filter, fstream, options, headers);
 }
 

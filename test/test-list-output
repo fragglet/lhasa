@@ -27,6 +27,34 @@ LHA_TOOL=lha
 GATHER=false
 #GATHER=true
 
+check_output() {
+	option=$1
+	archive=$2
+	expected=$3
+
+	# Check the output for a particular option matches the expected
+	# output file.
+
+	../src/test-lha $option archives/$archive > /tmp/tmp.txt
+
+	if ! diff -u output/$expected /tmp/tmp.txt; then
+		echo "Output not as expected for lha $option $archive" >&2
+		exit 1
+	fi
+
+	rm /tmp/tmp.txt
+}
+
+gather_output() {
+	option=$1
+	archive=$2
+	expected=$3
+
+	if [ ! -e output/$expected ]; then
+		$LHA_TOOL $option archives/$archive > output/$expected
+	fi
+}
+
 test_archive() {
 	archive=$1
 
@@ -39,36 +67,16 @@ test_archive() {
 	# Gather output from Unix LHA tool?
 
 	if $GATHER; then
-		if [ ! -e output/$archive-l.txt ]; then
-			$LHA_TOOL l archives/$archive > output/$archive-l.txt
-		fi
-
-		if [ ! -e output/$archive-v.txt ]; then
-			$LHA_TOOL v archives/$archive > output/$archive-v.txt
-		fi
+		gather_output l $archive $archive-l.txt
+		gather_output v $archive $archive-v.txt
+		gather_output lv $archive $archive-lv.txt
+		gather_output vv $archive $archive-vv.txt
 	fi
 
-	# Normal list output:
-
-	../src/test-lha l archives/$archive > /tmp/l.txt
-
-	if ! diff -u output/$archive-l.txt /tmp/l.txt; then
-		echo "Output not as expected for lha l $archive" >&2
-		exit 1
-	fi
-
-	rm /tmp/l.txt
-
-	# Verbose output:
-
-	../src/test-lha v archives/$archive > /tmp/v.txt
-
-	if ! diff -u output/$archive-v.txt /tmp/v.txt; then
-		echo "Output not as expected for lha v $archive" >&2
-		exit 1
-	fi
-
-	rm /tmp/v.txt
+	check_output l $archive $archive-l.txt
+	check_output v $archive $archive-v.txt
+	check_output lv $archive $archive-lv.txt
+	check_output vv $archive $archive-vv.txt
 }
 
 test_archive larc333/lz4.lzs
