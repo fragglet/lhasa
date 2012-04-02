@@ -180,6 +180,7 @@ static int parse_options(char *arg, LHAOptions *options)
 					++arg;
 				}
 				options->extract_path = arg;
+				arg += strlen(arg) - 1;
 				break;
 
 			default:

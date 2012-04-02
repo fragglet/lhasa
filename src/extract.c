@@ -398,6 +398,16 @@ void test_file_crc(LHAFilter *filter, LHAOptions *options)
 
 void extract_archive(LHAFilter *filter, LHAOptions *options)
 {
+	// Change directory before extract? (-w option).
+
+	if (options->extract_path != NULL) {
+		if (chdir(options->extract_path) != 0) {
+			fprintf(stderr, "Failed to change directory to %s.\n",
+			        options->extract_path);
+			exit(-1);
+		}
+	}
+
 	for (;;) {
 		LHAFileHeader *header;
 
