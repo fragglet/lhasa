@@ -14,12 +14,6 @@ Library:
 
 Command line tool:
  * Create/update/modify archives.
- * Options:
-   - q (quiet mode)
-   - n (don't execute command)
-   - f (don't prompt for overwrite)
-   - w (extract directory)
-   - i (ignore directory path)
 
 Testing:
  * Valgrind.

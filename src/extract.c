@@ -38,6 +38,19 @@ typedef struct {
 	char *operation;
 } ProgressCallbackData;
 
+// Print function for "dry run" messages (-n option).
+
+static void dry_run_print(char *format, LHAOptions *options,
+                          LHAFileHeader *header)
+{
+	if (options->use_path && header->path != NULL) {
+		printf(format, header->path, header->filename);
+	} else {
+		printf(format, "", header->filename);
+	}
+	printf("\n");
+}
+
 static void print_filename(LHAFileHeader *header, int use_path, char *status)
 {
 	printf("\r%s%s\t- %s  ",
@@ -118,6 +131,14 @@ static void test_archived_file_crc(LHAReader *reader,
 {
 	ProgressCallbackData progress;
 	int success;
+
+	if (options->dry_run) {
+		if (strcmp(header->compress_method,
+		           LHA_COMPRESS_TYPE_DIR) != 0) {
+			dry_run_print("VERIFY %s%s", options, header);
+		}
+		return;
+	}
 
 	progress.invoked = 0;
 	progress.operation = "Testing  :";
@@ -249,8 +270,11 @@ static char prompt_user(char *message)
 	return result;
 }
 
+// A file to be extracted already exists. Apply the overwrite policy
+// to decide whether to overwrite the existing file, prompting the
+// user if necessary.
+
 static int confirm_file_overwrite(LHAFileHeader *header,
-                                  char *fullpath,
                                   LHAOptions *options)
 {
 	char response;
@@ -265,7 +289,10 @@ static int confirm_file_overwrite(LHAFileHeader *header,
 	}
 
 	for (;;) {
-		printf("%s ", fullpath);
+		if (options->use_path && header->path != NULL) {
+			printf("%s", header->path);
+		}
+		printf("%s ", header->filename);
 
 		response = prompt_user("OverWrite ?(Yes/[No]/All/Skip) ");
 
@@ -289,15 +316,13 @@ static int confirm_file_overwrite(LHAFileHeader *header,
 	return 0;
 }
 
-// Check the specified file header. If the file already exists, prompt
-// for whether it should be overwritten. Returns true if the file
-// should continue to be extracted.
+// Check if the file pointed to by the specified header exists.
 
-static int check_file_overwrite(LHAFileHeader *header, LHAOptions *options)
+static int file_exists(LHAFileHeader *header, LHAOptions *options)
 {
 	struct stat statbuf;
 	char *fullpath;
-	int result;
+	int exists;
 
 	if (options->use_path && header->path != NULL) {
 		fullpath = malloc(strlen(header->path)
@@ -309,20 +334,18 @@ static int check_file_overwrite(LHAFileHeader *header, LHAOptions *options)
 	}
 
 	if (stat(fullpath, &statbuf) == 0) {
-		// File already exists. Confirm overwrite.
-
-		result = confirm_file_overwrite(header, fullpath, options);
+		exists = 1;
 	} else {
 		// TODO: Check errno, continue with extract when
 		// file not found; otherwise print an error.
-		result = 1;
+		exists = 0;
 	}
 
 	if (options->use_path && header->path != NULL) {
 		free(fullpath);
 	}
 
-	return result;
+	return exists;
 }
 
 // Extract an archived file.
@@ -334,9 +357,34 @@ static void extract_archived_file(LHAReader *reader,
 	ProgressCallbackData progress;
 	char *filename;
 	int success;
+	int is_dir;
 
-	if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0
-	 && !check_file_overwrite(header, options)) {
+	is_dir = !strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR);
+
+	// Print appropriate message and stop if we are performing
+	// a dry run. The message if we have an existing file is
+	// weird, but this is just accurately duplicating what the
+	// Unix lha tool says.
+
+	if (options->dry_run) {
+		if (is_dir) {
+			dry_run_print("EXTRACT %s%s (directory)",
+			              options, header);
+		} else if (file_exists(header, options)) {
+			dry_run_print("EXTRACT %s%s but file is exist",
+			              options, header);
+		} else {
+			dry_run_print("EXTRACT %s%s",
+			              options, header);
+		}
+
+		return;
+	}
+
+	// If a file already exists with this name, confirm overwrite.
+
+	if (!is_dir && file_exists(header, options)
+	 && !confirm_file_overwrite(header, options)) {
 		return;
 	}
 
