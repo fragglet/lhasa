@@ -1,0 +1,10 @@
+
+Archives for regression testing.
+
+abspath.lzh         - Archive containing a file with an absolute path.
+                      For security reasons, file extraction should
+                      always be done relative to the extraction path.
+                      If extraction to absolute paths was permitted, it
+                      would potentially allow arbitrary files on the
+                      filesystem to be overwritten.
+

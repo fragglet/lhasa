@@ -35,34 +35,56 @@ typedef struct {
 	int invoked;
 	LHAFileHeader *header;
 	LHAOptions *options;
+	char *filename;
 	char *operation;
 } ProgressCallbackData;
 
-// Print function for "dry run" messages (-n option).
+// Given a file header structure, get the path to extract to.
+// Returns a newly allocated string that must be free()d.
 
-static void dry_run_print(char *format, LHAOptions *options,
-                          LHAFileHeader *header)
+static char *file_full_path(LHAFileHeader *header, LHAOptions *options)
 {
+	char *result;
+	char *p;
+
+	// Full path, or filename only?
+
 	if (options->use_path && header->path != NULL) {
-		printf(format, header->path, header->filename);
+		result = malloc(strlen(header->path)
+		                + strlen(header->filename) + 1);
+		strcpy(result, header->path);
+		strcat(result, header->filename);
 	} else {
-		printf(format, "", header->filename);
+		result = strdup(header->filename);
 	}
-	printf("\n");
+
+	// If the header contains leading '/' characters, it is an
+	// absolute path (eg. /etc/passwd). Strip these leading
+	// characters to always generate a relative path, otherwise
+	// it can be a security risk - extracting an archive might
+	// overwrite arbitrary files on the filesystem.
+
+	p = result;
+
+	while (*p == '/') {
+		++p;
+	}
+
+	if (p > result) {
+		memmove(result, p, strlen(p) + 1);
+	}
+
+	return result;
 }
 
-static void print_filename(LHAFileHeader *header, int use_path, char *status)
+static void print_filename(char *filename, char *status)
 {
-	printf("\r%s%s\t- %s  ",
-	       use_path && header->path != NULL ? header->path : "",
-	       header->filename, status);
+	printf("\r%s\t- %s  ", filename, status);
 }
 
-static void print_filename_brief(LHAFileHeader *header, int use_path)
+static void print_filename_brief(char *filename)
 {
-	printf("\r%s%s :",
-	       use_path && header->path != NULL ? header->path : "",
-	       header->filename);
+	printf("\r%s :", filename);
 }
 
 // Callback function invoked during decompression progress.
@@ -85,8 +107,7 @@ static void progress_callback(unsigned int block,
 		return;
 	} else if (progress->options->quiet == 1) {
 		if (block == 0) {
-			print_filename_brief(progress->header,
-			                     progress->options->use_path);
+			print_filename_brief(progress->filename);
 			fflush(stdout);
 		}
 
@@ -103,17 +124,13 @@ static void progress_callback(unsigned int block,
 	// First call to specify number of blocks?
 
 	if (block == 0) {
-		print_filename(progress->header,
-		               progress->options->use_path,
-		               progress->operation);
+		print_filename(progress->filename, progress->operation);
 
 		for (i = 0; i < num_blocks; ++i) {
 			printf(".");
 		}
 
-		print_filename(progress->header,
-		               progress->options->use_path,
-		               progress->operation);
+		print_filename(progress->filename, progress->operation);
 	} else if (((block + factor - 1) % factor) == 0) {
 		// Otherwise, signal progress:
 
@@ -130,29 +147,35 @@ static void test_archived_file_crc(LHAReader *reader,
                                    LHAOptions *options)
 {
 	ProgressCallbackData progress;
+	char *filename;
 	int success;
+
+	filename = file_full_path(header, options);
 
 	if (options->dry_run) {
 		if (strcmp(header->compress_method,
 		           LHA_COMPRESS_TYPE_DIR) != 0) {
-			dry_run_print("VERIFY %s%s", options, header);
+			printf("VERIFY %s\n", filename);
 		}
+
+		free(filename);
 		return;
 	}
 
 	progress.invoked = 0;
 	progress.operation = "Testing  :";
 	progress.options = options;
+	progress.filename = filename;
 	progress.header = header;
 
 	success = lha_reader_check(reader, progress_callback, &progress);
 
 	if (progress.invoked && options->quiet < 2) {
 		if (success) {
-			print_filename(header, options->use_path, "Tested");
+			print_filename(filename, "Tested");
 			printf("\n");
 		} else {
-			print_filename(header, options->use_path, "CRC error");
+			print_filename(filename, "CRC error");
 			printf("\n");
 		}
 	}
@@ -160,6 +183,8 @@ static void test_archived_file_crc(LHAReader *reader,
 	if (!success) {
 		// TODO: Exit with error
 	}
+
+	free(filename);
 }
 
 // Check that the specified directory exists, and create it if it
@@ -274,8 +299,7 @@ static char prompt_user(char *message)
 // to decide whether to overwrite the existing file, prompting the
 // user if necessary.
 
-static int confirm_file_overwrite(LHAFileHeader *header,
-                                  LHAOptions *options)
+static int confirm_file_overwrite(char *filename, LHAOptions *options)
 {
 	char response;
 
@@ -289,10 +313,7 @@ static int confirm_file_overwrite(LHAFileHeader *header,
 	}
 
 	for (;;) {
-		if (options->use_path && header->path != NULL) {
-			printf("%s", header->path);
-		}
-		printf("%s ", header->filename);
+		printf("%s ", filename);
 
 		response = prompt_user("OverWrite ?(Yes/[No]/All/Skip) ");
 
@@ -318,31 +339,17 @@ static int confirm_file_overwrite(LHAFileHeader *header,
 
 // Check if the file pointed to by the specified header exists.
 
-static int file_exists(LHAFileHeader *header, LHAOptions *options)
+static int file_exists(char *filename)
 {
 	struct stat statbuf;
-	char *fullpath;
 	int exists;
 
-	if (options->use_path && header->path != NULL) {
-		fullpath = malloc(strlen(header->path)
-		                  + strlen(header->filename) + 1);
-		strcpy(fullpath, header->path);
-		strcat(fullpath, header->filename);
-	} else {
-		fullpath = header->filename;
-	}
-
-	if (stat(fullpath, &statbuf) == 0) {
+	if (stat(filename, &statbuf) == 0) {
 		exists = 1;
 	} else {
 		// TODO: Check errno, continue with extract when
 		// file not found; otherwise print an error.
 		exists = 0;
-	}
-
-	if (options->use_path && header->path != NULL) {
-		free(fullpath);
 	}
 
 	return exists;
@@ -359,6 +366,7 @@ static void extract_archived_file(LHAReader *reader,
 	int success;
 	int is_dir;
 
+	filename = file_full_path(header, options);
 	is_dir = !strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR);
 
 	// Print appropriate message and stop if we are performing
@@ -368,23 +376,22 @@ static void extract_archived_file(LHAReader *reader,
 
 	if (options->dry_run) {
 		if (is_dir) {
-			dry_run_print("EXTRACT %s%s (directory)",
-			              options, header);
-		} else if (file_exists(header, options)) {
-			dry_run_print("EXTRACT %s%s but file is exist",
-			              options, header);
+			printf("EXTRACT %s (directory)\n", filename);
+		} else if (file_exists(filename)) {
+			printf("EXTRACT %s but file is exist\n", filename);
 		} else {
-			dry_run_print("EXTRACT %s%s",
-			              options, header);
+			printf("EXTRACT %s\n", filename);
 		}
 
+		free(filename);
 		return;
 	}
 
 	// If a file already exists with this name, confirm overwrite.
 
-	if (!is_dir && file_exists(header, options)
-	 && !confirm_file_overwrite(header, options)) {
+	if (!is_dir && file_exists(filename)
+	 && !confirm_file_overwrite(filename, options)) {
+		free(filename);
 		return;
 	}
 
@@ -392,6 +399,7 @@ static void extract_archived_file(LHAReader *reader,
 
 	if (options->use_path && header->path != NULL) {
 		if (!make_parent_directories(header->path)) {
+			free(filename);
 			return;
 		}
 	}
@@ -400,22 +408,17 @@ static void extract_archived_file(LHAReader *reader,
 	progress.operation = "Melting  :";
 	progress.options = options;
 	progress.header = header;
-
-	if (options->use_path) {
-		filename = NULL;
-	} else {
-		filename = header->filename;
-	}
+	progress.filename = filename;
 
 	success = lha_reader_extract(reader, filename,
 	                             progress_callback, &progress);
 
 	if (progress.invoked && options->quiet < 2) {
 		if (success) {
-			print_filename(header, options->use_path, "Melted");
+			print_filename(filename, "Melted");
 			printf("\n");
 		} else {
-			print_filename(header, options->use_path, "Failure");
+			print_filename(filename, "Failure");
 			printf("\n");
 		}
 	}
@@ -423,6 +426,8 @@ static void extract_archived_file(LHAReader *reader,
 	if (!success) {
 		// TODO: Exit with error
 	}
+
+	free(filename);
 }
 
 // lha -t command.
