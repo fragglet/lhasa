@@ -292,9 +292,9 @@ static ListColumn timestamp_column = {
 static void name_column_print(LHAFileHeader *header)
 {
 	if (header->path != NULL) {
-		printf("%s", header->path);
+		safe_printf("%s", header->path);
 	}
-	printf("%s", header->filename);
+	safe_printf("%s", header->filename);
 }
 
 static ListColumn name_column = {
@@ -313,9 +313,10 @@ static ListColumn short_name_column = {
 static void whole_line_name_column_print(LHAFileHeader *header)
 {
 	if (header->path != NULL) {
-		printf("%s", header->path);
+		safe_printf("%s", header->path);
 	}
-	printf("%s\n", header->filename);
+	safe_printf("%s", header->filename);
+	printf("\n");
 }
 
 static ListColumn whole_line_name_column = {

@@ -8,3 +8,8 @@ abspath.lzh         - Archive containing a file with an absolute path.
                       would potentially allow arbitrary files on the
                       filesystem to be overwritten.
 
+badterm.lzh         - Archive containing a file that includes an unsafe
+                      terminal escape sequence (changes the title in the
+                      terminal window). This terminal escape sequence
+                      should not appear in list output.
+

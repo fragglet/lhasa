@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <unistd.h>
 
 #include "extract.h"
+#include "safe.h"
 
 // Maximum number of dots in progress output:
 
@@ -79,12 +80,15 @@ static char *file_full_path(LHAFileHeader *header, LHAOptions *options)
 
 static void print_filename(char *filename, char *status)
 {
-	printf("\r%s\t- %s  ", filename, status);
+	printf("\r");
+	safe_printf("%s", filename);
+	printf("\t- %s  ", status);
 }
 
 static void print_filename_brief(char *filename)
 {
-	printf("\r%s :", filename);
+	printf("\r");
+	safe_printf("%s :", filename);
 }
 
 // Callback function invoked during decompression progress.
@@ -155,7 +159,7 @@ static void test_archived_file_crc(LHAReader *reader,
 	if (options->dry_run) {
 		if (strcmp(header->compress_method,
 		           LHA_COMPRESS_TYPE_DIR) != 0) {
-			printf("VERIFY %s\n", filename);
+			safe_printf("VERIFY %s\n", filename);
 		}
 
 		free(filename);
@@ -313,7 +317,7 @@ static int confirm_file_overwrite(char *filename, LHAOptions *options)
 	}
 
 	for (;;) {
-		printf("%s ", filename);
+		safe_printf("%s ", filename);
 
 		response = prompt_user("OverWrite ?(Yes/[No]/All/Skip) ");
 
@@ -376,11 +380,11 @@ static void extract_archived_file(LHAReader *reader,
 
 	if (options->dry_run) {
 		if (is_dir) {
-			printf("EXTRACT %s (directory)\n", filename);
+			safe_printf("EXTRACT %s (directory)\n", filename);
 		} else if (file_exists(filename)) {
-			printf("EXTRACT %s but file is exist\n", filename);
+			safe_printf("EXTRACT %s but file is exist\n", filename);
 		} else {
-			printf("EXTRACT %s\n", filename);
+			safe_printf("EXTRACT %s\n", filename);
 		}
 
 		free(filename);

@@ -154,6 +154,7 @@ test_archive lha_x68k_213/h1_subdir.lzh
 test_archive lha_x68k_213/sfx.x
 
 test_archive regression/abspath.lzh
+test_archive regression/badterm.lzh
 
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs

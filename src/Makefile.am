@@ -7,7 +7,8 @@ SOURCES =                                 \
 	              options.h           \
 	filter.c      filter.h            \
 	list.c        list.h              \
-	extract.c     extract.h
+	extract.c     extract.h           \
+	safe.c        safe.h
 
 lha_SOURCES=$(SOURCES)
 lha_CFLAGS=$(MAIN_CFLAGS) -I$(top_builddir)/lib
