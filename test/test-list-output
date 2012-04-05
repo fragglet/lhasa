@@ -156,6 +156,17 @@ test_archive lharc_atari_313a/h1_subdir.lzh
 #test_archive lharc_atari_313a/h2_lz5.lzh
 #test_archive lharc_atari_313a/h2_subdir.lzh
 
+test_archive lha_x68k_213/h0_lh0.lzh
+test_archive lha_x68k_213/h0_lh5.lzh
+test_archive lha_x68k_213/h0_subdir.lzh
+test_archive lha_x68k_213/h1_lh0.lzh
+test_archive lha_x68k_213/h1_lh5.lzh
+test_archive lha_x68k_213/h1_subdir.lzh
+#test_archive lha_x68k_213/h2_lh0.lzh           TODO - Level 2 decode
+#test_archive lha_x68k_213/h2_lh5.lzh
+#test_archive lha_x68k_213/h2_subdir.lzh
+test_archive lha_x68k_213/sfx.x
+
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs
 
