@@ -383,7 +383,7 @@ static void extract_archived_file(LHAReader *reader,
 		if (is_dir) {
 			safe_printf("EXTRACT %s (directory)", filename);
 		} else if (file_exists(filename)) {
-			safe_printf("EXTRACT %s but file is exist", filename);
+			safe_printf("EXTRACT %s but file is exist.", filename);
 		} else {
 			safe_printf("EXTRACT %s", filename);
 		}

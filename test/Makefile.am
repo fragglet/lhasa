@@ -10,7 +10,8 @@ COMPILED_TESTS=                       \
 
 UNCOMPILED_TESTS=                     \
 	test-list-output              \
-	test-crc-output
+	test-crc-output               \
+	test-dry-run
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)

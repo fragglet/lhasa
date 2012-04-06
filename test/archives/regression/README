@@ -13,3 +13,5 @@ badterm.lzh         - Archive containing a file that includes an unsafe
                       terminal window). This terminal escape sequence
                       should not appear in list output.
 
+dir.lzh             - Archive that just contains a directory.
+
