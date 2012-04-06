@@ -159,7 +159,8 @@ static void test_archived_file_crc(LHAReader *reader,
 	if (options->dry_run) {
 		if (strcmp(header->compress_method,
 		           LHA_COMPRESS_TYPE_DIR) != 0) {
-			safe_printf("VERIFY %s\n", filename);
+			safe_printf("VERIFY %s", filename);
+			printf("\n");
 		}
 
 		free(filename);
@@ -380,12 +381,13 @@ static void extract_archived_file(LHAReader *reader,
 
 	if (options->dry_run) {
 		if (is_dir) {
-			safe_printf("EXTRACT %s (directory)\n", filename);
+			safe_printf("EXTRACT %s (directory)", filename);
 		} else if (file_exists(filename)) {
-			safe_printf("EXTRACT %s but file is exist\n", filename);
+			safe_printf("EXTRACT %s but file is exist", filename);
 		} else {
-			safe_printf("EXTRACT %s\n", filename);
+			safe_printf("EXTRACT %s", filename);
 		}
+		printf("\n");
 
 		free(filename);
 		return;
