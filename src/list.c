@@ -29,6 +29,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 #include "list.h"
+#include "safe.h"
 
 static float compression_percent(size_t compressed, size_t uncompressed)
 {
