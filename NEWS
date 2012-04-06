@@ -1,5 +1,13 @@
 
-v?.?.? (????-??-??):
+v0.0.1 (2011-04-06):
 
-    Initial version.
+    Initial version. This should be considered beta code, although this
+    first version should already be capable of extracting the majority of
+    archive files found in the wild. The main missing features are:
+
+     * Lack of support for level 2 and 3 file headers.
+     * Inability to create archives (only extract them).
+
+    These are features that I aim to add in future releases. Other future
+    features can be found in the TODO file.
 
