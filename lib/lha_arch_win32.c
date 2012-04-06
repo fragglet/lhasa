@@ -59,5 +59,18 @@ FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
 	return fopen(filename, "wb");
 }
 
+LHAFileType lha_arch_exists(char *filename)
+{
+	// TODO
+	return LHA_FILE_NONE;
+}
+
+int lha_arch_chdir(char *path)
+{
+	// TODO
+	// SetCurrentDirectory(...)
+	return 0;
+}
+
 #endif /* LHA_ARCH_WINDOWS */
 

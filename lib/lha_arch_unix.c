@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #if LHA_ARCH == LHA_ARCH_UNIX
 
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <utime.h>
@@ -107,6 +108,30 @@ FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
 	}
 
 	return fstream;
+}
+
+LHAFileType lha_arch_exists(char *filename)
+{
+	struct stat statbuf;
+
+	if (stat(filename, &statbuf) != 0) {
+		if (errno == ENOENT) {
+			return LHA_FILE_NONE;
+		} else {
+			return LHA_FILE_ERROR;
+		}
+	}
+
+	if (S_ISDIR(statbuf.st_mode)) {
+		return LHA_FILE_DIRECTORY;
+	} else {
+		return LHA_FILE_FILE;
+	}
+}
+
+int lha_arch_chdir(char *path)
+{
+	return chdir(path) == 0;
 }
 
 #endif /* LHA_ARCH_UNIX */

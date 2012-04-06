@@ -21,9 +21,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <unistd.h>
+
+#include "lha_arch.h"
 
 #include "extract.h"
 #include "safe.h"
@@ -197,29 +196,35 @@ static void test_archived_file_crc(LHAReader *reader,
 
 static int check_parent_directory(char *path)
 {
-	struct stat fs;
+	LHAFileType file_type;
 
-	if (stat(path, &fs) == 0) {
-		// Check it's a directory:
+	file_type = lha_arch_exists(path);
 
-		if ((fs.st_mode & S_IFDIR) == 0) {
+	switch (file_type) {
+
+		case LHA_FILE_DIRECTORY:
+			// Already exists.
+			break;
+
+		case LHA_FILE_NONE:
+			// Create the missing directory:
+
+			if (lha_arch_mkdir(path, 0755) != 0) {
+				fprintf(stderr,
+				        "Failed to create parent directory %s\n",
+				        path);
+				return 0;
+			}
+			break;
+
+		case LHA_FILE_FILE:
 			fprintf(stderr, "Parent path %s is not a directory!\n",
 			        path);
 			return 0;
-		}
-	} else if (errno == ENOENT) {
-		// Create the missing directory:
 
-		if (mkdir(path, 0755) != 0) {
-			fprintf(stderr,
-			        "Failed to create parent directory %s: %s\n",
-			        path, strerror(errno));
+		case LHA_FILE_ERROR:
+			fprintf(stderr, "Failed to stat %s\n", path);
 			return 0;
-		}
-	} else {
-		fprintf(stderr, "Failed to stat %s: %s\n",
-		        path, strerror(errno));
-		return 0;
 	}
 
 	return 1;
@@ -346,18 +351,16 @@ static int confirm_file_overwrite(char *filename, LHAOptions *options)
 
 static int file_exists(char *filename)
 {
-	struct stat statbuf;
-	int exists;
+	LHAFileType file_type;
 
-	if (stat(filename, &statbuf) == 0) {
-		exists = 1;
-	} else {
-		// TODO: Check errno, continue with extract when
-		// file not found; otherwise print an error.
-		exists = 0;
+	file_type = lha_arch_exists(filename);
+
+	if (file_type == LHA_FILE_ERROR) {
+		fprintf(stderr, "Failed to read file type of '%s'\n", filename);
+		exit(-1);
 	}
 
-	return exists;
+	return file_type != LHA_FILE_NONE;
 }
 
 // Extract an archived file.
@@ -460,7 +463,7 @@ void extract_archive(LHAFilter *filter, LHAOptions *options)
 	// Change directory before extract? (-w option).
 
 	if (options->extract_path != NULL) {
-		if (chdir(options->extract_path) != 0) {
+		if (lha_arch_chdir(options->extract_path) != 0) {
 			fprintf(stderr, "Failed to change directory to %s.\n",
 			        options->extract_path);
 			exit(-1);

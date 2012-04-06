@@ -32,6 +32,14 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_ARCH LHA_ARCH_UNIX
 #endif
 
+typedef enum
+{
+    LHA_FILE_NONE,
+    LHA_FILE_FILE,
+    LHA_FILE_DIRECTORY,
+    LHA_FILE_ERROR,
+} LHAFileType;
+
 /**
  * Create a directory.
  *
@@ -83,10 +91,29 @@ int lha_arch_utime(char *filename, unsigned int timestamp);
  * @param unix_gid    Unix GID to set for the new file, or -1 to not set.
  * @param unix_perms  Unix permissions to set for the new file, or -1 to not
  *                    set.
+ * @return            Standard C file handle.
  */
 
 FILE *lha_arch_fopen(char *filename, int unix_uid,
                      int unix_gid, int unix_perms);
+
+/**
+ * Query whether the specified file exists.
+ *
+ * @param filename    Path to the file.
+ * @return            The type of file.
+ */
+
+LHAFileType lha_arch_exists(char *filename);
+
+/**
+ * Change to the specified directory.
+ *
+ * @param path        Path to change to.
+ * @return            Non-zero for success.
+ */
+
+int lha_arch_chdir(char *path);
 
 #endif /* ifndef LHASA_LHA_ARCH_H */
 
