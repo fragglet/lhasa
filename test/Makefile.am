@@ -45,3 +45,7 @@ check-postrun:
 
 endif
 
+noinst_PROGRAMS=fuzzer
+
+fuzzer_SOURCES = fuzzer.c
+
