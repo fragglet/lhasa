@@ -70,7 +70,7 @@ static int peek_bits(BitStreamReader *reader,
 	// If there are not enough bits in the buffer to satisfy this
 	// request, we need to fill up the buffer with more bits.
 
-	if (reader->bits < n) {
+	while (reader->bits < n) {
 
 		// Maximum number of bytes we can fill?
 
@@ -82,18 +82,18 @@ static int peek_bits(BitStreamReader *reader,
 		bytes = reader->callback(buf, fill_bytes,
 		                         reader->callback_data);
 
+		// End of file?
+
+		if (bytes == 0) {
+			return -1;
+		}
+
 		reader->bit_buffer |= (uint32_t) buf[0] << (24 - reader->bits);
 		reader->bit_buffer |= (uint32_t) buf[1] << (16 - reader->bits);
 		reader->bit_buffer |= (uint32_t) buf[2] << (8 - reader->bits);
 		reader->bit_buffer |= (uint32_t) buf[3];
 
 		reader->bits += bytes * 8;
-
-		// Do we have enough now?  If not, we're out of luck.
-
-		if (reader->bits < n) {
-			return -1;
-		}
 	}
 
 	return (signed int) (reader->bit_buffer >> (32 - n));
