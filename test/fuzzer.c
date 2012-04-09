@@ -26,7 +26,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <signal.h>
 #include <assert.h>
+#include <unistd.h>
 #include <time.h>
 
 #include "lha_decoder.h"
@@ -35,19 +37,61 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define MAX_FUZZ_LEN (2 * 1024 * 1024)
 
-typedef struct {
-	uint8_t *data;
-	size_t data_len;
-	unsigned int read;
-} ReadCallbackData;
+// Input data to feed to the decompressor:
+
+static uint8_t *input_data;
+static size_t input_data_len;
+
+// Position in input stream:
+
+static unsigned int input_pos;
 
 // Contents of "canary buffer" that is put around allocated blocks to
 // check their contents.
 
 static const uint8_t canary_block[] = {
-	0xdf, 0xba, 0x18, 0xa0, 0x51, 0x91, 0x3c, 0xd6, 
-	0x03, 0xfb, 0x2c, 0xa6, 0xd6, 0x88, 0xa5, 0x75, 
+	0xdf, 0xba, 0x18, 0xa0, 0x51, 0x91, 0x3c, 0xd6,
+	0x03, 0xfb, 0x2c, 0xa6, 0xd6, 0x88, 0xa5, 0x75,
 };
+
+static void dump_input_data(char *filename)
+{
+	FILE *fstream;
+
+	fstream = fopen(filename, "wb");
+	fwrite(input_data, 1, input_data_len, fstream);
+	fclose(fstream);
+}
+
+// Abort function, invoked when a test fails. Dumps the input for the
+// failing test to a file, and exits with SIGABRT (to trigger a
+// coredump.
+
+static void error_abort(char *message)
+{
+	char filename[32];
+
+	fprintf(stderr, "\n--\nTest failed: Error: %s\n", message);
+	sprintf(filename, "input-data.%i", getpid());
+	dump_input_data(filename);
+	fprintf(stderr, "Trigger input data dumped to %s\n", filename);
+
+	abort();
+}
+
+// Signal function invoked when SIGALRM is raised.
+
+static void alarm_signal(int sig)
+{
+	error_abort("Alarm expired");
+}
+
+// Signal function invoked when SIGSEGV is raised.
+
+static void crash_signal(int sig)
+{
+	error_abort("Segmentation violation");
+}
 
 // Allocate some memory with canary blocks surrounding it.
 
@@ -86,9 +130,12 @@ static void canary_check(void *_data)
 	memcpy(&nbytes, data - sizeof(size_t) - sizeof(canary_block),
 	       sizeof(size_t));
 
-	assert(!memcmp(data - sizeof(canary_block), canary_block,
-	               sizeof(canary_block)));
-	assert(!memcmp(data + nbytes, canary_block, sizeof(canary_block)));
+	if (memcmp(data - sizeof(canary_block), canary_block,
+	           sizeof(canary_block)) != 0
+	 || memcmp(data + nbytes, canary_block,
+	           sizeof(canary_block)) != 0) {
+		error_abort("Canary area check failed");
+	}
 }
 
 // Fill in the specified block with random data.
@@ -107,19 +154,17 @@ static void fuzz_block(uint8_t *data, unsigned int data_len)
 
 static size_t read_more_data(void *buf, size_t buf_len, void *user_data)
 {
-	ReadCallbackData *cb_data = user_data;
-
 	// Return end of file when we reach the end of the data.
 
-	if (cb_data->read >= cb_data->data_len) {
+	if (input_pos >= input_data_len) {
 		return 0;
 	}
 
 	// Only copy a single byte at a time. This allows us to
 	// accurately track how much of the signature is valid.
 
-	memcpy(buf, cb_data->data + cb_data->read, 1);
-	++cb_data->read;
+	memcpy(buf, input_data + input_pos, 1);
+	++input_pos;
 
 	return 1;
 }
@@ -131,19 +176,22 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
                                   uint8_t *data,
                                   size_t data_len)
 {
-	ReadCallbackData cb_data;
 	uint8_t *read_buf;
 	size_t result;
 	void *handle;
 
+	// Throw an alarm after 5 minutes if it doesn't complete.
+
+	alarm(5 * 60);
+
 	// Init decoder.
 
-	cb_data.data = data;
-	cb_data.data_len = data_len;
-	cb_data.read = 0;
+	input_data = data;
+	input_data_len = data_len;
+	input_pos = 0;
 
 	handle = canary_malloc(dtype->extra_size);
-	assert(dtype->init(handle, read_more_data, &cb_data));
+	assert(dtype->init(handle, read_more_data, NULL));
 
 	// Create a buffer into which to decompress data.
 
@@ -173,7 +221,11 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
 
 	//printf("Fuzz test complete, %i bytes read\n", cb_data.read);
 
-	return cb_data.read;
+	// Cancel alarm.
+
+	alarm(0);
+
+	return input_pos;
 }
 
 static void fuzz_test(LHADecoderType *dtype, size_t data_len)
@@ -216,6 +268,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Unknown decoder type '%s'\n", argv[1]);
 		exit(-1);
 	}
+
+	signal(SIGALRM, alarm_signal);
+	signal(SIGSEGV, crash_signal);
 
 	srand(time(NULL));
 
