@@ -46,6 +46,10 @@ static size_t input_data_len;
 
 static unsigned int input_pos;
 
+// Decompressor algorithm we are processing.
+
+static char *algorithm;
+
 // Contents of "canary buffer" that is put around allocated blocks to
 // check their contents.
 
@@ -72,7 +76,7 @@ static void error_abort(char *message)
 	char filename[32];
 
 	fprintf(stderr, "\n--\nTest failed: Error: %s\n", message);
-	sprintf(filename, "input-data.%i", getpid());
+	sprintf(filename, "input-data.%s.%i", algorithm, getpid());
 	dump_input_data(filename);
 	fprintf(stderr, "Trigger input data dumped to %s\n", filename);
 
@@ -256,16 +260,20 @@ int main(int argc, char *argv[])
 {
 	LHADecoderType *dtype;
 	unsigned int i;
+	time_t now;
+	char timestr[32];
 
 	if (argc < 2) {
 		printf("Usage: %s <decoder-type>\n", argv[0]);
 		exit(-1);
 	}
 
-	dtype = lha_decoder_for_name(argv[1]);
+	algorithm = argv[1];
+
+	dtype = lha_decoder_for_name(algorithm);
 
 	if (dtype == NULL) {
-		fprintf(stderr, "Unknown decoder type '%s'\n", argv[1]);
+		fprintf(stderr, "Unknown decoder type '%s'\n", algorithm);
 		exit(-1);
 	}
 
@@ -275,7 +283,10 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 
 	for (i = 0; ; ++i) {
-		printf("Iteration %i:\n", i);
+		now = time(NULL);
+		strftime(timestr, sizeof(timestr), "%Y-%m-%dT%H:%M:%S",
+		         localtime(&now));
+		printf("%s - Iteration %i:\n", timestr, i);
 		fuzz_test(dtype, MAX_FUZZ_LEN);
 	}
 
