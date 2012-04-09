@@ -52,6 +52,56 @@ typedef struct {
 	unsigned int max_len;
 } ReadCallbackData;
 
+// Contents of "canary buffer" that is put around allocated blocks to
+// check their contents.
+
+static const uint8_t canary_block[] = {
+	0xdf, 0xba, 0x18, 0xa0, 0x51, 0x91, 0x3c, 0xd6, 
+	0x03, 0xfb, 0x2c, 0xa6, 0xd6, 0x88, 0xa5, 0x75, 
+};
+
+// Allocate some memory with canary blocks surrounding it.
+
+static void *canary_malloc(size_t nbytes)
+{
+	uint8_t *result;
+
+	result = malloc(nbytes + 2 * sizeof(canary_block) + sizeof(size_t));
+	assert(result != NULL);
+
+	memcpy(result, &nbytes, sizeof(size_t));
+	memcpy(result + sizeof(size_t), canary_block, sizeof(canary_block));
+	memset(result + sizeof(size_t) + sizeof(canary_block), 0, nbytes);
+	memcpy(result + sizeof(size_t) + sizeof(canary_block) + nbytes,
+	       canary_block, sizeof(canary_block));
+
+	return result + sizeof(size_t) + sizeof(canary_block);
+}
+
+// Free memory allocated with canary_malloc().
+
+static void canary_free(void *data)
+{
+	if (data != NULL) {
+		free((uint8_t *) data - sizeof(size_t) - sizeof(canary_block));
+	}
+}
+
+// Check the canary blocks surrounding memory allocated with canary_malloc().
+
+static void canary_check(void *_data)
+{
+	uint8_t *data = _data;
+	size_t nbytes;
+
+	memcpy(&nbytes, data - sizeof(size_t) - sizeof(canary_block),
+	       sizeof(size_t));
+
+	assert(!memcmp(data - sizeof(canary_block), canary_block,
+	               sizeof(canary_block)));
+	assert(!memcmp(data + nbytes, canary_block, sizeof(canary_block)));
+}
+
 // Fill in the specified block with random data.
 
 static void fuzz_block(uint8_t *data, unsigned int data_len)
@@ -142,8 +192,7 @@ static void *init_decoder(LHADecoderType *dtype,
 {
 	void *result;
 
-	result = malloc(dtype->extra_size);
-	assert(result != NULL);
+	result = canary_malloc(dtype->extra_size);
 
 	assert(dtype->init(result, read_callback, callback_data));
 
@@ -202,11 +251,13 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
 
 	// Create a buffer into which to decompress data.
 
-	read_buf = malloc(dtype->max_read);
+	read_buf = canary_malloc(dtype->max_read);
 	assert(read_buf != NULL);
 
 	for (;;) {
+		memset(read_buf, 0, dtype->max_read);
 		result = dtype->read(handle, read_buf);
+		canary_check(read_buf);
 
 		//printf("read: %i\n", result);
 		if (result == 0) {
@@ -220,8 +271,9 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
 		dtype->free(handle);
 	}
 
-	free(handle);
-	free(read_buf);
+	canary_check(handle);
+	canary_free(handle);
+	canary_free(read_buf);
 
 	//printf("Fuzz test complete, %i bytes read\n", cb_data.read);
 
