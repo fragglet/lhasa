@@ -253,17 +253,18 @@ static void fuzz_test(LHADecoderType *dtype, unsigned int iterations,
 			len = run_fuzz_test(dtype, new_signature, max_len);
 			new_signature->data_len = len;
 
-			if (len >= max_len) {
-				printf("\tReached limit.\n");
-				return;
-			}
-
 			if (len > signature->data_len
 			 && (best == NULL || len > best->data_len)) {
 				free_signature(best);
 				best = new_signature;
 			} else {
 				free_signature(new_signature);
+			}
+
+			if (len >= max_len) {
+				printf("\tReached limit.\n");
+				free_signature(best);
+				goto finished;
 			}
 		}
 
@@ -288,6 +289,9 @@ static void fuzz_test(LHADecoderType *dtype, unsigned int iterations,
 			}
 		}
 	}
+
+finished:
+	free_signature(signature);
 }
 
 int main(int argc, char *argv[])
