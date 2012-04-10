@@ -515,7 +515,7 @@ static size_t lha_lh_new_read(void *data, uint8_t *buf)
 
 	// Start of new block?
 
-	if (decoder->block_remaining == 0) {
+	while (decoder->block_remaining == 0) {
 		if (!start_new_block(decoder)) {
 			return 0;
 		}
