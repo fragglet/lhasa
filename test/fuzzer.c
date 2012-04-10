@@ -256,6 +256,41 @@ static void fuzz_test(LHADecoderType *dtype, size_t data_len)
 	free(data);
 }
 
+static void run_from_file(LHADecoderType *dtype, char *filename)
+{
+	FILE *fstream;
+	uint8_t *data;
+	size_t data_len;
+	unsigned int count;
+
+	fstream = fopen(filename, "rb");
+
+	if (fstream == NULL) {
+		fprintf(stderr, "Failed to open '%s'\n", filename);
+		exit(-1);
+	}
+
+	fseek(fstream, 0, SEEK_END);
+	data_len = ftell(fstream);
+	fseek(fstream, 0, SEEK_SET);
+
+	data = malloc(data_len);
+	assert(data != NULL);
+	fread(data, 1, data_len, fstream);
+
+	printf("Running input from %s:\n", filename);
+
+	count = run_fuzz_test(dtype, data, data_len);
+
+	if (count >= data_len) {
+		printf("\tTest complete (end of file)\n");
+	} else {
+		printf("\tTest complete (read %i bytes)\n", count);
+	}
+
+	free(data);
+}
+
 int main(int argc, char *argv[])
 {
 	LHADecoderType *dtype;
@@ -264,7 +299,7 @@ int main(int argc, char *argv[])
 	char timestr[32];
 
 	if (argc < 2) {
-		printf("Usage: %s <decoder-type>\n", argv[0]);
+		printf("Usage: %s <decoder-type> [filename]\n", argv[0]);
 		exit(-1);
 	}
 
@@ -277,17 +312,21 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	signal(SIGALRM, alarm_signal);
-	signal(SIGSEGV, crash_signal);
+	if (argc >= 3) {
+		run_from_file(dtype, argv[2]);
+	} else {
+		signal(SIGALRM, alarm_signal);
+		signal(SIGSEGV, crash_signal);
 
-	srand(time(NULL));
+		srand(time(NULL));
 
-	for (i = 0; ; ++i) {
-		now = time(NULL);
-		strftime(timestr, sizeof(timestr), "%Y-%m-%dT%H:%M:%S",
-		         localtime(&now));
-		printf("%s - Iteration %i:\n", timestr, i);
-		fuzz_test(dtype, MAX_FUZZ_LEN);
+		for (i = 0; ; ++i) {
+			now = time(NULL);
+			strftime(timestr, sizeof(timestr),
+			         "%Y-%m-%dT%H:%M:%S", localtime(&now));
+			printf("%s - Iteration %i:\n", timestr, i);
+			fuzz_test(dtype, MAX_FUZZ_LEN);
+		}
 	}
 
 	return 0;
