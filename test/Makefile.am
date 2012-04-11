@@ -16,7 +16,7 @@ UNCOMPILED_TESTS=                     \
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)
 
-check_PROGRAMS=$(COMPILED_TESTS)
+check_PROGRAMS=$(COMPILED_TESTS) fuzzer
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
@@ -44,8 +44,6 @@ check-postrun:
 	@cd $(top_builddir); ./gencov lib/*.c src/*.c
 
 endif
-
-noinst_PROGRAMS=fuzzer
 
 fuzzer_SOURCES = fuzzer.c
 
