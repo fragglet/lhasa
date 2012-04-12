@@ -74,7 +74,7 @@ struct _LHAFileHeader {
 	uint8_t os_type;
 	uint16_t crc;
 	unsigned int timestamp;
-	void *raw_data;
+	uint8_t *raw_data;
 	size_t raw_data_len;
 	unsigned int extra_flags;
 

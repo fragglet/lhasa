@@ -27,8 +27,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_file_header.h"
 #include "ext_header.h"
 
+#define COMMON_HEADER_LEN 22 /* bytes */
 #define LEVEL_0_MIN_HEADER_LEN 22 /* bytes */
 #define LEVEL_1_MIN_HEADER_LEN 25 /* bytes */
+
+#define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
+#define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)
 
 // Perform checksum of header contents.
 
@@ -164,83 +168,41 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 	return 1;
 }
 
-// Decode the contents of the header.
+// Read some more data from the input stream, extending the raw_data
+// array (and the size of the header).
 
-static int decode_header(LHAFileHeader *header)
+static uint8_t *extend_raw_data(LHAFileHeader **header,
+                                LHAInputStream *stream,
+                                size_t nbytes)
 {
-	uint8_t *data;
-	size_t len, path_len;
-	size_t min_len;
+	LHAFileHeader *new_header;
+	size_t new_raw_len;
+	uint8_t *result;
 
-	data = header->raw_data;
-	len = header->raw_data_len;
+	// Reallocate the header and raw_data area to be larger.
 
-	// Sanity check header length.  This is the minimum header length
-	// for a header that has a zero-length path.
+	new_raw_len = RAW_DATA_LEN(header) + nbytes;
+	new_header = realloc(*header, sizeof(LHAFileHeader) + new_raw_len);
 
-	if (len < LEVEL_0_MIN_HEADER_LEN) {
-		return 0;
+	if (new_header == NULL) {
+		return NULL;
 	}
 
-	// Compression method:
+	// Update the header pointer to point to the new area.
 
-	memcpy(header->compress_method, data, 5);
-	header->compress_method[5] = '\0';
+	*header = new_header;
+	new_header->raw_data = (uint8_t *) (new_header + 1);
+	result = new_header->raw_data + new_header->raw_data_len;
 
-	// File lengths:
+	// Read data from stream into new area.
 
-	header->compressed_length = lha_decode_uint32(data + 5);
-	header->length = lha_decode_uint32(data + 9);
-
-	// Timestamp:
-
-	header->timestamp = decode_ftime(data + 13);
-
-	// Header level:
-
-	header->header_level = data[18];
-
-	switch (header->header_level) {
-		case 0:
-			min_len = LEVEL_0_MIN_HEADER_LEN;
-			break;
-		case 1:
-			min_len = LEVEL_1_MIN_HEADER_LEN;
-			break;
-
-		default:
-			// TODO
-			return 0;
+	if (!lha_input_stream_read(stream, result, nbytes)) {
+		return NULL;
 	}
 
-	// Read path.  Check path length field - is the header long enough
-	// to hold this full path?
+	new_header->raw_data_len = new_raw_len;
 
-	path_len = data[19];
-
-	if (min_len + path_len > len) {
-		return 0;
-	}
-
-	// OS type?
-
-	if (header->header_level == 1) {
-		header->os_type = data[path_len + 22];
-	} else {
-		header->os_type = LHA_OS_TYPE_UNKNOWN;
-	}
-
-	// Read filename field:
-
-	if (!process_level0_path(header, data + 20, path_len)) {
-		return 0;
-	}
-
-	// CRC field.
-
-	header->crc = lha_decode_uint16(data + 20 + path_len);
-
-	return 1;
+	return result;
 }
 
 static int read_next_ext_header(LHAFileHeader **header,
@@ -248,14 +210,11 @@ static int read_next_ext_header(LHAFileHeader **header,
                                 uint8_t **ext_header,
                                 size_t *ext_header_len)
 {
-	LHAFileHeader *new_header;
-	size_t new_raw_len;
-
 	// Last two bytes of the header raw data contain the size
 	// of the next header.
 
-	*ext_header_len = lha_decode_uint16((*header)->raw_data
-	                              + (*header)->raw_data_len - 2);
+	*ext_header_len
+	    = lha_decode_uint16(&RAW_DATA(header, RAW_DATA_LEN(header) - 2));
 
 	// No more headers?
 
@@ -264,29 +223,9 @@ static int read_next_ext_header(LHAFileHeader **header,
 		return 1;
 	}
 
-	// Reallocate header structure larger to accomodate the new
-	// extended header.
+	*ext_header = extend_raw_data(header, stream, *ext_header_len);
 
-	new_raw_len = (*header)->raw_data_len + *ext_header_len;
-	new_header = realloc(*header, sizeof(LHAFileHeader) + new_raw_len);
-
-	if (new_header == NULL) {
-		return 0;
-	}
-
-	*header = new_header;
-	new_header->raw_data = new_header + 1;
-	*ext_header = new_header->raw_data + new_header->raw_data_len;
-
-	// Read extended data from stream into new area.
-
-	if (!lha_input_stream_read(stream, *ext_header, *ext_header_len)) {
-		return 0;
-	}
-
-	new_header->raw_data_len = new_raw_len;
-
-	return 1;
+	return *ext_header != NULL;
 }
 
 static int decode_extended_headers(LHAFileHeader **header,
@@ -333,24 +272,127 @@ static int decode_extended_headers(LHAFileHeader **header,
 	return 1;
 }
 
+// Decode a level 0 or 1 header.
+
+static int decode_level0_header(LHAFileHeader **header, LHAInputStream *stream)
+{
+	uint8_t header_len;
+	uint8_t header_csum;
+	size_t path_len;
+	size_t min_len;
+
+	header_len = RAW_DATA(header, 0);
+	header_csum = RAW_DATA(header, 1);
+
+	// Sanity check header length.  This is the minimum header length
+	// for a header that has a zero-length path.
+
+	switch ((*header)->header_level) {
+		case 0:
+			min_len = LEVEL_0_MIN_HEADER_LEN;
+			break;
+		case 1:
+			min_len = LEVEL_1_MIN_HEADER_LEN;
+			break;
+
+		default:
+			return 0;
+	}
+
+	if (header_len < min_len) {
+		return 0;
+	}
+
+	// We only have a partial header so far. Read the full header.
+
+	if (!extend_raw_data(header, stream,
+	                     header_len + 2 - RAW_DATA_LEN(header))) {
+		return 0;
+	}
+
+	// Checksum the header.
+
+	if (!checksum_header(&RAW_DATA(header, 2),
+	                     RAW_DATA_LEN(header) - 2,
+	                     header_csum)) {
+		return 0;
+	}
+
+	// Compression method:
+
+	memcpy((*header)->compress_method, &RAW_DATA(header, 2), 5);
+	(*header)->compress_method[5] = '\0';
+
+	// File lengths:
+
+	(*header)->compressed_length = lha_decode_uint32(&RAW_DATA(header, 7));
+	(*header)->length = lha_decode_uint32(&RAW_DATA(header, 11));
+
+	// Timestamp:
+
+	(*header)->timestamp = decode_ftime(&RAW_DATA(header, 15));
+
+	// Read path.  Check path length field - is the header long enough
+	// to hold this full path?
+
+	path_len = RAW_DATA(header, 21);
+
+	if (min_len + path_len > header_len) {
+		return 0;
+	}
+
+	// OS type?
+
+	if ((*header)->header_level == 0) {
+		(*header)->os_type = LHA_OS_TYPE_UNKNOWN;
+	} else {
+		(*header)->os_type = RAW_DATA(header, 24 + path_len);
+	}
+
+	// Read filename field:
+
+	if (!process_level0_path(*header, &RAW_DATA(header, 22), path_len)) {
+		return 0;
+	}
+
+	// CRC field.
+
+	(*header)->crc = lha_decode_uint16(&RAW_DATA(header, 22 + path_len));
+
+	return 1;
+}
+
+static int decode_level1_header(LHAFileHeader **header, LHAInputStream *stream)
+{
+	if (!decode_level0_header(header, stream)) {
+		return 0;
+	}
+
+	// Level 1 headers can have extended headers, so parse them.
+
+	if (!decode_extended_headers(header, stream)) {
+		return 0;
+	}
+
+	return 1;
+}
+
 LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 {
 	LHAFileHeader *header;
-	uint8_t header_len;
-	uint8_t header_csum;
+	int success;
 
-	// TODO: Needs refactoring to support level 2, 3 headers.
-
-	// Read the "mini-header":
-
-	if (!lha_input_stream_read_byte(stream, &header_len)
-	 || !lha_input_stream_read_byte(stream, &header_csum)) {
-		return NULL;
-	}
+	// We cannot decode the file header until we identify the
+	// header level (as different header level formats are
+	// decoded in different ways. The header level field is
+	// located at byte offset 20 within the header, so we
+	// must read the first 21 bytes to read it (actually this
+	// reads one byte more, so that we get the filename length
+	// byte for level 1 headers as well).
 
 	// Allocate result structure.
 
-	header = malloc(sizeof(LHAFileHeader) + header_len);
+	header = malloc(sizeof(LHAFileHeader) + COMMON_HEADER_LEN);
 
 	if (header == NULL) {
 		return NULL;
@@ -360,28 +402,36 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	header->_refcount = 1;
 
-	// Read the raw header data and perform checksum.
+	// Read first 21 bytes of header.
 
-	header->raw_data = header + 1;
-	header->raw_data_len = header_len;
+	header->raw_data = (uint8_t *) (header + 1);
+	header->raw_data_len = COMMON_HEADER_LEN;
 
-	if (!lha_input_stream_read(stream, header->raw_data, header_len)
-	 || !checksum_header(header->raw_data, header_len, header_csum)) {
+	if (!lha_input_stream_read(stream, header->raw_data,
+	                           header->raw_data_len)) {
 		goto fail;
 	}
 
-	// Checksum passes. Decode the header contents.
+	// Identify header level, and decode header depending on
+	// the value encountered.
 
-	if (!decode_header(header)) {
-		goto fail;
+	header->header_level = header->raw_data[20];
+
+	switch (header->header_level) {
+		case 0:
+			success = decode_level0_header(&header, stream);
+			break;
+
+		case 1:
+			success = decode_level1_header(&header, stream);
+			break;
+
+		default:
+			success = 0;
+			break;
 	}
 
-	// Read extended headers.
-	// TODO: Fallback to ignoring extended headers if failure occurs
-	// here?
-
-	if (header->header_level >= 1
-	 && !decode_extended_headers(&header, stream)) {
+	if (!success) {
 		goto fail;
 	}
 
