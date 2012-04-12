@@ -1,7 +1,6 @@
 Library:
  * Better error handling.
- * Level 2, 3 header parsing.
- * Parse broken Amiga LHA 1.22 archives.
+ * Level 3 header parsing.
  * Extract:
     * Add options API to control whether permissions, timestamp are set.
     * Creation of parent directories on extract (+optional)

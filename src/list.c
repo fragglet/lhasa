@@ -295,7 +295,9 @@ static void name_column_print(LHAFileHeader *header)
 	if (header->path != NULL) {
 		safe_printf("%s", header->path);
 	}
-	safe_printf("%s", header->filename);
+	if (header->filename != NULL) {
+		safe_printf("%s", header->filename);
+	}
 }
 
 static ListColumn name_column = {
@@ -316,7 +318,9 @@ static void whole_line_name_column_print(LHAFileHeader *header)
 	if (header->path != NULL) {
 		safe_printf("%s", header->path);
 	}
-	safe_printf("%s", header->filename);
+	if (header->filename != NULL) {
+		safe_printf("%s", header->filename);
+	}
 	printf("\n");
 }
 

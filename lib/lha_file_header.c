@@ -30,6 +30,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define COMMON_HEADER_LEN 22 /* bytes */
 #define LEVEL_0_MIN_HEADER_LEN 22 /* bytes */
 #define LEVEL_1_MIN_HEADER_LEN 25 /* bytes */
+#define LEVEL_2_HEADER_LEN 26 /* bytes */
 
 #define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
 #define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)
@@ -205,6 +206,42 @@ static uint8_t *extend_raw_data(LHAFileHeader **header,
 	return result;
 }
 
+// Starting at the specified offset in the raw_data array, walk
+// through the list of extended headers and parse them.
+
+static int decode_extended_headers(LHAFileHeader **header,
+                                   unsigned int offset)
+{
+	uint8_t *ext_header;
+	size_t ext_header_len;
+
+	while (offset < RAW_DATA_LEN(header) - 2) {
+		ext_header = &RAW_DATA(header, offset + 2);
+		ext_header_len = lha_decode_uint16(&RAW_DATA(header, offset));
+
+		// Header length zero indicates end of chain. Otherwise, sanity
+		// check the header length is valid.
+
+		if (ext_header_len == 0) {
+			break;
+		} else if (ext_header_len < 3
+		        || offset + ext_header_len + 2 > RAW_DATA_LEN(header)) {
+			return 0;
+		}
+
+		// Process header:
+
+		lha_ext_header_decode(*header, ext_header[0],
+		                      ext_header + 1, ext_header_len - 3);
+
+		// Advance to next header.
+
+		offset += ext_header_len;
+	}
+
+	return 1;
+}
+
 static int read_next_ext_header(LHAFileHeader **header,
                                 LHAInputStream *stream,
                                 uint8_t **ext_header,
@@ -228,8 +265,11 @@ static int read_next_ext_header(LHAFileHeader **header,
 	return *ext_header != NULL;
 }
 
-static int decode_extended_headers(LHAFileHeader **header,
-                                   LHAInputStream *stream)
+// Read extended headers for a level 1 header, extending the
+// raw_data block to include them.
+
+static int read_l1_extended_headers(LHAFileHeader **header,
+                                    LHAInputStream *stream)
 {
 	uint8_t *ext_header;
 	size_t ext_header_len;
@@ -248,13 +288,11 @@ static int decode_extended_headers(LHAFileHeader **header,
 			break;
 		}
 
-		// In level 1 headers, the compressed length field is
-		// actually "compressed length + length of all extended
-		// headers":
+		// For backwards compatibility with level 0 headers,
+		// the compressed length field is actually "compressed
+		// length + length of all extended headers":
 
-		if ((*header)->header_level <= 1) {
-			(*header)->compressed_length -= ext_header_len;
-		}
+		(*header)->compressed_length -= ext_header_len;
 
 		// Must be at least 3 bytes - 1 byte header type
 		// + 2 bytes for next header length
@@ -262,11 +300,6 @@ static int decode_extended_headers(LHAFileHeader **header,
 		if (ext_header_len < 3) {
 			return 0;
 		}
-
-		// Process header:
-
-		lha_ext_header_decode(*header, ext_header[0],
-		                      ext_header + 1, ext_header_len - 3);
 	}
 
 	return 1;
@@ -364,13 +397,66 @@ static int decode_level0_header(LHAFileHeader **header, LHAInputStream *stream)
 
 static int decode_level1_header(LHAFileHeader **header, LHAInputStream *stream)
 {
+	unsigned int ext_header_start;
+
 	if (!decode_level0_header(header, stream)) {
 		return 0;
 	}
 
 	// Level 1 headers can have extended headers, so parse them.
 
-	if (!decode_extended_headers(header, stream)) {
+	ext_header_start = RAW_DATA_LEN(header) - 2;
+
+	if (!read_l1_extended_headers(header, stream)
+	 || !decode_extended_headers(header, ext_header_start)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+static int decode_level2_header(LHAFileHeader **header, LHAInputStream *stream)
+{
+	unsigned int header_len;
+
+	header_len = lha_decode_uint16(&RAW_DATA(header, 0));
+
+	if (header_len < LEVEL_2_HEADER_LEN) {
+		return 0;
+	}
+
+	// Read the full header.
+
+	if (!extend_raw_data(header, stream,
+	                     header_len - RAW_DATA_LEN(header))) {
+		return 0;
+	}
+
+	// Compression method:
+
+	memcpy((*header)->compress_method, &RAW_DATA(header, 2), 5);
+	(*header)->compress_method[5] = '\0';
+
+	// File lengths:
+
+	(*header)->compressed_length = lha_decode_uint32(&RAW_DATA(header, 7));
+	(*header)->length = lha_decode_uint32(&RAW_DATA(header, 11));
+
+	// Timestamp. Unlike level 0/1, this is a Unix-style timestamp.
+
+	(*header)->timestamp = lha_decode_uint32(&RAW_DATA(header, 15));
+
+	// CRC.
+
+	(*header)->crc = lha_decode_uint16(&RAW_DATA(header, 21));
+
+	// OS type:
+
+	(*header)->os_type = RAW_DATA(header, 23);
+
+	// TODO: Extended headers
+
+	if (!decode_extended_headers(header, 24)) {
 		return 0;
 	}
 
@@ -424,6 +510,10 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 		case 1:
 			success = decode_level1_header(&header, stream);
+			break;
+
+		case 2:
+			success = decode_level2_header(&header, stream);
 			break;
 
 		default:

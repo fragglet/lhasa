@@ -128,7 +128,7 @@ test_archive pmarc2/long.pma
 
 test_archive lha_amiga_122/level0.lzh
 #test_archive lha_amiga_122/level1.lzh    TODO - Unix LHA fails
-#test_archive lha_amiga_122/level2.lzh    TODO - Level 2 decode
+test_archive lha_amiga_122/level2.lzh
 test_archive lha_amiga_122/lh0.lzh
 test_archive lha_amiga_122/lh1.lzh
 test_archive lha_amiga_122/lh4_long.lzh
@@ -139,7 +139,7 @@ test_archive lha_amiga_122/sfx.run
 
 test_archive lha_amiga_212/level0.lzh
 test_archive lha_amiga_212/level1.lzh
-#test_archive lha_amiga_212/level2.lzh   TODO - Level 2 decode
+test_archive lha_amiga_212/level2.lzh
 test_archive lha_amiga_212/lh1.lzh
 test_archive lha_amiga_212/lh6.lzh
 
@@ -152,9 +152,9 @@ test_archive lharc_atari_313a/shorter.lzh
 test_archive lharc_atari_313a/h1_lh5.lzh
 test_archive lharc_atari_313a/h1_lz5.lzh
 test_archive lharc_atari_313a/h1_subdir.lzh
-#test_archive lharc_atari_313a/h2_lh5.lzh        TODO - Level 2 decode
-#test_archive lharc_atari_313a/h2_lz5.lzh
-#test_archive lharc_atari_313a/h2_subdir.lzh
+test_archive lharc_atari_313a/h2_lh5.lzh
+test_archive lharc_atari_313a/h2_lz5.lzh
+test_archive lharc_atari_313a/h2_subdir.lzh
 
 test_archive lha_x68k_213/h0_lh0.lzh
 test_archive lha_x68k_213/h0_lh5.lzh
@@ -162,9 +162,9 @@ test_archive lha_x68k_213/h0_subdir.lzh
 test_archive lha_x68k_213/h1_lh0.lzh
 test_archive lha_x68k_213/h1_lh5.lzh
 test_archive lha_x68k_213/h1_subdir.lzh
-#test_archive lha_x68k_213/h2_lh0.lzh           TODO - Level 2 decode
-#test_archive lha_x68k_213/h2_lh5.lzh
-#test_archive lha_x68k_213/h2_subdir.lzh
+test_archive lha_x68k_213/h2_lh0.lzh
+test_archive lha_x68k_213/h2_lh5.lzh
+test_archive lha_x68k_213/h2_subdir.lzh
 test_archive lha_x68k_213/sfx.x
 
 test_archive regression/abspath.lzh

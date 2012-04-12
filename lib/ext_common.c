@@ -55,9 +55,9 @@ static int ext_header_path_decoder(LHAFileHeader *header,
                                    size_t data_len)
 {
 	unsigned int i;
-	char *new_path;
+	uint8_t *new_path;
 
-	new_path = malloc(data_len + 1);
+	new_path = malloc(data_len + 2);
 
 	if (new_path == NULL) {
 		return 0;
@@ -66,14 +66,24 @@ static int ext_header_path_decoder(LHAFileHeader *header,
 	memcpy(new_path, data, data_len);
 	new_path[data_len] = '\0';
 
+	// Amiga LHA v1.22 generates path headers without a path
+	// separator at the end of the string. This is broken (and
+	// was fixed in a later version), but handle it correctly.
+
+	if (data_len > 0 && new_path[data_len - 1] != 0xff) {
+		new_path[data_len] = 0xff;
+		new_path[data_len + 1] = '\0';
+		++data_len;
+	}
+
 	free(header->path);
 	header->path = new_path;
 
 	for (i = 0; i < data_len; ++i) {
-		if (data[i] == 0xff) {
+		if (new_path[i] == 0xff) {
 			new_path[i] = '/';
 		} else if (header->os_type == LHA_OS_TYPE_MSDOS) {
-			new_path[i] = (char) tolower(new_path[i]);
+			new_path[i] = (char) tolower((char) new_path[i]);
 		}
 	}
 
