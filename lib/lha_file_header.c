@@ -106,6 +106,14 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 	int is_allcaps;
 	uint8_t *sep;
 
+	// Zero-length filename probably means that this is a directory
+	// entry. Leave the filename field as NULL - this makes us
+	// consistent with level 2/3 headers.
+
+	if (data_len == 0) {
+		return 1;
+	}
+
 	// Is the path an all-caps filename?  If so, it is a DOS path that
 	// should be translated to lower case.
 
@@ -454,8 +462,6 @@ static int decode_level2_header(LHAFileHeader **header, LHAInputStream *stream)
 
 	(*header)->os_type = RAW_DATA(header, 23);
 
-	// TODO: Extended headers
-
 	if (!decode_extended_headers(header, 24)) {
 		return 0;
 	}
@@ -488,7 +494,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	header->_refcount = 1;
 
-	// Read first 21 bytes of header.
+	// Read first chunk of header.
 
 	header->raw_data = (uint8_t *) (header + 1);
 	header->raw_data_len = COMMON_HEADER_LEN;
@@ -523,6 +529,20 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	if (!success) {
 		goto fail;
+	}
+
+	// Sanity check that we got some headers, at least.
+	// Directory entries must have a path, and files must have a
+	// filename.
+
+	if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)) {
+		if (header->path == NULL) {
+			goto fail;
+		}
+	} else {
+		if (header->filename == NULL) {
+			goto fail;
+		}
 	}
 
 	return header;

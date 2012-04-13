@@ -63,13 +63,19 @@ struct _LHAFileHeader {
 	unsigned int _refcount;
 	LHAFileHeader *_next;
 
+	// Path (directory) and filename. Either of these may be NULL,
+	// but not both - a directory entry (LHA_COMPRESS_TYPE_DIR) always
+	// has a non-NULL path, and a non-directory entry always has a
+	// non-NULL filename.
+
+	char *path;
+	char *filename;
+
 	// Decoded fields:
 
 	char compress_method[6];
 	size_t compressed_length;
 	size_t length;
-	char *path;
-	char *filename;
 	uint8_t header_level;
 	uint8_t os_type;
 	uint16_t crc;

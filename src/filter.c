@@ -70,6 +70,7 @@ static int match_glob(char *glob, char *str)
 
 static int matches_filter(LHAFilter *filter, LHAFileHeader *header)
 {
+	size_t path_len;
 	char *path;
 	unsigned int i;
 
@@ -79,13 +80,29 @@ static int matches_filter(LHAFilter *filter, LHAFileHeader *header)
 		return 1;
 	}
 
+	path_len = 0;
+
 	if (header->path != NULL) {
-		path = malloc(strlen(header->path)
-		              + strlen(header->filename) + 1);
-		strcpy(path, header->path);
+		path_len += strlen(header->path);
+	}
+
+	if (header->filename != NULL) {
+		path_len += strlen(header->filename);
+	}
+
+	path = malloc(path_len + 1);
+
+	if (path == NULL) {
+		// TODO?
+		return 0;
+	}
+
+	if (header->path != NULL) {
+		strcat(path, header->path);
+	}
+
+	if (header->filename != NULL) {
 		strcat(path, header->filename);
-	} else {
-		path = header->filename;
 	}
 
 	// Check this path with the list of filters. If one matches,
@@ -97,9 +114,7 @@ static int matches_filter(LHAFilter *filter, LHAFileHeader *header)
 		}
 	}
 
-	if (header->path != NULL) {
-		free(path);
-	}
+	free(path);
 
 	return i < filter->num_filters;
 }

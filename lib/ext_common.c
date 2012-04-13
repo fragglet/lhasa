@@ -77,7 +77,7 @@ static int ext_header_path_decoder(LHAFileHeader *header,
 	}
 
 	free(header->path);
-	header->path = new_path;
+	header->path = (char *) new_path;
 
 	for (i = 0; i < data_len; ++i) {
 		if (new_path[i] == 0xff) {

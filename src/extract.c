@@ -44,18 +44,37 @@ typedef struct {
 
 static char *file_full_path(LHAFileHeader *header, LHAOptions *options)
 {
+	size_t len;
 	char *result;
 	char *p;
 
 	// Full path, or filename only?
 
+	len = 0;
+
 	if (options->use_path && header->path != NULL) {
-		result = malloc(strlen(header->path)
-		                + strlen(header->filename) + 1);
-		strcpy(result, header->path);
+		len += strlen(header->path);
+	}
+
+	if (header->filename != NULL) {
+		len += strlen(header->filename);
+	}
+
+	result = malloc(len + 1);
+
+	if (result == NULL) {
+		// TODO?
+		exit(-1);
+	}
+
+	result[0] = '\0';
+
+	if (options->use_path && header->path != NULL) {
+		strcat(result, header->path);
+	}
+
+	if (header->filename != NULL) {
 		strcat(result, header->filename);
-	} else {
-		result = strdup(header->filename);
 	}
 
 	// If the header contains leading '/' characters, it is an
