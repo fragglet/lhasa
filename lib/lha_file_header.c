@@ -29,9 +29,26 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "crc16.h"
 
 #define COMMON_HEADER_LEN 22 /* bytes */
+
+// Minimum length of a level 0 header (with zero-length filename).
+
 #define LEVEL_0_MIN_HEADER_LEN 22 /* bytes */
+
+// Minimum length of a level 1 base header (with zero-length filename).
+
 #define LEVEL_1_MIN_HEADER_LEN 25 /* bytes */
+
+// Length of a level 2 base header.
+
 #define LEVEL_2_HEADER_LEN 26 /* bytes */
+
+// Length of a level 3 base header.
+
+#define LEVEL_3_HEADER_LEN 32 /* bytes */
+
+// Maximum length of a level 3 header (including extended headers).
+
+#define LEVEL_3_MAX_HEADER_LEN (1024 * 1024) /* 1 MB */
 
 #define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
 #define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)
@@ -256,31 +273,52 @@ static uint8_t *extend_raw_data(LHAFileHeader **header,
 static int decode_extended_headers(LHAFileHeader **header,
                                    unsigned int offset)
 {
+	unsigned int field_size;
 	uint8_t *ext_header;
 	size_t ext_header_len;
+	size_t available_length;
 
-	while (offset < RAW_DATA_LEN(header) - 2) {
-		ext_header = &RAW_DATA(header, offset + 2);
-		ext_header_len = lha_decode_uint16(&RAW_DATA(header, offset));
+	// Level 3 headers use 32-bit length fields; all others use
+	// 16-bit fields.
+
+	if ((*header)->header_level == 3) {
+		field_size = 4;
+	} else {
+		field_size = 2;
+	}
+
+	available_length = RAW_DATA_LEN(header) - offset - field_size;
+
+	while (offset <= RAW_DATA_LEN(header) - field_size) {
+		ext_header = &RAW_DATA(header, offset + field_size);
+
+		if (field_size == 4) {
+			ext_header_len
+			    = lha_decode_uint32(&RAW_DATA(header, offset));
+		} else {
+			ext_header_len
+			    = lha_decode_uint16(&RAW_DATA(header, offset));
+		}
 
 		// Header length zero indicates end of chain. Otherwise, sanity
 		// check the header length is valid.
 
 		if (ext_header_len == 0) {
 			break;
-		} else if (ext_header_len < 3
-		        || offset + ext_header_len + 2 > RAW_DATA_LEN(header)) {
+		} else if (ext_header_len < field_size + 1
+		        || ext_header_len > available_length) {
 			return 0;
 		}
 
 		// Process header:
 
-		lha_ext_header_decode(*header, ext_header[0],
-		                      ext_header + 1, ext_header_len - 3);
+		lha_ext_header_decode(*header, ext_header[0], ext_header + 1,
+		                      ext_header_len - field_size - 1);
 
 		// Advance to next header.
 
 		offset += ext_header_len;
+		available_length -= ext_header_len;
 	}
 
 	return 1;
@@ -505,6 +543,72 @@ static int decode_level2_header(LHAFileHeader **header, LHAInputStream *stream)
 	return 1;
 }
 
+static int decode_level3_header(LHAFileHeader **header, LHAInputStream *stream)
+{
+	unsigned int header_len;
+
+	// The first field at the start of a level 3 header is supposed to
+	// indicate word size, with the idea being that the header format
+	// can be extended beyond 32-bit words in the future. In practise,
+	// nothing supports anything other than 32-bit (4 bytes), and neither
+	// do we.
+
+	if (lha_decode_uint16(&RAW_DATA(header, 0)) != 4) {
+		return 0;
+	}
+
+	// Read the full header.
+
+	if (!extend_raw_data(header, stream,
+	                     LEVEL_3_HEADER_LEN - RAW_DATA_LEN(header))) {
+		return 0;
+	}
+
+	// Read the header length field (including extended headers), and
+	// extend to this full length. Because this is a 32-bit value,
+	// we must place a sensible limit on the amount of data that will
+	// be read, to avoid possibly allocating gigabytes of memory.
+
+	header_len = lha_decode_uint32(&RAW_DATA(header, 24));
+
+	if (header_len > LEVEL_3_MAX_HEADER_LEN) {
+		return 0;
+	}
+
+	if (!extend_raw_data(header, stream,
+	                     header_len - RAW_DATA_LEN(header))) {
+		return 0;
+	}
+
+	// Compression method:
+
+	memcpy((*header)->compress_method, &RAW_DATA(header, 2), 5);
+	(*header)->compress_method[5] = '\0';
+
+	// File lengths:
+
+	(*header)->compressed_length = lha_decode_uint32(&RAW_DATA(header, 7));
+	(*header)->length = lha_decode_uint32(&RAW_DATA(header, 11));
+
+	// Unix-style timestamp.
+
+	(*header)->timestamp = lha_decode_uint32(&RAW_DATA(header, 15));
+
+	// CRC.
+
+	(*header)->crc = lha_decode_uint16(&RAW_DATA(header, 21));
+
+	// OS type:
+
+	(*header)->os_type = RAW_DATA(header, 23);
+
+	if (!decode_extended_headers(header, 28)) {
+		return 0;
+	}
+
+	return 1;
+}
+
 LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 {
 	LHAFileHeader *header;
@@ -556,6 +660,10 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 		case 2:
 			success = decode_level2_header(&header, stream);
+			break;
+
+		case 3:
+			success = decode_level3_header(&header, stream);
 			break;
 
 		default:
