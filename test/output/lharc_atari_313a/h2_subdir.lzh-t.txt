@@ -1,1 +1,1 @@
-SUBDIR/SUBDIR2/HELLO.TXT	- Testing  :  .SUBDIR/SUBDIR2/HELLO.TXT	- Testing  :  oSUBDIR/SUBDIR2/HELLO.TXT	- Tested  
+subdir/subdir2/hello.txt	- Testing  :  .subdir/subdir2/hello.txt	- Testing  :  osubdir/subdir2/hello.txt	- Tested  

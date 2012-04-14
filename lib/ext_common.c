@@ -82,8 +82,6 @@ static int ext_header_path_decoder(LHAFileHeader *header,
 	for (i = 0; i < data_len; ++i) {
 		if (new_path[i] == 0xff) {
 			new_path[i] = '/';
-		} else if (header->os_type == LHA_OS_TYPE_MSDOS) {
-			new_path[i] = (char) tolower((char) new_path[i]);
 		}
 	}
 

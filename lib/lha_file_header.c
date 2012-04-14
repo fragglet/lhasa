@@ -77,20 +77,64 @@ static unsigned int decode_ftime(uint8_t *buf)
 	return (unsigned int) mktime(&datetime);
 }
 
-// Fix up MS-DOS path: translate all-caps to lower case and replace
-// DOS-style \ directory separator with /
+// MS-DOS archives (and archives from similar systems) may have paths and
+// filenames that are in all-caps. Detect these and convert them to
+// lower-case.
 
-static void fixup_msdos_path(char *path, int lowercase)
+static void fix_msdos_allcaps(LHAFileHeader *header)
+{
+	unsigned int i;
+	int is_allcaps;
+
+	// Check both path and filename to see if there are any lower-case
+	// characters.
+
+	is_allcaps = 1;
+
+	if (header->path != NULL) {
+		for (i = 0; header->path[i] != '\0'; ++i) {
+			if (islower(header->path[i])) {
+				is_allcaps = 0;
+				break;
+			}
+		}
+	}
+
+	if (is_allcaps && header->filename != NULL) {
+		for (i = 0; header->filename[i] != '\0'; ++i) {
+			if (islower(header->filename[i])) {
+				is_allcaps = 0;
+				break;
+			}
+		}
+	}
+
+	// If both are all-caps, convert them all to lower-case.
+
+	if (is_allcaps) {
+		if (header->path != NULL) {
+			for (i = 0; header->path[i] != '\0'; ++i) {
+				header->path[i] = tolower(header->path[i]);
+			}
+		}
+		if (header->filename != NULL) {
+			for (i = 0; header->filename[i] != '\0'; ++i) {
+				header->filename[i]
+				    = tolower(header->filename[i]);
+			}
+		}
+	}
+}
+
+// Convert MS-DOS path separators to Unix path separators.
+
+static void msdos_path_to_unix(char *path)
 {
 	unsigned int i;
 
 	for (i = 0; path[i] != '\0'; ++i) {
 		if (path[i] == '\\') {
 			path[i] = '/';
-		}
-
-		if (lowercase) {
-			path[i] = (char) tolower(path[i]);
 		}
 	}
 }
@@ -103,7 +147,6 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 	uint8_t *filename;
 	size_t filename_len;
 	unsigned int i;
-	int is_allcaps;
 	uint8_t *sep;
 
 	// Zero-length filename probably means that this is a directory
@@ -112,25 +155,6 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 
 	if (data_len == 0) {
 		return 1;
-	}
-
-	// Is the path an all-caps filename?  If so, it is a DOS path that
-	// should be translated to lower case.
-
-	if (header->os_type == LHA_OS_TYPE_UNKNOWN
-	 || header->os_type == LHA_OS_TYPE_MSDOS
-	 || header->os_type == LHA_OS_TYPE_ATARI
-	 || header->os_type == LHA_OS_TYPE_OS2) {
-		is_allcaps = 1;
-
-		for (i = 0; i < data_len; ++i) {
-			if (islower(data[i])) {
-				is_allcaps = 0;
-				break;
-			}
-		}
-	} else {
-		is_allcaps = 0;
 	}
 
 	// Is there a directory separator in the path?  If so, we need to
@@ -153,7 +177,7 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 
 		memcpy(header->path, data, (size_t) (sep - data) + 1);
 		header->path[sep - data + 1] = '\0';
-		fixup_msdos_path(header->path, is_allcaps);
+		msdos_path_to_unix(header->path);
 
 		filename = sep + 1;
 		filename_len = data_len - 1 - (size_t) (sep - data);
@@ -172,7 +196,6 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 
 	memcpy(header->filename, filename, filename_len);
 	header->filename[filename_len] = '\0';
-	fixup_msdos_path(header->filename, is_allcaps);
 
 	return 1;
 }
@@ -543,6 +566,16 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 		if (header->filename == NULL) {
 			goto fail;
 		}
+	}
+
+	// Is the path an all-caps filename?  If so, it is a DOS path that
+	// should be translated to lower case.
+
+	if (header->os_type == LHA_OS_TYPE_UNKNOWN
+	 || header->os_type == LHA_OS_TYPE_MSDOS
+	 || header->os_type == LHA_OS_TYPE_ATARI
+	 || header->os_type == LHA_OS_TYPE_OS2) {
+		fix_msdos_allcaps(header);
 	}
 
 	return header;
