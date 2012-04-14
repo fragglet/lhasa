@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define LHA_FILE_UNIX_PERMS            0x01
 #define LHA_FILE_UNIX_UID_GID          0x02
+#define LHA_FILE_COMMON_CRC            0x04
 
 // Common OS types:
 
@@ -91,6 +92,7 @@ struct _LHAFileHeader {
 	unsigned int unix_gid;
 	char *unix_group;
 	char *unix_username;
+	uint16_t common_crc;
 };
 
 /**

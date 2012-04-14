@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_endian.h"
 #include "lha_file_header.h"
 #include "ext_header.h"
+#include "crc16.h"
 
 #define COMMON_HEADER_LEN 22 /* bytes */
 #define LEVEL_0_MIN_HEADER_LEN 22 /* bytes */
@@ -37,7 +38,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Perform checksum of header contents.
 
-static int checksum_header(uint8_t *header, size_t header_len, size_t csum)
+static int check_l0_checksum(uint8_t *header, size_t header_len, size_t csum)
 {
 	unsigned int result;
 	unsigned int i;
@@ -49,6 +50,18 @@ static int checksum_header(uint8_t *header, size_t header_len, size_t csum)
 	}
 
 	return (result & 0xff) == csum;
+}
+
+// Perform full-header CRC check, based on CRC from "common" extended header.
+
+static int check_common_crc(LHAFileHeader *header)
+{
+	uint16_t crc;
+
+	crc = 0;
+	lha_crc16_buf(&crc, header->raw_data, header->raw_data_len);
+
+	return crc == header->common_crc;
 }
 
 // Decode MS-DOS timestamp.
@@ -376,9 +389,9 @@ static int decode_level0_header(LHAFileHeader **header, LHAInputStream *stream)
 
 	// Checksum the header.
 
-	if (!checksum_header(&RAW_DATA(header, 2),
-	                     RAW_DATA_LEN(header) - 2,
-	                     header_csum)) {
+	if (!check_l0_checksum(&RAW_DATA(header, 2),
+	                       RAW_DATA_LEN(header) - 2,
+	                       header_csum)) {
 		return 0;
 	}
 
@@ -576,6 +589,14 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 	 || header->os_type == LHA_OS_TYPE_ATARI
 	 || header->os_type == LHA_OS_TYPE_OS2) {
 		fix_msdos_allcaps(header);
+	}
+
+	// Was the "common" extended header read, which contains a CRC of
+	// the full header? If so, perform a CRC check now.
+
+	if ((header->extra_flags & LHA_FILE_COMMON_CRC) != 0
+	 && !check_common_crc(header)) {
+		return 0;
 	}
 
 	return header;

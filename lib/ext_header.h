@@ -27,6 +27,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Extended header types:
 
+#define LHA_EXT_HEADER_COMMON           0x00
 #define LHA_EXT_HEADER_FILENAME         0x01
 #define LHA_EXT_HEADER_PATH             0x02
 #define LHA_EXT_HEADER_MULTI_DISC       0x39

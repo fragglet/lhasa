@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // ext_common.c:
 
+extern LHAExtHeaderType lha_ext_header_common;
 extern LHAExtHeaderType lha_ext_header_filename;
 extern LHAExtHeaderType lha_ext_header_path;
 
@@ -34,6 +35,7 @@ extern LHAExtHeaderType lha_ext_header_unix_group;
 extern LHAExtHeaderType lha_ext_header_unix_timestamp;
 
 static const LHAExtHeaderType *ext_header_types[] = {
+	&lha_ext_header_common,
 	&lha_ext_header_filename,
 	&lha_ext_header_path,
 	&lha_ext_header_unix_perms,
