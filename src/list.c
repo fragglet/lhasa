@@ -97,6 +97,8 @@ static char *os_type_to_string(uint8_t os_type)
 			return "[Human68K]";
 		case LHA_OS_TYPE_ATARI:
 			return "[Atari]";
+		case LHA_OS_TYPE_AMIGA:
+			return "[Amiga]";
 		case LHA_OS_TYPE_UNKNOWN:
 			return "[generic]";
 		default:

@@ -1,4 +1,4 @@
-#!/bin/bash
+
 #
 # Copyright (c) 2011, 2012, Simon Howard
 #
@@ -113,7 +113,7 @@ test_archive lha_os2_208/h3_subdir.lzh
 #test_archive pmarc2/long.pma
 
 test_archive lha_amiga_122/level0.lzh
-#test_archive lha_amiga_122/level1.lzh    TODO - Unix LHA fails
+test_archive lha_amiga_122/level1.lzh
 test_archive lha_amiga_122/level2.lzh
 test_archive lha_amiga_122/lh0.lzh
 test_archive lha_amiga_122/lh1.lzh
