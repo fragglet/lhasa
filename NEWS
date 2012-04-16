@@ -1,4 +1,15 @@
 
+v0.0.2 (2011-04-17):
+
+    Second beta release.
+
+     * This version adds support for level 2 and 3 file headers. Lhasa
+       should now be capable of decompressing most, if not all archives
+       found in the wild.
+     * A fuzz testing framework has been added for testing the
+       decompression code. A couple of bugs have been fixed as a result
+       of this.
+
 v0.0.1 (2011-04-06):
 
     Initial version. This should be considered beta code, although this
