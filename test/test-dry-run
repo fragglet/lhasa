@@ -137,6 +137,12 @@ test_archive lha_x68k_213/h2_lh5.lzh        "GPL-2"
 test_archive lha_x68k_213/h2_subdir.lzh     "subdir/subdir2/HELLO.TXT"
 test_archive lha_x68k_213/sfx.x             "gpl-2"
 
+test_archive maclha_224/lh5.lzh             "gpl-2"
+test_archive maclha_224/subdir.lzh          "subdir/subdir2/hello.txt"
+test_archive maclha_224/nm_lh0.lzh          "gpl-2.gz"
+test_archive maclha_224/nm_lh5.lzh          "gpl-2"
+test_archive maclha_224/nm_subdir.lzh       "subdir/subdir2/hello.txt"
+
 test_archive regression/abspath.lzh         "tmp/absolute_path.txt"
 test_archive regression/badterm.lzh         "tmp/?]2;malicious??"
 

@@ -167,6 +167,12 @@ test_archive lha_x68k_213/h2_lh5.lzh
 test_archive lha_x68k_213/h2_subdir.lzh
 test_archive lha_x68k_213/sfx.x
 
+test_archive maclha_224/lh5.lzh
+test_archive maclha_224/subdir.lzh
+test_archive maclha_224/nm_lh0.lzh
+test_archive maclha_224/nm_lh5.lzh
+test_archive maclha_224/nm_subdir.lzh
+
 test_archive regression/abspath.lzh
 test_archive regression/badterm.lzh
 
