@@ -24,7 +24,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <errno.h>
 #include <time.h>
 
-#include <unistd.h>
 #include <sys/stat.h>
 
 #include "lha_reader.h"
