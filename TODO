@@ -5,6 +5,7 @@ Library:
     * Creation of parent directories on extract (+optional)
  * Add LHAFile convenience class.
  * Compression and LHA file generation.
+ * MacBinary header detection and removal, to support MacLHA archives.
  * Decompressors for obscure algorithms (need to write compressors):
     * -lh2-, -lh3- (experimental LHA?)
     * -pm1- (Old PMArc)

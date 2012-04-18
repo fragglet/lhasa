@@ -167,11 +167,22 @@ test_archive lha_x68k_213/h2_lh5.lzh
 test_archive lha_x68k_213/h2_subdir.lzh
 test_archive lha_x68k_213/sfx.x
 
-test_archive maclha_224/lh5.lzh
-test_archive maclha_224/subdir.lzh
-test_archive maclha_224/nm_lh0.lzh
-test_archive maclha_224/nm_lh5.lzh
-test_archive maclha_224/nm_subdir.lzh
+test_archive maclha_224/l0_lh0.lzh
+test_archive maclha_224/l0_lh1.lzh
+test_archive maclha_224/l0_lh5.lzh
+test_archive maclha_224/l0_nm_lh5.lzh
+test_archive maclha_224/l1_full_subdir.lzh
+test_archive maclha_224/l1_lh0.lzh
+test_archive maclha_224/l1_lh1.lzh
+test_archive maclha_224/l1_lh5.lzh
+test_archive maclha_224/l1_nm_lh5.lzh
+test_archive maclha_224/l1_subdir.lzh
+test_archive maclha_224/l2_full_subdir.lzh
+test_archive maclha_224/l2_lh0.lzh
+test_archive maclha_224/l2_lh1.lzh
+test_archive maclha_224/l2_lh5.lzh
+test_archive maclha_224/l2_nm_lh5.lzh
+test_archive maclha_224/l2_subdir.lzh
 
 test_archive regression/abspath.lzh
 test_archive regression/badterm.lzh
