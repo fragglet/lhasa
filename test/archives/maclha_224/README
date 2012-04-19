@@ -16,3 +16,9 @@ There are equivalent level 0 and level 2 archives with l0_ and l2_ prefixes.
 There are no subdirectory archives for level 0, as MacLHA will not generate
 level 0 archives containing path names.
 
+All archives except the "_nm_" archives contain MacBinary headers at the
+start of the compressed data. The "_subdir" archives have files made in
+the Mac OS "TeachText" application and therefore have MacBinary headers
+that contain meaningful information. They also have non-matching
+creation and modification times.
+

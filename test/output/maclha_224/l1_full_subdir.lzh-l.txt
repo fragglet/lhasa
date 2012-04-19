@@ -1,5 +1,5 @@
  PERMSSN    UID  GID      SIZE  RATIO     STAMP           NAME
 ---------- ----------- ------- ------ ------------ --------------------
-[Mac OS]                   256  22.7% Apr 17 16:57 /Untitled/subdir/subdir2/hello.txt
+[Mac OS]                   256 100.0% Apr 19 19:10 /Untitled/subdir/subdir2/hello.txt
 ---------- ----------- ------- ------ ------------ --------------------
- Total         1 file      256  22.7% Jan  1  2000
+ Total         1 file      256 100.0% Jan  1  2000
