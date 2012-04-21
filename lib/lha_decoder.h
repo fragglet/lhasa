@@ -130,6 +130,10 @@ struct _LHADecoder {
 
 	unsigned int outbuf_pos, outbuf_len;
 	uint8_t *outbuf;
+
+	/** Current CRC of the output stream. */
+
+	uint16_t crc;
 };
 
 /**

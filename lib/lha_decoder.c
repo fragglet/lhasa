@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <limits.h>
 
+#include "crc16.h"
 #include "lha_decoder.h"
 
 #include "null_decoder.h"
@@ -76,6 +77,7 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	decoder->outbuf_len = 0;
 	decoder->stream_pos = 0;
 	decoder->stream_length = stream_length;
+	decoder->crc = 0;
 
 	// Private data area follows the structure.
 
@@ -200,6 +202,10 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 			break;
 		}
 	}
+
+	// Update CRC.
+
+	lha_crc16_buf(&decoder->crc, buf, filled);
 
 	// Track stream position.
 

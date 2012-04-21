@@ -22,8 +22,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
-#include "crc16.h"
-
 #include "lha_arch.h"
 #include "lha_decoder.h"
 #include "lha_basic_reader.h"
@@ -272,8 +270,7 @@ static int do_decode(LHAReader *reader,
                      void *callback_data)
 {
 	uint8_t buf[64];
-	uint16_t crc;
-	unsigned int bytes, total_bytes;
+	unsigned int bytes;
 
 	// Set progress callback for decoder.
 
@@ -282,11 +279,7 @@ static int do_decode(LHAReader *reader,
 		                    callback_data);
 	}
 
-	// Decompress the current file, performing a running
-	// CRC of the contents as we go.
-
-	total_bytes = 0;
-	crc = 0;
+	// Decompress the current file.
 
 	do {
 		bytes = lha_reader_read(reader, buf, sizeof(buf));
@@ -297,15 +290,13 @@ static int do_decode(LHAReader *reader,
 			}
 		}
 
-		lha_crc16_buf(&crc, buf, bytes);
-		total_bytes += bytes;
-
 	} while (bytes > 0);
 
-	// Decompressed length should match, as well as CRC.
+	// Decoder stores output position and performs running CRC.
+	// At the end of the stream these should match the header values.
 
-	return total_bytes == reader->curr_file->length
-	    && crc == reader->curr_file->crc;
+	return reader->decoder->stream_pos == reader->curr_file->length
+	    && reader->decoder->crc == reader->curr_file->crc;
 }
 
 int lha_reader_check(LHAReader *reader,
