@@ -24,6 +24,7 @@ SRC =                                                   \
 	lha_input_stream.c                              \
 	lha_basic_reader.c      lha_basic_reader.h      \
 	lha_reader.c                                    \
+	macbinary.c             macbinary.h             \
 	null_decoder.c          null_decoder.h          \
 	lh1_decoder.c           lh1_decoder.h           \
 	lh5_decoder.c           lh5_decoder.h           \

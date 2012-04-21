@@ -31,3 +31,14 @@ uint32_t lha_decode_uint32(uint8_t *buf)
 	                 | (buf[2] << 16) | (buf[3] << 24));
 }
 
+uint16_t lha_decode_be_uint16(uint8_t *buf)
+{
+	return (uint16_t) ((buf[0] << 8) | buf[1]);
+}
+
+uint32_t lha_decode_be_uint32(uint8_t *buf)
+{
+	return (uint32_t) ((buf[0] << 24) | (buf[1] << 16)
+	                 | (buf[2] << 8) | buf[3]);
+}
+
