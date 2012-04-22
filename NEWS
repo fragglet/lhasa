@@ -1,5 +1,16 @@
 
-v0.0.2 (2011-04-17):
+v0.0.3 (2012-04-22):
+
+    Third beta release.
+
+     * A fix has been added for a bug where missing parent directories
+       were not being created properly.
+     * Regression testing archives have been added from MacLHA v2.24.
+     * In order to support MacLHA archives, code has been added that
+       heuristically detects the MacBinary headers added by MacLHA
+       and strips them off.
+
+v0.0.2 (2012-04-17):
 
     Second beta release.
 
@@ -10,7 +21,7 @@ v0.0.2 (2011-04-17):
        decompression code. A couple of bugs have been fixed as a result
        of this.
 
-v0.0.1 (2011-04-06):
+v0.0.1 (2012-04-06):
 
     Initial version. This should be considered beta code, although this
     first version should already be capable of extracting the majority of
