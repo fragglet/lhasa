@@ -5,19 +5,19 @@ LDADD=$(top_builddir)/lib/liblhasatest.a libtestframework.a
 COMPILED_TESTS=                       \
 	test-crc16                    \
 	test-basic-reader             \
-	test-decoder                  \
-	test-decompress
+	test-decoder
 
 UNCOMPILED_TESTS=                     \
+	test-decompress               \
+	test-file-headers             \
 	test-list-output              \
 	test-crc-output               \
-	test-file-headers             \
 	test-dry-run
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)
 
-check_PROGRAMS=$(COMPILED_TESTS) fuzzer dump-headers
+check_PROGRAMS=$(COMPILED_TESTS) fuzzer dump-headers decompress-crc
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
@@ -48,4 +48,5 @@ endif
 
 fuzzer_SOURCES = fuzzer.c
 dump_headers_SOURCES = dump-headers.c
+decompress_crc_SOURCES = decompress-crc.c
 

@@ -1,6 +1,6 @@
-test-decompress
 test-basic-reader
 test-crc16
 test-decoder
 fuzzer
 dump-headers
+decompress-crc
