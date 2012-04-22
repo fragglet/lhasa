@@ -197,7 +197,13 @@ static int check_modification_time(unsigned int mod_time,
 	// this allows MacLHA-added MacBinary headers to be
 	// distinguished from archived MacBinary files more reliably.
 
-	return (time_diff % (15 * 60)) == 0;
+	//return (time_diff % (15 * 60)) == 0;
+
+	// It turns out the assumption above doesn't hold, and MacLHA
+	// does generate archives where the timestamps don't always
+	// exactly match. Oh well.
+
+	return 1;
 }
 
 // Given the specified data buffer, check whether it has a MacBinary
