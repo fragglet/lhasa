@@ -11,12 +11,13 @@ COMPILED_TESTS=                       \
 UNCOMPILED_TESTS=                     \
 	test-list-output              \
 	test-crc-output               \
+	test-file-headers             \
 	test-dry-run
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)
 
-check_PROGRAMS=$(COMPILED_TESTS) fuzzer
+check_PROGRAMS=$(COMPILED_TESTS) fuzzer dump-headers
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
@@ -46,4 +47,5 @@ check-postrun:
 endif
 
 fuzzer_SOURCES = fuzzer.c
+dump_headers_SOURCES = dump-headers.c
 
