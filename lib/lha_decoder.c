@@ -127,12 +127,15 @@ static void check_progress_callback(LHADecoder *decoder)
 	block = (decoder->stream_pos + decoder->dtype->block_size - 1)
 	      / decoder->dtype->block_size;
 
-	// Started a new block?
+	// If the stream has advanced by another block, invoke the callback
+	// function. Invoke it multiple times if it has advanced by
+	// more than one block.
 
-	if (block != decoder->last_block) {
-		decoder->progress_callback(block, decoder->total_blocks,
+	while (decoder->last_block != block) {
+		++decoder->last_block;
+		decoder->progress_callback(decoder->last_block,
+		                           decoder->total_blocks,
 		                           decoder->progress_callback_data);
-		decoder->last_block = block;
 	}
 }
 
