@@ -325,7 +325,7 @@ static int read_macbinary_header(MacBinaryDecoder *decoder,
 
 	if (!is_macbinary_header(decoder->mb_header, header)) {
 		decoder->mb_header_bytes = bytes;
-		return 0;
+		return 1;
 	}
 
 	// We have a MacBinary header, so skip over it. Decide how
