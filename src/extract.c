@@ -228,7 +228,7 @@ static int check_parent_directory(char *path)
 		case LHA_FILE_NONE:
 			// Create the missing directory:
 
-			if (lha_arch_mkdir(path, 0755) != 0) {
+			if (!lha_arch_mkdir(path, 0755)) {
 				fprintf(stderr,
 				        "Failed to create parent directory %s\n",
 				        path);
@@ -256,6 +256,14 @@ static int make_parent_directories(char *path)
 {
 	int result;
 	char *p;
+
+	while (path[0] == '/') {
+		++path;
+	}
+
+	if (path[0] == '\0') {
+		return 1;
+	}
 
 	result = 1;
 	path = strdup(path);
