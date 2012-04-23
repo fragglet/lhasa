@@ -43,8 +43,10 @@ static void print_header(LHAFileHeader *header)
 	}
 	printf("\n");
 	printf("crc: %04x\n", header->crc);
-	printf("timestamp: %i\n", header->timestamp);
 
+	if (header->timestamp != 0) {
+		printf("timestamp: %i\n", header->timestamp);
+	}
 	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
 		printf("unix_perms: 0%o\n", header->unix_perms);
 	}

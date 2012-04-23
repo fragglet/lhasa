@@ -5,5 +5,4 @@ length: 6912
 header_level: 0
 os_type: 0
 crc: 39cc
-timestamp: 0
 --
