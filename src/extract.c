@@ -249,13 +249,16 @@ static int check_parent_directory(char *path)
 	return 1;
 }
 
-// Given a directory, ensure that it and all its parent directories
-// exist.
+// Given a file header, create its parent directories as necessary.
 
-static int make_parent_directories(char *path)
+static int make_parent_directories(LHAFileHeader *header)
 {
 	int result;
+	char *path;
 	char *p;
+	char saved;
+
+	path = header->path;
 
 	while (path[0] == '/') {
 		++path;
@@ -277,21 +280,37 @@ static int make_parent_directories(char *path)
 	do {
 		p = strchr(p, '/');
 
-		// Terminate string here.
+		// Terminate string after the path separator.
 
 		if (p != NULL) {
-			*p = '\0';
+			saved = *(p + 1);
+			*(p + 1) = '\0';
 		}
 
-		if (!check_parent_directory(path)) {
-			result = 0;
-			break;
+		// Check if this parent directory exists and create it;
+		// however, if this file header is for a directory,
+		// only create its missing parent headers - not the
+		// directory itself. That is to say, for an entry:
+		//
+		//  -lhd-  subdir/subdir2/
+		//
+		// Only create subdir/ - subdir/subdir2/ is created
+		// by the call to lha_reader_extract.
+
+		if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0
+		 || strcmp(header->path, path) != 0) {
+
+			if (!check_parent_directory(path)) {
+				result = 0;
+				break;
+			}
 		}
 
-		// Restore path separator and advance to next parent dir.
+		// Restore character that was after the path separator
+		// and advance to the next path.
 
 		if (p != NULL) {
-			*p = '/';
+			*(p + 1) = saved;
 			++p;
 		}
 	} while (p != NULL);
@@ -434,7 +453,7 @@ static void extract_archived_file(LHAReader *reader,
 	// Create parent directories for file:
 
 	if (options->use_path && header->path != NULL) {
-		if (!make_parent_directories(header->path)) {
+		if (!make_parent_directories(header)) {
 			free(filename);
 			return;
 		}

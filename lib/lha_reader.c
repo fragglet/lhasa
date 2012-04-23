@@ -432,9 +432,9 @@ static int extract_directory(LHAReader *reader, char *path)
 		mode = 0777;
 	}
 
-	 if (!lha_arch_mkdir(path, mode)) {
+	if (!lha_arch_mkdir(path, mode)) {
 		return 0;
-	 }
+	}
 
 	// The directory has been created, but the metadata has not yet
 	// been applied. It depends on the directory policy how this
