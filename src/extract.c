@@ -490,7 +490,7 @@ void extract_archive(LHAFilter *filter, LHAOptions *options)
 	// Change directory before extract? (-w option).
 
 	if (options->extract_path != NULL) {
-		if (lha_arch_chdir(options->extract_path) != 0) {
+		if (!lha_arch_chdir(options->extract_path)) {
 			fprintf(stderr, "Failed to change directory to %s.\n",
 			        options->extract_path);
 			exit(-1);
