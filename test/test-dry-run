@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2011, 2012, Simon Howard
 #
@@ -20,28 +20,27 @@
 # Check the "dry run" output is as expected.
 #
 
-set -eu
+. test_common.sh
 
 test_dry_run() {
-	option=$1
-	archive_file=$2
-	expected=$3
+	local option=$1
+	local archive_file=$2
+	local expected=$3
 
 	# Only check the last line of output:
 
 	echo "$expected" > /tmp/expected.txt
-	../src/test-lha $option "archives/$archive_file" | tail -n 1 \
+	"$test_lha" $option "archives/$archive_file" | tail -n 1 \
 	    > /tmp/output.txt
 
 	if ! diff /tmp/expected.txt /tmp/output.txt; then
-		echo "Output not as expected for $archive_file" > /dev/stderr
-		exit 1
+		fail "Output not as expected for $archive_file"
 	fi
 }
 
 test_archive() {
-	archive_file=$1
-	filename=$2
+	local archive_file=$1
+	local filename=$2
 
 	test_dry_run en "$archive_file" "EXTRACT $filename"
 	test_dry_run tn "$archive_file" "VERIFY $filename"

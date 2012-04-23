@@ -20,14 +20,8 @@
 # Test script that tests the extract functionality.
 #
 
-set -eu
+. test_common.sh
 
-LHA=lha
-GATHER=false
-#GATHER=true
-
-test_base="$PWD"
-test_lha="$test_base/../src/test-lha"
 run_sandbox=/tmp/extract1
 w_sandbox=/tmp/extract2
 gather_sandbox=/tmp/extract3
@@ -46,20 +40,19 @@ make_sandboxes() {
 }
 
 file_to_overwrite() {
-	filename="$1"
-	tmpfile="$run_sandbox/$filename"
+	local filename="$1"
+	local tmpfile="$run_sandbox/$filename"
 	mkdir -p $(dirname "$tmpfile")
 	echo "__OVERWRITE_FILE__" > "$tmpfile"
 }
 
 check_overwritten() {
-	archive_file=$1
-	filename=$2
+	local archive_file=$1
+	local filename=$2
 	if grep -q __OVERWRITE_FILE__ "$run_sandbox/$filename"; then
-		echo "File was not overwritten as expected:" >&2
-		echo "  archive: $archive_file" >&2
-		echo "  filename: $filename" >&2
-		exit 1
+		fail "File was not overwritten as expected:" \
+		     "  archive: $archive_file"              \
+		     "  filename: $filename"
 	fi
 }
 
@@ -68,7 +61,7 @@ check_overwritten() {
 
 lha_check_output() {
 	#echo "lha_check_output: $@"
-	expected_output="$1"
+	local expected_output="$1"
 	shift
 
 	cd "$run_sandbox"
@@ -77,14 +70,13 @@ lha_check_output() {
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
 		cd "$gather_sandbox"
-		$LHA "$@" > $expected_output
+		$LHA_TOOL "$@" > $expected_output
 		cd "$test_base"
 	fi
 
 	if ! diff -u "$expected_output" /tmp/output.txt; then
-		echo "Output not as expected for command:" >&2
-		echo "    lha $@" >&2
-		exit 1
+		fail "Output not as expected for command:" \
+		     "    lha $@" >&2
 	fi
 
 	rm -f /tmp/output.txt
@@ -93,17 +85,16 @@ lha_check_output() {
 # Basic 'lha e' extract.
 
 test_basic_extract() {
-	archive_file=$1
-	filename=$2
-	expected_file="$test_base/output/$archive_file-e.txt"
+	local archive_file=$1
+	local filename=$2
+	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	make_sandboxes
 
 	lha_check_output "$expected_file" e "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		echo "Failed to extract $filename from $archive_file" >&2
-		exit 1
+		fail "Failed to extract $filename from $archive_file"
 	fi
 
 	remove_sandboxes
@@ -112,8 +103,9 @@ test_basic_extract() {
 # Extract with 'w' option to specify destination directory.
 
 test_w_option() {
-	archive_file=$1
-	filename=$2
+	local archive_file=$1
+	local filename=$2
+	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	make_sandboxes
 
@@ -121,8 +113,7 @@ test_w_option() {
 	                 "ew=$w_sandbox" "$test_base/archives/$archive_file"
 
 	if [ ! -e "$w_sandbox/$filename" ]; then
-		echo "Failed to extract $filename from $archive_file" >&2
-		exit 1
+		fail "Failed to extract $filename from $archive_file"
 	fi
 
 	remove_sandboxes
@@ -131,8 +122,8 @@ test_w_option() {
 # Extract with level 1 quiet option to partially silence output.
 
 test_q1_option() {
-	archive_file=$1
-	filename=$2
+	local archive_file=$1
+	local filename=$2
 
 	make_sandboxes
 
@@ -142,8 +133,7 @@ test_q1_option() {
 	                 eq1 "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		echo "Failed to extract $filanem from $archive_file" >&2
-		exit 1
+		fail "Failed to extract $filanem from $archive_file"
 	fi
 
 	rm -f /tmp/expected.txt
@@ -154,9 +144,9 @@ test_q1_option() {
 # Extract with level 2 quiet option to fully silence output.
 
 test_q_option() {
-	cmd=$1
-	archive_file=$2
-	filename=$3
+	local cmd=$1
+	local archive_file=$2
+	local filename=$3
 
 	make_sandboxes
 
@@ -166,8 +156,7 @@ test_q_option() {
 	                 $cmd "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		echo "Failed to extract $filanem from $archive_file" >&2
-		exit 1
+		fail "Failed to extract $filanem from $archive_file"
 	fi
 
 	# The -q option also causes an existing file to be overwritten
@@ -183,12 +172,16 @@ test_q_option() {
 # Extract with 'i' option to ignore directory of archived files.
 
 test_i_option() {
-	archive_file=$1
-	filename=$2
+	local archive_file=$1
+	local filename=$2
 
-	base_filename=$(basename "$filename")
+	local base_filename=$(basename "$filename")
 
 	make_sandboxes
+
+	# Hackishly transform the file containing the expected output
+	# to remove the parent directory. This gives the expected
+	# output when using the -i option.
 
 	sed 's/[A-Za-z0-9\/]*\///g'                       \
 	      < "$test_base/output/$archive_file-e.txt"   \
@@ -198,8 +191,7 @@ test_i_option() {
 	                 ei "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$base_filename" ]; then
-		echo "Failed to extract $base_filename from $archive_file" >&2
-		exit 1
+		fail "Failed to extract $base_filename from $archive_file"
 	fi
 
 	rm -f /tmp/expected.txt
@@ -209,9 +201,9 @@ test_i_option() {
 # Extract with the 'f' option to force overwrite of an existing file.
 
 test_f_option() {
-	archive_file=$1
-	filename=$2
-	expected_file="$test_base/output/$archive_file-e.txt"
+	local archive_file=$1
+	local filename=$2
+	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	make_sandboxes
 	file_to_overwrite "$filename"
@@ -220,8 +212,7 @@ test_f_option() {
 	                 ef "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		echo "Failed to extract $filename from $archive_file" >&2
-		exit 1
+		fail "Failed to extract $filename from $archive_file"
 	fi
 
 	check_overwritten "$archive_file" "$filename"
@@ -230,8 +221,8 @@ test_f_option() {
 }
 
 test_archive() {
-	archive_file=$1
-	filename=$2
+	local archive_file=$1
+	local filename=$2
 
 	test_basic_extract "$archive_file" "$filename"
 	test_w_option "$archive_file" "$filename"

@@ -15,8 +15,14 @@ UNCOMPILED_TESTS=                     \
 	test-dry-run                  \
 	test-extract
 
+EXTRA_DIST=                           \
+	archives                      \
+	compressed                    \
+	output                        \
+	test_common.sh                \
+	$(UNCOMPILED_TESTS)
+
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
-EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)
 
 check_PROGRAMS=$(COMPILED_TESTS) fuzzer dump-headers decompress-crc
 check_LIBRARIES=libtestframework.a

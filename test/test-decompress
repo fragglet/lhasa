@@ -22,28 +22,27 @@
 # the decompressed data.
 #
 
-set -eu
+. test_common.sh
 
 test_archive() {
-	archive=$1
+	local archive=$1
 
 	(echo "crc: $2"; echo "length: $3") > /tmp/expected.txt
 
 	./decompress-crc "archives/$archive" > /tmp/output.txt
 
 	if ! diff -u /tmp/expected.txt /tmp/output.txt; then
-		echo "Output not as expected for $archive"
-		exit 1
+		fail "Output not as expected for $archive"
 	fi
 }
 
 generate_test_line() {
-	archive=$1
+	local archive=$1
 
-	crc=$(./decompress-crc archives/$archive | grep crc: \
-	      | sed "s/crc: //")
-	len=$(./decompress-crc archives/$archive | grep length: \
-	      | sed "s/length: //")
+	local crc=$(./decompress-crc archives/$archive | grep crc: \
+	            | sed "s/crc: //")
+	local len=$(./decompress-crc archives/$archive | grep length: \
+	            | sed "s/length: //")
 	printf "test_archive %-35s%-10s%s\n" "$archive" "$crc" "$len"
 }
 

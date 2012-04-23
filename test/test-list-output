@@ -21,34 +21,29 @@
 # by the Unix LHA tool exactly.
 #
 
-set -eu
-
-LHA_TOOL=lha
-GATHER=false
-#GATHER=true
+. test_common.sh
 
 check_output() {
-	option=$1
-	archive=$2
-	expected=$3
+	local option=$1
+	local archive=$2
+	local expected=$3
 
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	../src/test-lha $option archives/$archive > /tmp/tmp.txt
+	"$test_lha" $option archives/$archive > /tmp/tmp.txt
 
 	if ! diff -u output/$expected /tmp/tmp.txt; then
-		echo "Output not as expected for lha $option $archive" >&2
-		exit 1
+		fail "Output not as expected for lha $option $archive"
 	fi
 
 	rm /tmp/tmp.txt
 }
 
 gather_output() {
-	option=$1
-	archive=$2
-	expected=$3
+	local option=$1
+	local archive=$2
+	local expected=$3
 
 	if [ ! -e output/$expected ]; then
 		$LHA_TOOL $option archives/$archive > output/$expected
@@ -56,7 +51,7 @@ gather_output() {
 }
 
 test_archive() {
-	archive=$1
+	local archive=$1
 
 	# Fix timestamp to a set date.  The list output includes
 	# the timestamp of the file, so it must match the check

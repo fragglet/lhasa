@@ -22,11 +22,11 @@
 # values.
 #
 
-set -eu
+. test_common.sh
 
 test_archive() {
-	archive=$1
-	expected="output/$archive-hdr.txt"
+	local archive=$1
+	local expected="output/$archive-hdr.txt"
 
 	./dump-headers "archives/$archive" > /tmp/hdr.txt
 
@@ -37,8 +37,7 @@ test_archive() {
 	fi
 
 	if ! diff -u "$expected" /tmp/hdr.txt; then
-		echo "Output not as expected for $archive" >&2
-		exit 1
+		fail "Output not as expected for $archive"
 	fi
 }
 
