@@ -12,7 +12,8 @@ UNCOMPILED_TESTS=                     \
 	test-file-headers             \
 	test-list-output              \
 	test-crc-output               \
-	test-dry-run
+	test-dry-run                  \
+	test-extract
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 EXTRA_DIST=archives compressed output $(UNCOMPILED_TESTS)
