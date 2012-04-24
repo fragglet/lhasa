@@ -69,10 +69,10 @@ check_extracted_file() {
 	fi
 
 	if [ "$timestamp" != "" ]; then
-		file_ts=$(stat -c "%Y" "$run_sandbox/$filename")
+		file_ts=$(file_mod_time "$run_sandbox/$filename")
 
 		if [ "$file_ts" != "$timestamp" ]; then
-			echo "Timestamp mismatch for $archive_file" \
+			fail "Timestamp mismatch for $archive_file" \
 			     "$filename: $file_ts != $timestamp"
 		fi
 	fi
@@ -117,6 +117,8 @@ lha_check_output() {
 	#echo "lha_check_output: $@"
 	local expected_output="$1"
 	shift
+
+	#echo "lha $@"
 
 	cd "$run_sandbox"
 	"$test_lha" "$@" >/tmp/output.txt
