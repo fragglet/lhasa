@@ -6,7 +6,7 @@ header_level: 1
 os_type: 85 ('U')
 crc: b6d5
 timestamp: 1262304000
-unix_perms: 0100644
+unix_perms: 0100600
 unix_uid: 1000
 unix_gid: 1000
 --

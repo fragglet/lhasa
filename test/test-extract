@@ -69,7 +69,7 @@ check_extracted_file() {
 	fi
 
 	if [ "$timestamp" != "" ]; then
-		file_ts=$(file_mod_time "$run_sandbox/$filename")
+		local file_ts=$(file_mod_time "$run_sandbox/$filename")
 
 		if [ "$file_ts" != "$timestamp" ]; then
 			fail "Timestamp mismatch for $archive_file" \
@@ -77,9 +77,20 @@ check_extracted_file() {
 		fi
 	fi
 
-#	if [ "$unix_perms" != "" ]; then
-#		# TODO
-#	fi
+	# Check file permissions. The permissions in the -hdr files
+	# look like "0100644" - strip these down to just the last
+	# three numbers.
+
+	if [ "$unix_perms" != "" ]; then
+		local file_perms=$(file_perms "$run_sandbox/$filename" \
+		                   | sed 's/.*\(...\)/\1/')
+		unix_perms=$(echo $unix_perms | sed 's/.*\(...\)/\1/')
+
+		if [ "$file_perms" != "$unix_perms" ]; then
+			fail "Permission mismatch for $archive_file" \
+			     "$filename: $file_perms != $unix_perms"
+		fi
+	fi
 }
 
 check_extracted_files() {

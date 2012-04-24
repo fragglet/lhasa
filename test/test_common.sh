@@ -45,7 +45,6 @@ fail() {
 	exit 1
 }
 
-# Read file modification time.
 # There doesn't seem to be a portable way to do this in shell. Sigh.
 
 if stat -c "%Y" / >/dev/null 2>&1; then
@@ -54,11 +53,23 @@ else
 	STAT_COMMAND_TYPE="BSD"
 fi
 
+# Read file modification time.
+
 file_mod_time() {
 	if [ $STAT_COMMAND_TYPE = "GNU" ]; then
 		stat -c "%Y" "$@"
 	else
 		stat -f "%m" "$@"
+	fi
+}
+
+# Read file permissions.
+
+file_perms() {
+	if [ $STAT_COMMAND_TYPE = "GNU" ]; then
+		stat -c "%a" "$@"
+	else
+		stat -f "%p" "$@"
 	fi
 }
 
