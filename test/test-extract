@@ -27,9 +27,18 @@ w_sandbox=/tmp/extract2
 gather_sandbox=/tmp/extract3
 
 remove_sandboxes() {
-	rm -rf "$run_sandbox"
-	rm -rf "$w_sandbox"
-	rm -rf "$gather_sandbox"
+	if [ -e "$run_sandbox" ]; then
+		chmod -R +wx "$run_sandbox"
+		rm -rf "$run_sandbox"
+	fi
+	if [ -e "$w_sandbox" ]; then
+		chmod -R +wx "$w_sandbox"
+		rm -rf "$w_sandbox"
+	fi
+	if [ -e "$gather_sandbox" ]; then
+		chmod -R +wx "$gather_sandbox"
+		rm -rf "$gather_sandbox"
+	fi
 }
 
 make_sandboxes() {

@@ -8,4 +8,10 @@ lh6_long.lzh - Large -lh6- compressed file.
 lh7.lzh      - Archive containing compressed file (-lh7-: -o7 option)
 lh7_long.lzh - Large -lh7- compressed file.
 subdir.lzh   - Archive containing subdirectories.
+               This archive has specially chosen permissions - the file
+               is contained in a directory without write permissions.
+               The archive therefore has to be extracted carefully,
+               with the directory's contents extracted before the
+               permissions on it are set.  The Unix LHA tool, although
+               it was used to create this archive, fails to extract it.
 
