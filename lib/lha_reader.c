@@ -394,7 +394,14 @@ static int set_directory_metadata(LHAFileHeader *header, char *path)
 	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
 		if (!lha_arch_chown(path, header->unix_uid,
 		                    header->unix_gid)) {
-			return 0;
+			// On most Unix systems, only root can change
+			// ownership. But if we can't change ownership,
+			// it isn't a fatal error. Ignore the failure
+			// and continue.
+
+			// TODO: Implement some kind of alternate handling
+			// here?
+			/* return 0; */
 		}
 	}
 

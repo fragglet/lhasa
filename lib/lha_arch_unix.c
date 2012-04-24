@@ -78,14 +78,22 @@ FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
 
 	if (unix_uid >= 0) {
 		if (fchown(fileno, unix_uid, unix_gid) != 0) {
-			close(fileno);
+			// On most Unix systems, only root can change
+			// ownership. But if we can't change ownership,
+			// it isn't a fatal error. So ignore the failure
+			// and continue.
+
+			// TODO: Implement some kind of alternate handling
+			// here?
+
+			/* close(fileno);
 			remove(filename);
-			return NULL;
+			return NULL; */
 		}
 	}
 
 	// Set file permissions.
-	// File permissiosn must be set *after* owner and group have
+	// File permissions must be set *after* owner and group have
 	// been set; otherwise, we might briefly be granting permissions
 	// to the wrong group.
 
