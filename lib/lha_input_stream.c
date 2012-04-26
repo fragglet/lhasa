@@ -28,7 +28,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // Maximum length of the self-extractor header.
 // If we don't find an LHA file header after this many bytes, give up.
 
-#define MAX_SFX_HEADER_LEN 8192
+#define MAX_SFX_HEADER_LEN 65536
 
 // Size of the lead-in buffer used to skip the self-extractor.
 
