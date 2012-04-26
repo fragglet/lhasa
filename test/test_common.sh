@@ -32,7 +32,7 @@ test_lha="$test_base/../src/test-lha"
 # These options are used to run the Unix LHA tool to gather output
 # for comparison. When GATHER=true, canonical output is gathered.
 
-LHA=lha
+LHA_TOOL=/usr/bin/lha
 GATHER=false
 #GATHER=true
 

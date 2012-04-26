@@ -146,6 +146,21 @@ test_archive maclha_224/l2_lh5.lzh
 test_archive maclha_224/l2_nm_lh5.lzh
 test_archive maclha_224/l2_subdir.lzh
 
+test_archive lhmelt_16536/h0_lh0.lzh
+test_archive lhmelt_16536/h0_lh1.lzh
+test_archive lhmelt_16536/h0_lh5.lzh
+test_archive lhmelt_16536/h0_lh6.lzh
+test_archive lhmelt_16536/h0_lh7.lzh
+test_archive lhmelt_16536/h0_subdir.lzh
+test_archive lhmelt_16536/h1_lh0.lzh
+test_archive lhmelt_16536/h1_lh1.lzh
+test_archive lhmelt_16536/h1_lh5.lzh
+test_archive lhmelt_16536/h1_subdir.lzh
+test_archive lhmelt_16536/h2_lh0.lzh
+test_archive lhmelt_16536/h2_lh1.lzh
+test_archive lhmelt_16536/h2_lh5.lzh
+test_archive lhmelt_16536/h2_subdir.lzh
+
 test_archive regression/abspath.lzh
 test_archive regression/badterm.lzh
 

@@ -1,0 +1,16 @@
+
+These archives are generated using LHMelt v1.65.3.6 (lmlzh32.dll v2.67.1.2).
+The following files have level 0 headers:
+
+  h0_lh0.lzh        - Stored (-lh0-) file.
+  h0_lh1.lzh        - Compressed (-lh1-) file.
+  h0_lh5.lzh        - Compressed (-lh5-) file.
+  h0_lh6.lzh        - Compressed (-lh6-) file.
+  h0_lh7.lzh        - Compressed (-lh7-) file.
+  h0_subdir.lzh     - Archive containing a file with a path. This was
+                      generated with the "use root dir" option turned on
+                      and the recursive button pressed, so that an entry
+                      was stored for the parent directory.
+
+Equivalent archives with level 1 and 2 headers have h1_ and h2_ prefixes.
+

@@ -170,6 +170,21 @@ test_archive maclha_224/l2_lh5.lzh              $gpl2
 test_archive maclha_224/l2_nm_lh5.lzh           $gpl2
 test_archive maclha_224/l2_subdir.lzh           $hello_world3
 
+test_archive lhmelt_16536/h0_lh0.lzh            $gpl2_gz
+test_archive lhmelt_16536/h0_lh1.lzh            $gpl2
+test_archive lhmelt_16536/h0_lh5.lzh            $gpl2
+test_archive lhmelt_16536/h0_lh6.lzh            $gpl2
+test_archive lhmelt_16536/h0_lh7.lzh            $gpl2
+test_archive lhmelt_16536/h0_subdir.lzh         $hello_world1
+test_archive lhmelt_16536/h1_lh0.lzh            $gpl2_gz
+test_archive lhmelt_16536/h1_lh1.lzh            $gpl2
+test_archive lhmelt_16536/h1_lh5.lzh            $gpl2
+test_archive lhmelt_16536/h1_subdir.lzh         $hello_world1
+test_archive lhmelt_16536/h2_lh0.lzh            $gpl2_gz
+test_archive lhmelt_16536/h2_lh1.lzh            $gpl2
+test_archive lhmelt_16536/h2_lh5.lzh            $gpl2
+test_archive lhmelt_16536/h2_subdir.lzh         $hello_world1
+
 test_archive regression/abspath.lzh             bd98d221  46
 test_archive regression/badterm.lzh             00000000  0
 

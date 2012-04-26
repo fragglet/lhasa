@@ -416,6 +416,24 @@ test_archive maclha_224/l2_nm_lh5.lzh       "gpl-2"
 test_archive maclha_224/l2_subdir.lzh       "subdir/subdir2/hello.txt"
 test_archive maclha_224/l2_full_subdir.lzh  "Untitled/subdir/subdir2/hello.txt"
 
+# Weird ordering of directories in LHmelt-generated archives means that the
+# subdirectory tests currently fail, because the timestamp is not set right:
+
+test_archive lhmelt_16536/h0_lh0.lzh        "gpl-2.gz"
+test_archive lhmelt_16536/h0_lh1.lzh        "gpl-2"
+test_archive lhmelt_16536/h0_lh5.lzh        "gpl-2"
+test_archive lhmelt_16536/h0_lh6.lzh        "gpl-2"
+test_archive lhmelt_16536/h0_lh7.lzh        "gpl-2"
+#test_archive lhmelt_16536/h0_subdir.lzh     "subdir/subdir2/hello.txt"
+test_archive lhmelt_16536/h1_lh0.lzh        "gpl-2.gz"
+test_archive lhmelt_16536/h1_lh1.lzh        "gpl-2"
+test_archive lhmelt_16536/h1_lh5.lzh        "gpl-2"
+#test_archive lhmelt_16536/h1_subdir.lzh     "subdir/subdir2/hello.txt"
+test_archive lhmelt_16536/h2_lh0.lzh        "gpl-2.gz"
+test_archive lhmelt_16536/h2_lh1.lzh        "gpl-2"
+test_archive lhmelt_16536/h2_lh5.lzh        "gpl-2"
+#test_archive lhmelt_16536/h2_subdir.lzh     "subdir/subdir2/hello.txt"
+
 test_archive regression/abspath.lzh         "tmp/absolute_path.txt"
 
 test_archive generated/lzs/lzs.lzs          "gpl-2"
