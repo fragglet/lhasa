@@ -36,7 +36,7 @@ check_output() {
 		fail "Output not as expected for lha $*"
 	fi
 
-	rm /tmp/tmp.txt
+	rm -f /tmp/tmp.txt
 }
 
 gather_output() {

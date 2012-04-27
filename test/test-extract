@@ -241,10 +241,8 @@ test_q_option() {
 
 	make_sandboxes
 
-	touch /tmp/lha_empty.txt
 	file_to_overwrite "$filename"
-	lha_check_output /tmp/lha_empty.txt \
-	                 $cmd "$test_base/archives/$archive_file"
+	lha_check_output /dev/null $cmd "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
 		fail "Failed to extract $filanem from $archive_file"
@@ -254,8 +252,6 @@ test_q_option() {
 	# without confirmation (like -f). Make sure file is overwritten.
 
 	check_overwritten "$archive_file" "$filename"
-
-	rm -f /tmp/lha_empty.txt
 
 	remove_sandboxes
 }

@@ -39,6 +39,8 @@ test_archive() {
 	if ! diff -u "$expected" /tmp/hdr.txt; then
 		fail "Output not as expected for $archive"
 	fi
+
+	rm -f /tmp/hdr.txt
 }
 
 test_archive larc333/lz4.lzs
