@@ -6,5 +6,5 @@ MAINTAINERCLEANFILES = $(AUX_DIST_GEN)
 
 $(pkgconfig_DATA) : config.status
 
-SUBDIRS=lib src test
+SUBDIRS=doc lib src test
 

@@ -75,6 +75,7 @@ AM_CONFIG_HEADER(config.h:config.hin)
 
 AC_OUTPUT([
     Makefile
+    doc/Makefile
     lib/Makefile
     src/Makefile
     test/Makefile
