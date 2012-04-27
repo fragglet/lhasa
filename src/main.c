@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_reader.h"
 
+#include "config.h"
 #include "extract.h"
 #include "list.h"
 
@@ -40,7 +41,8 @@ typedef enum {
 static void help_page(char *progname)
 {
 	printf(
-	"Lhasa command line LHA tool  - Copyright (C) 2011,2012 Simon Howard\n"
+	PACKAGE_NAME " v" PACKAGE_VERSION " command line LHA tool  "
+		"- Copyright (C) 2011,2012 Simon Howard\n"
 	"usage: %s [-]{lvtxe[q{num}][finv]}[w=<dir>] archive_file [file...]\n"
 	"commands:                        options:\n"
 	" l,v List / Verbose List          f  Force overwrite (no prompt)\n"
