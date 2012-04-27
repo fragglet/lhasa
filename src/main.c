@@ -63,12 +63,16 @@ static void do_command(ProgramMode mode, char *filename,
 	LHAReader *reader;
 	LHAFilter filter;
 
-	fstream = fopen(filename, "rb");
+	if (!strcmp(filename, "-")) {
+		fstream = stdin;
+	} else {
+		fstream = fopen(filename, "rb");
 
-	if (fstream == NULL) {
-		fprintf(stderr, "LHa: Error: %s %s\n",
-		                filename, strerror(errno));
-		exit(-1);
+		if (fstream == NULL) {
+			fprintf(stderr, "LHa: Error: %s %s\n",
+			                filename, strerror(errno));
+			exit(-1);
+		}
 	}
 
 	stream = lha_input_stream_from_FILE(fstream);

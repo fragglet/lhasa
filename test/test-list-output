@@ -31,7 +31,7 @@ check_output() {
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	"$test_lha" $option archives/$archive > /tmp/tmp.txt
+	"$test_lha" $option $archive > /tmp/tmp.txt
 
 	if ! diff -u output/$expected /tmp/tmp.txt; then
 		fail "Output not as expected for lha $option $archive"
@@ -46,7 +46,7 @@ gather_output() {
 	local expected=$3
 
 	if [ ! -e output/$expected ]; then
-		$LHA_TOOL $option archives/$archive > output/$expected
+		$LHA_TOOL $option $archive > output/$expected
 	fi
 }
 
@@ -62,16 +62,23 @@ test_archive() {
 	# Gather output from Unix LHA tool?
 
 	if $GATHER; then
-		gather_output l $archive $archive-l.txt
-		gather_output v $archive $archive-v.txt
-		gather_output lv $archive $archive-lv.txt
-		gather_output vv $archive $archive-vv.txt
+		gather_output l archives/$archive $archive-l.txt
+		gather_output v archives/$archive $archive-v.txt
+		gather_output lv archives/$archive $archive-lv.txt
+		gather_output vv archives/$archive $archive-vv.txt
 	fi
 
-	check_output l $archive $archive-l.txt
-	check_output v $archive $archive-v.txt
-	check_output lv $archive $archive-lv.txt
-	check_output vv $archive $archive-vv.txt
+	check_output l archives/$archive $archive-l.txt
+	check_output v archives/$archive $archive-v.txt
+	check_output lv archives/$archive $archive-lv.txt
+	check_output vv archives/$archive $archive-vv.txt
+
+	# Test that the same can be done from stdin.
+
+	check_output l - $archive-l.txt < archives/$archive
+	check_output v - $archive-v.txt < archives/$archive
+	check_output lv - $archive-lv.txt < archives/$archive
+	check_output vv - $archive-vv.txt < archives/$archive
 }
 
 test_archive larc333/lz4.lzs
