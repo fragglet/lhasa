@@ -45,20 +45,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // TODO: This may not be ideal behavior for handling files with
 // names that contain Unicode characters.
 
-// Version of printf() that strips out any potentially malicious
-// characters from the outputted string.
-// Note: all escape characters are considered potentially malicious,
-// including newline characters.
-
-int safe_printf(char *format, ...)
+static void safe_output(FILE *stream, unsigned char *str)
 {
-	va_list args;
-	int result;
-	unsigned char *str;
 	unsigned char *p;
-
-	va_start(args, format);
-	result = vasprintf((char **) &str, format, args);
 
 	for (p = str; *p != '\0'; ++p) {
 
@@ -71,9 +60,43 @@ int safe_printf(char *format, ...)
 		}
 	}
 
-	printf("%s", str);
+	fprintf(stream, "%s", str);
+}
 
+// Version of printf() that strips out any potentially malicious
+// characters from the outputted string.
+// Note: all escape characters are considered potentially malicious,
+// including newline characters.
+
+int safe_fprintf(FILE *stream, char *format, ...)
+{
+	va_list args;
+	int result;
+	unsigned char *str;
+
+	va_start(args, format);
+
+	result = vasprintf((char **) &str, format, args);
+	safe_output(stream, str);
 	free(str);
+
+	va_end(args);
+
+	return result;
+}
+
+int safe_printf(char *format, ...)
+{
+	va_list args;
+	int result;
+	unsigned char *str;
+
+	va_start(args, format);
+
+	result = vasprintf((char **) &str, format, args);
+	safe_output(stdout, str);
+	free(str);
+
 	va_end(args);
 
 	return result;
