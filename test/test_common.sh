@@ -27,7 +27,15 @@ set -eu
 # Location of tests and the test-build version of the lha tool:
 
 test_base="$PWD"
-test_lha="$test_base/../src/test-lha"
+
+# Wrapper command to invoke the test-lha tool and print an error
+# if the command exits with a failure.
+
+test_lha() {
+	if ! "$test_base/../src/test-lha" "$@"; then
+		fail "Command failed: lha $*"
+	fi
+}
 
 # These options are used to run the Unix LHA tool to gather output
 # for comparison. When GATHER=true, canonical output is gathered.

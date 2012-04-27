@@ -38,13 +38,23 @@ test_archive() {
 
 	# CRC test:
 
-	"$test_lha" t archives/$archive > /tmp/t.txt
+	test_lha t archives/$archive > /tmp/t.txt
 
 	if ! diff -u output/$archive-t.txt /tmp/t.txt; then
 		fail "Output not as expected for lha t $archive"
 	fi
 
-	rm /tmp/t.txt
+	rm -f /tmp/t.txt
+
+	# Perform the same test, reading from stdin.
+
+	test_lha t - < archives/$archive > /tmp/t.txt
+
+	if ! diff -u output/$archive-t.txt /tmp/t.txt; then
+		fail "Output not as expected for lha t - < $archive"
+	fi
+
+	rm -f /tmp/t.txt
 }
 
 # Length-specific tests:

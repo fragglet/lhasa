@@ -27,15 +27,22 @@ test_dry_run() {
 	local archive_file=$2
 	local expected=$3
 
+	if [ "$archive_file" != "-" ]; then
+		archive_file="archives/$archive_file"
+	fi
+
 	# Only check the last line of output:
 
 	echo "$expected" > /tmp/expected.txt
-	"$test_lha" $option "archives/$archive_file" | tail -n 1 \
-	    > /tmp/output.txt
+	test_lha $option "$archive_file" > /tmp/output.txt
 
-	if ! diff /tmp/expected.txt /tmp/output.txt; then
+	tail -n 1 < /tmp/output.txt > /tmp/output2.txt
+
+	if ! diff /tmp/expected.txt /tmp/output2.txt; then
 		fail "Output not as expected for $archive_file"
 	fi
+
+	rm -f /tmp/expected.txt /tmp/output.txt /tmp/output2.txt
 }
 
 test_archive() {
@@ -44,6 +51,11 @@ test_archive() {
 
 	test_dry_run en "$archive_file" "EXTRACT $filename"
 	test_dry_run tn "$archive_file" "VERIFY $filename"
+
+	# Test the same, reading from stdin.
+
+	test_dry_run en - "EXTRACT $filename" < "archives/$archive_file"
+	test_dry_run tn - "VERIFY $filename" < "archives/$archive_file"
 }
 
 # Tests for archives in the test set:

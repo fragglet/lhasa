@@ -65,12 +65,16 @@ static void do_command(ProgramMode mode, char *filename,
 	LHAReader *reader;
 	LHAFilter filter;
 
-	fstream = fopen(filename, "rb");
+	if (!strcmp(filename, "-")) {
+		fstream = stdin;
+	} else {
+		fstream = fopen(filename, "rb");
 
-	if (fstream == NULL) {
-		fprintf(stderr, "LHa: Error: %s %s\n",
-		                filename, strerror(errno));
-		exit(-1);
+		if (fstream == NULL) {
+			fprintf(stderr, "LHa: Error: %s %s\n",
+			                filename, strerror(errno));
+			exit(-1);
+		}
 	}
 
 	stream = lha_input_stream_from_FILE(fstream);
@@ -206,8 +210,6 @@ static int parse_options(char *arg, LHAOptions *options)
 static int parse_command_line(char *cmd, ProgramMode *mode,
                               LHAOptions *options)
 {
-	init_options(options);
-
 	// Parse program mode argument. Initial '-' is ignored.
 
 	if (*cmd == '-') {
@@ -234,15 +236,19 @@ int main(int argc, char *argv[])
 	ProgramMode mode;
 	LHAOptions options;
 
-	// Parse the command line options.
+	// Parse the command line options and run command.
+	// As a shortcut, a single argument can be provided to list the
+	// contents of an archive ("lha foo.lzh" == "lha l foo.lzh").
 
-	if (argc < 3 || !parse_command_line(argv[1], &mode, &options)) {
+	init_options(&options);
+
+	if (argc >= 3 && parse_command_line(argv[1], &mode, &options)) {
+		do_command(mode, argv[2], &options, argv + 3, argc - 3);
+	} else if (argc == 2) {
+		do_command(MODE_LIST, argv[1], &options, NULL, 0);
+	} else {
 		help_page(argv[0]);
 	}
-
-	// Run the command.
-
-	do_command(mode, argv[2], &options, argv + 3, argc - 3);
 
 	return 0;
 }

@@ -141,7 +141,7 @@ lha_check_output() {
 	#echo "lha $@"
 
 	cd "$run_sandbox"
-	"$test_lha" "$@" >/tmp/output.txt
+	test_lha "$@" >/tmp/output.txt
 	cd "$test_base"
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
@@ -152,7 +152,7 @@ lha_check_output() {
 
 	if ! diff -u "$expected_output" /tmp/output.txt; then
 		fail "Output not as expected for command:" \
-		     "    lha $@" >&2
+		     "    lha $*" >&2
 	fi
 
 	rm -f /tmp/output.txt
@@ -168,6 +168,23 @@ test_basic_extract() {
 	make_sandboxes
 
 	lha_check_output "$expected_file" e "$test_base/archives/$archive_file"
+
+	check_extracted_files "$archive_file"
+
+	remove_sandboxes
+}
+
+# Basic extract, reading from stdin.
+
+test_stdin_extract() {
+	local archive_file=$1
+	local filename=$2
+	local expected_file="$test_base/output/$archive_file-e.txt"
+
+	make_sandboxes
+
+	lha_check_output "$expected_file" e - \
+	     < "$test_base/archives/$archive_file"
 
 	check_extracted_files "$archive_file"
 
@@ -300,6 +317,7 @@ test_archive() {
 	local filename=$2
 
 	test_basic_extract "$archive_file" "$filename"
+	test_stdin_extract "$archive_file" "$filename"
 	test_w_option "$archive_file" "$filename"
 	test_q_option eq "$archive_file" "$filename"
 	test_q_option eq2 "$archive_file" "$filename"

@@ -24,29 +24,27 @@
 . test_common.sh
 
 check_output() {
-	local option=$1
-	local archive=$2
-	local expected=$3
+	local expected=$1
+	shift
 
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	"$test_lha" $option archives/$archive > /tmp/tmp.txt
+	test_lha "$@" > /tmp/tmp.txt
 
 	if ! diff -u output/$expected /tmp/tmp.txt; then
-		fail "Output not as expected for lha $option $archive"
+		fail "Output not as expected for lha $*"
 	fi
 
 	rm /tmp/tmp.txt
 }
 
 gather_output() {
-	local option=$1
-	local archive=$2
-	local expected=$3
+	local expected=$1
+	shift
 
 	if [ ! -e output/$expected ]; then
-		$LHA_TOOL $option archives/$archive > output/$expected
+		$LHA_TOOL "$@" > output/$expected
 	fi
 }
 
@@ -62,16 +60,28 @@ test_archive() {
 	# Gather output from Unix LHA tool?
 
 	if $GATHER; then
-		gather_output l $archive $archive-l.txt
-		gather_output v $archive $archive-v.txt
-		gather_output lv $archive $archive-lv.txt
-		gather_output vv $archive $archive-vv.txt
+		gather_output $archive-l.txt   l archives/$archive
+		gather_output $archive-v.txt   v archives/$archive
+		gather_output $archive-lv.txt  lv archives/$archive
+		gather_output $archive-vv.txt  vv archives/$archive
 	fi
 
-	check_output l $archive $archive-l.txt
-	check_output v $archive $archive-v.txt
-	check_output lv $archive $archive-lv.txt
-	check_output vv $archive $archive-vv.txt
+	check_output $archive-l.txt   l archives/$archive
+	check_output $archive-v.txt   v archives/$archive
+	check_output $archive-lv.txt  lv archives/$archive
+	check_output $archive-vv.txt  vv archives/$archive
+
+	# Test that the same can be done from stdin.
+
+	check_output $archive-l.txt   l - < archives/$archive
+	check_output $archive-v.txt   v - < archives/$archive
+	check_output $archive-lv.txt  lv - < archives/$archive
+	check_output $archive-vv.txt  vv - < archives/$archive
+
+	# Single argument implies 'l':
+
+	check_output $archive-l.txt   archives/$archive
+	check_output $archive-l.txt   - < archives/$archive
 }
 
 test_archive larc333/lz4.lzs
