@@ -34,12 +34,15 @@ test_dry_run() {
 	# Only check the last line of output:
 
 	echo "$expected" > /tmp/expected.txt
-	"$test_lha" $option "$archive_file" | tail -n 1 \
-	    > /tmp/output.txt
+	test_lha $option "$archive_file" > /tmp/output.txt
 
-	if ! diff /tmp/expected.txt /tmp/output.txt; then
+	tail -n 1 < /tmp/output.txt > /tmp/output2.txt
+
+	if ! diff /tmp/expected.txt /tmp/output2.txt; then
 		fail "Output not as expected for $archive_file"
 	fi
+
+	rm -f /tmp/expected.txt /tmp/output.txt /tmp/output2.txt
 }
 
 test_archive() {

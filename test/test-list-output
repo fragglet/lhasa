@@ -30,10 +30,10 @@ check_output() {
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	"$test_lha" "$@" > /tmp/tmp.txt
+	test_lha "$@" > /tmp/tmp.txt
 
 	if ! diff -u output/$expected /tmp/tmp.txt; then
-		fail "Output not as expected for lha $@"
+		fail "Output not as expected for lha $*"
 	fi
 
 	rm /tmp/tmp.txt

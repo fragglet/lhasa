@@ -141,7 +141,7 @@ lha_check_output() {
 	#echo "lha $@"
 
 	cd "$run_sandbox"
-	"$test_lha" "$@" >/tmp/output.txt
+	test_lha "$@" >/tmp/output.txt
 	cd "$test_base"
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
@@ -152,7 +152,7 @@ lha_check_output() {
 
 	if ! diff -u "$expected_output" /tmp/output.txt; then
 		fail "Output not as expected for command:" \
-		     "    lha $@" >&2
+		     "    lha $*" >&2
 	fi
 
 	rm -f /tmp/output.txt
