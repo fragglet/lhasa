@@ -97,6 +97,8 @@ static int matches_filter(LHAFilter *filter, LHAFileHeader *header)
 		return 0;
 	}
 
+	path[0] = '\0';
+
 	if (header->path != NULL) {
 		strcat(path, header->path);
 	}
