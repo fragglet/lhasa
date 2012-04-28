@@ -448,6 +448,10 @@ static void extract_archived_file(LHAReader *reader,
 
 	if (!is_dir && file_exists(filename)
 	 && !confirm_file_overwrite(filename, options)) {
+		if (options->overwrite_policy == LHA_OVERWRITE_SKIP) {
+			safe_printf("%s : Skipped...", filename);
+			printf("\n");
+		}
 		free(filename);
 		return;
 	}
