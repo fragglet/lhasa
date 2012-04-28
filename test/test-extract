@@ -55,12 +55,42 @@ file_to_overwrite() {
 	echo "__OVERWRITE_FILE__" > "$tmpfile"
 }
 
+check_exists() {
+	local archive_file=$1
+	local filename=$2
+	if [ ! -e "$run_sandbox/$filename" ]; then
+		fail "File was not extracted as expected:"  \
+		     "  archive: $archive_file"             \
+		     "  filename: $filename"
+	fi
+}
+
+check_not_exists() {
+	local archive_file=$1
+	local filename=$2
+	if [ -e "$run_sandbox/$filename" ]; then
+		fail "File was extracted, not as expected:"  \
+		     "  archive: $archive_file"              \
+		     "  filename: $filename"
+	fi
+}
+
 check_overwritten() {
 	local archive_file=$1
 	local filename=$2
 	if grep -q __OVERWRITE_FILE__ "$run_sandbox/$filename"; then
 		fail "File was not overwritten as expected:" \
 		     "  archive: $archive_file"              \
+		     "  filename: $filename"
+	fi
+}
+
+check_not_overwritten() {
+	local archive_file=$1
+	local filename=$2
+	if ! grep -q __OVERWRITE_FILE__ "$run_sandbox/$filename"; then
+		fail "File was overwritten, not as expected:"   \
+		     "  archive: $archive_file"                 \
 		     "  filename: $filename"
 	fi
 }
@@ -141,7 +171,7 @@ lha_check_output() {
 	#echo "lha $@"
 
 	cd "$run_sandbox"
-	test_lha "$@" >/tmp/output.txt
+	test_lha "$@" >/tmp/output.txt 2>&1
 	cd "$test_base"
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
@@ -241,10 +271,8 @@ test_q_option() {
 
 	make_sandboxes
 
-	touch /tmp/lha_empty.txt
 	file_to_overwrite "$filename"
-	lha_check_output /tmp/lha_empty.txt \
-	                 $cmd "$test_base/archives/$archive_file"
+	lha_check_output /dev/null $cmd "$test_base/archives/$archive_file"
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
 		fail "Failed to extract $filanem from $archive_file"
@@ -254,8 +282,6 @@ test_q_option() {
 	# without confirmation (like -f). Make sure file is overwritten.
 
 	check_overwritten "$archive_file" "$filename"
-
-	rm -f /tmp/lha_empty.txt
 
 	remove_sandboxes
 }
@@ -456,4 +482,158 @@ test_archive regression/abspath.lzh         "tmp/absolute_path.txt"
 
 test_archive generated/lzs/lzs.lzs          "gpl-2"
 test_archive generated/lzs/long.lzs         "long.txt"
+
+# ======================================================================
+#
+# Special cases:
+#
+
+# Test basic overwrite prompt (y/n).
+
+test_overwrite_prompt() {
+	make_sandboxes
+
+	local archive_file=regression/multiple.lzh
+
+	file_to_overwrite "file1.txt"
+	file_to_overwrite "file2-1.txt"
+	file_to_overwrite "file2-2.txt"
+	file_to_overwrite "file3.txt"
+	file_to_overwrite "file4.txt"
+
+	(echo y; echo n; echo Y; echo N; echo "") |               \
+	lha_check_output output/regression/multiple.lzh-ow1.txt   \
+	    e "$test_base/archives/$archive_file"
+
+	check_overwritten     "$archive_file" "file1.txt"
+	check_not_overwritten "$archive_file" "file2-1.txt"
+	check_overwritten     "$archive_file" "file2-2.txt"
+	check_not_overwritten "$archive_file" "file3.txt"
+	check_not_overwritten "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test "overwrite all" ('a' option).
+
+test_overwrite_all() {
+	local cmd=$1
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	file_to_overwrite "file1.txt"
+	file_to_overwrite "file2-1.txt"
+	file_to_overwrite "file2-2.txt"
+	file_to_overwrite "file3.txt"
+	file_to_overwrite "file4.txt"
+
+	echo $cmd |                                               \
+	lha_check_output output/regression/multiple.lzh-ow2.txt   \
+	    e "$test_base/archives/$archive_file"
+
+	check_overwritten "$archive_file" "file1.txt"
+	check_overwritten "$archive_file" "file2-1.txt"
+	check_overwritten "$archive_file" "file2-2.txt"
+	check_overwritten "$archive_file" "file3.txt"
+	check_overwritten "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test overwrite "skip" ('s' option).
+
+test_overwrite_skip() {
+	local cmd=$1
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	file_to_overwrite "file1.txt"
+	file_to_overwrite "file2-1.txt"
+	file_to_overwrite "file2-2.txt"
+	file_to_overwrite "file3.txt"
+	file_to_overwrite "file4.txt"
+
+	echo $cmd |                                               \
+	lha_check_output output/regression/multiple.lzh-ow3.txt   \
+	    e "$test_base/archives/$archive_file"
+
+	check_not_overwritten "$archive_file" "file1.txt"
+	check_not_overwritten "$archive_file" "file2-1.txt"
+	check_not_overwritten "$archive_file" "file2-2.txt"
+	check_not_overwritten "$archive_file" "file3.txt"
+	check_not_overwritten "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test wildcards for extract option.
+
+test_wildcard1() {
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	lha_check_output output/regression/multiple.lzh-e1.txt    \
+	    e "$test_base/archives/$archive_file" "file2*.txt"
+
+	check_not_exists "$archive_file" "file1.txt"
+	check_exists     "$archive_file" "file2-1.txt"
+	check_exists     "$archive_file" "file2-2.txt"
+	check_not_exists "$archive_file" "file3.txt"
+	check_not_exists "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test wildcards for extract option (second test).
+
+test_wildcard2() {
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	lha_check_output output/regression/multiple.lzh-e2.txt    \
+	    e "$test_base/archives/$archive_file" "file?.txt"
+
+	check_exists     "$archive_file" "file1.txt"
+	check_not_exists "$archive_file" "file2-1.txt"
+	check_not_exists "$archive_file" "file2-2.txt"
+	check_exists     "$archive_file" "file3.txt"
+	check_exists     "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test extract of a specific list of files.
+
+test_extract_list() {
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	lha_check_output output/regression/multiple.lzh-e3.txt    \
+	    e "$test_base/archives/$archive_file"                 \
+	    file1.txt file2-2.txt file4.txt
+
+	check_exists     "$archive_file" "file1.txt"
+	check_not_exists "$archive_file" "file2-1.txt"
+	check_exists     "$archive_file" "file2-2.txt"
+	check_not_exists "$archive_file" "file3.txt"
+	check_exists     "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+
+test_overwrite_prompt
+test_overwrite_all a
+test_overwrite_all A
+test_overwrite_skip s
+test_overwrite_skip S
+
+test_wildcard1
+test_wildcard2
+test_extract_list
 

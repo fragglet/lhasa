@@ -34,6 +34,8 @@ test_archive() {
 	if ! diff -u /tmp/expected.txt /tmp/output.txt; then
 		fail "Output not as expected for $archive"
 	fi
+
+	rm -f /tmp/expected.txt /tmp/output.txt
 }
 
 generate_test_line() {

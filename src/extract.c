@@ -201,6 +201,8 @@ static void test_archived_file_crc(LHAReader *reader,
 			print_filename(filename, "CRC error");
 			printf("\n");
 		}
+
+		fflush(stdout);
 	}
 
 	if (!success) {
@@ -328,8 +330,8 @@ static char prompt_user(char *message)
 	char result;
 	int c;
 
-	printf("%s", message);
-	fflush(stdout);
+	fprintf(stderr, "%s", message);
+	fflush(stderr);
 
 	// Read characters until a newline is found, saving the first
 	// character entered.
@@ -369,7 +371,7 @@ static int confirm_file_overwrite(char *filename, LHAOptions *options)
 	}
 
 	for (;;) {
-		safe_printf("%s ", filename);
+		safe_fprintf(stderr, "%s ", filename);
 
 		response = prompt_user("OverWrite ?(Yes/[No]/All/Skip) ");
 
@@ -446,6 +448,10 @@ static void extract_archived_file(LHAReader *reader,
 
 	if (!is_dir && file_exists(filename)
 	 && !confirm_file_overwrite(filename, options)) {
+		if (options->overwrite_policy == LHA_OVERWRITE_SKIP) {
+			safe_printf("%s : Skipped...", filename);
+			printf("\n");
+		}
 		free(filename);
 		return;
 	}
@@ -476,6 +482,8 @@ static void extract_archived_file(LHAReader *reader,
 			print_filename(filename, "Failure");
 			printf("\n");
 		}
+
+		fflush(stdout);
 	}
 
 	if (!success) {
