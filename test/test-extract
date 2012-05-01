@@ -630,6 +630,19 @@ test_extract_list() {
 	remove_sandboxes
 }
 
+# Test extract of a truncated archive file.
+
+test_extract_truncated() {
+	local archive_file=regression/truncated.lzh
+
+	make_sandboxes
+
+	lha_check_output output/regression/truncated.lzh-e.txt   \
+	    e "$test_base/archives/$archive_file"
+
+	remove_sandboxes
+}
+
 
 test_overwrite_prompt
 test_overwrite_all a
@@ -640,4 +653,5 @@ test_overwrite_skip S
 test_wildcard1
 test_wildcard2
 test_extract_list
+test_extract_truncated
 

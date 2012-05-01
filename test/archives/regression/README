@@ -15,3 +15,5 @@ badterm.lzh         - Archive containing a file that includes an unsafe
 
 dir.lzh             - Archive that just contains a directory.
 
+truncated.lzh       - Unexpectedly truncated -lh5- archive.
+
