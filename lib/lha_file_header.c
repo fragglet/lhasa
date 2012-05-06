@@ -94,6 +94,14 @@ static unsigned int decode_ftime(uint8_t *buf)
 		return 0;
 	}
 
+	// Deconstruct the contents of the MS-DOS time value and populate the
+	// 'datetime' structure. Note that 'mktime' generates a timestamp for
+	// the local time zone: this is unfortunate, but probably the best
+	// that can be done, due to the limited data stored in MS-DOS time
+	// values.
+
+	memset(&datetime, 0, sizeof(struct tm));
+
 	datetime.tm_sec = (raw << 1) & 0x3e;
 	datetime.tm_min = (raw >> 5) & 0x3f;
 	datetime.tm_hour = (raw >> 11) & 0x1f;

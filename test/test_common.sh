@@ -24,6 +24,14 @@
 
 set -eu
 
+# Some of the test output is time zone-dependent, and output (eg.
+# from 'lha l') can be different in different time zones. Use the
+# TZ environment variable to force the behavior to the London
+# time zone.
+
+TZ=Europe/London
+export TZ
+
 # Location of tests and the test-build version of the lha tool:
 
 test_base="$PWD"
