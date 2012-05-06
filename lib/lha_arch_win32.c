@@ -35,6 +35,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 int lha_arch_vasprintf(char **result, char *fmt, va_list args)
 {
 	int len;
@@ -84,15 +87,27 @@ FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
 
 LHAFileType lha_arch_exists(char *filename)
 {
-	// TODO
+	WIN32_FILE_ATTRIBUTE_DATA file_attr;
+
+	// Read file attributes to determine the type of the file.
+	// If this fails, assume the file does not exist.
+
+	if (GetFileAttributesExA(filename, GetFileExInfoStandard,
+	                         &file_attr)) {
+		if ((file_attr.dwFileAttributes
+		       & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+			return LHA_FILE_DIRECTORY;
+		} else {
+			return LHA_FILE_FILE;
+		}
+	}
+
 	return LHA_FILE_NONE;
 }
 
 int lha_arch_chdir(char *path)
 {
-	// TODO
-	// SetCurrentDirectory(...)
-	return 0;
+	return SetCurrentDirectoryA(path) != 0;
 }
 
 #endif /* LHA_ARCH_WINDOWS */
