@@ -34,7 +34,7 @@ export TZ
 
 # Is this a Cygwin build?
 
-if [ $(uname -o) = Cygwin ]; then
+if uname -s | grep -qi cygwin; then
 	is_cygwin=true
 else
 	is_cygwin=false
