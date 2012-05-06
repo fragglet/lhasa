@@ -18,10 +18,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+
+#include "lha_arch.h"
 
 // Routines for safe terminal output.
 //
@@ -37,10 +38,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // > software can be abused when un-trusted data is displayed on the
 // > screen. The impact of this abuse can range from annoying screen
 // > garbage to a complete system compromise.
-
-// TODO: This file depends on vasprintf(), which is a non-standard
-// function (_GNU_SOURCE above). Develop a compatible workaround
-// for operating systems that don't have it.
 
 // TODO: This may not be ideal behavior for handling files with
 // names that contain Unicode characters.
@@ -76,7 +73,10 @@ int safe_fprintf(FILE *stream, char *format, ...)
 
 	va_start(args, format);
 
-	result = vasprintf((char **) &str, format, args);
+	result = lha_arch_vasprintf((char **) &str, format, args);
+	if (str == NULL) {
+		exit(-1);
+	}
 	safe_output(stream, str);
 	free(str);
 
@@ -93,7 +93,10 @@ int safe_printf(char *format, ...)
 
 	va_start(args, format);
 
-	result = vasprintf((char **) &str, format, args);
+	result = lha_arch_vasprintf((char **) &str, format, args);
+	if (str == NULL) {
+		exit(-1);
+	}
 	safe_output(stdout, str);
 	free(str);
 

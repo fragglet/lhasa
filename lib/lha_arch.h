@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHASA_LHA_ARCH_H
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #define LHA_ARCH_UNIX     1
 #define LHA_ARCH_WINDOWS  2
@@ -39,6 +40,18 @@ typedef enum
     LHA_FILE_DIRECTORY,
     LHA_FILE_ERROR,
 } LHAFileType;
+
+/**
+ * Cross-platform version of vasprintf().
+ *
+ * @param result      Pointer to a variable to store the resulting string.
+ * @param fmt         Format string.
+ * @param args        Additional arguments for printf().
+ * @return            Number of characters in resulting string, or -1 if
+ *                    an error occurred in generating the string.
+ */
+
+int lha_arch_vasprintf(char **result, char *fmt, va_list args);
 
 /**
  * Create a directory.

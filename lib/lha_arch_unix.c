@@ -26,12 +26,24 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #if LHA_ARCH == LHA_ARCH_UNIX
 
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <utime.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+// TODO: This file depends on vasprintf(), which is a non-standard
+// function (_GNU_SOURCE above). Most modern Unix systems have an
+// implementation of it, but develop a compatible workaround for
+// operating systems that don't have it.
+
+int lha_arch_vasprintf(char **result, char *fmt, va_List args)
+{
+	return vasprintf(result, fmt, args);
+}
 
 int lha_arch_mkdir(char *path, unsigned int unix_perms)
 {

@@ -27,11 +27,28 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #if LHA_ARCH == LHA_ARCH_WINDOWS
 
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <utime.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+int lha_arch_vasprintf(char **result, char *fmt, va_list args)
+{
+	int len;
+
+	len = vsnprintf(NULL, 0, fmt, args);
+	if (len >= 0) {
+		*result = malloc(len + 1);
+		if (*result != NULL) {
+			return vsprintf(*result, fmt, args);
+		}
+	}
+
+	*result = NULL;
+	return -1;
+}
 
 int lha_arch_mkdir(char *path, unsigned int unix_mode)
 {
