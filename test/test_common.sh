@@ -32,9 +32,31 @@ set -eu
 TZ=Europe/London
 export TZ
 
+# Is this a Cygwin build?
+
+if [ $(uname -o) = Cygwin ]; then
+	is_cygwin=true
+else
+	is_cygwin=false
+fi
+
+build_arch=$(./build-arch)
+
 # Location of tests and the test-build version of the lha tool:
 
 test_base="$PWD"
+
+# Get the path to a test archive file.
+
+test_arc_file() {
+	filename=$1
+
+	if $is_cygwin; then
+		cygpath -w "$test_base/archives/$filename"
+	else
+		echo "$test_base/archives/$filename"
+	fi
+}
 
 # Wrapper command to invoke the test-lha tool and print an error
 # if the command exits with a failure.

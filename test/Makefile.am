@@ -25,7 +25,7 @@ EXTRA_DIST=                           \
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 
 EXTRA_PROGRAMS=fuzzer
-check_PROGRAMS=$(COMPILED_TESTS) dump-headers decompress-crc
+check_PROGRAMS=$(COMPILED_TESTS) dump-headers decompress-crc build-arch
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
@@ -55,6 +55,7 @@ check-postrun:
 endif
 
 fuzzer_SOURCES = fuzzer.c
+build_arch_SOURCES = build-arch.c
 dump_headers_SOURCES = dump-headers.c
 decompress_crc_SOURCES = decompress-crc.c
 

@@ -120,7 +120,7 @@ check_extracted_file() {
 	# look like "0100644" - strip these down to just the last
 	# three numbers.
 
-	if [ "$unix_perms" != "" ]; then
+	if [ "$build_arch" = "unix" ] && [ "$unix_perms" != "" ]; then
 		local file_perms=$(file_perms "$run_sandbox/$filename" \
 		                   | sed 's/.*\(...\)/\1/')
 		unix_perms=$(echo $unix_perms | sed 's/.*\(...\)/\1/')
@@ -197,7 +197,7 @@ test_basic_extract() {
 
 	make_sandboxes
 
-	lha_check_output "$expected_file" e "$test_base/archives/$archive_file"
+	lha_check_output "$expected_file" e $(test_arc_file "$archive_file")
 
 	check_extracted_files "$archive_file"
 
@@ -214,7 +214,7 @@ test_stdin_extract() {
 	make_sandboxes
 
 	lha_check_output "$expected_file" e - \
-	     < "$test_base/archives/$archive_file"
+	    < $(test_arc_file "$archive_file")
 
 	check_extracted_files "$archive_file"
 
@@ -227,11 +227,16 @@ test_w_option() {
 	local archive_file=$1
 	local filename=$2
 	local expected_file="$test_base/output/$archive_file-e.txt"
+	local extract_dir="$w_sandbox"
+
+	if $is_cygwin; then
+		extract_dir=$(cygpath -w "$w_sandbox")
+	fi
 
 	make_sandboxes
 
 	lha_check_output "$expected_file" \
-	                 "ew=$w_sandbox" "$test_base/archives/$archive_file"
+	                 "ew=$extract_dir" $(test_arc_file "$archive_file")
 
 	if [ ! -e "$w_sandbox/$filename" ]; then
 		fail "Failed to extract $filename from $archive_file"
@@ -251,10 +256,10 @@ test_q1_option() {
 	printf "\r$filename :\r$filename\t- Melted  \n" >/tmp/expected.txt
 
 	lha_check_output /tmp/expected.txt \
-	                 eq1 "$test_base/archives/$archive_file"
+	                 eq1 $(test_arc_file "$archive_file")
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filanem from $archive_file"
+		fail "Failed to extract $filename from $archive_file"
 	fi
 
 	rm -f /tmp/expected.txt
@@ -272,10 +277,10 @@ test_q_option() {
 	make_sandboxes
 
 	file_to_overwrite "$filename"
-	lha_check_output /dev/null $cmd "$test_base/archives/$archive_file"
+	lha_check_output /dev/null $cmd $(test_arc_file "$archive_file")
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filanem from $archive_file"
+		fail "Failed to extract $filename from $archive_file"
 	fi
 
 	# The -q option also causes an existing file to be overwritten
@@ -305,7 +310,7 @@ test_i_option() {
 	      > /tmp/expected.txt
 
 	lha_check_output /tmp/expected.txt \
-	                 ei "$test_base/archives/$archive_file"
+	                 ei $(test_arc_file "$archive_file")
 
 	if [ ! -e "$run_sandbox/$base_filename" ]; then
 		fail "Failed to extract $base_filename from $archive_file"
@@ -326,11 +331,10 @@ test_f_option() {
 	file_to_overwrite "$filename"
 
 	lha_check_output "$expected_file" \
-	                 ef "$test_base/archives/$archive_file"
-
+	                 ef $(test_arc_file "$archive_file")
 
 	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filanem from $archive_file"
+		fail "Failed to extract $filename from $archive_file"
 	fi
 
 	check_overwritten "$archive_file" "$filename"
@@ -508,7 +512,7 @@ test_overwrite_prompt() {
 
 	(echo y; echo n; echo Y; echo N; echo "") |               \
 	lha_check_output output/regression/multiple.lzh-ow1.txt   \
-	    e "$test_base/archives/$archive_file"
+	    e $(test_arc_file "$archive_file")
 
 	check_overwritten     "$archive_file" "file1.txt"
 	check_not_overwritten "$archive_file" "file2-1.txt"
@@ -535,7 +539,7 @@ test_overwrite_all() {
 
 	echo $cmd |                                               \
 	lha_check_output output/regression/multiple.lzh-ow2.txt   \
-	    e "$test_base/archives/$archive_file"
+	    e $(test_arc_file "$archive_file")
 
 	check_overwritten "$archive_file" "file1.txt"
 	check_overwritten "$archive_file" "file2-1.txt"
@@ -562,7 +566,7 @@ test_overwrite_skip() {
 
 	echo $cmd |                                               \
 	lha_check_output output/regression/multiple.lzh-ow3.txt   \
-	    e "$test_base/archives/$archive_file"
+	    e $(test_arc_file "$archive_file")
 
 	check_not_overwritten "$archive_file" "file1.txt"
 	check_not_overwritten "$archive_file" "file2-1.txt"
@@ -581,7 +585,7 @@ test_wildcard1() {
 	make_sandboxes
 
 	lha_check_output output/regression/multiple.lzh-e1.txt    \
-	    e "$test_base/archives/$archive_file" "file2*.txt"
+	    e $(test_arc_file "$archive_file") "file2*.txt"
 
 	check_not_exists "$archive_file" "file1.txt"
 	check_exists     "$archive_file" "file2-1.txt"
@@ -600,7 +604,7 @@ test_wildcard2() {
 	make_sandboxes
 
 	lha_check_output output/regression/multiple.lzh-e2.txt    \
-	    e "$test_base/archives/$archive_file" "file?.txt"
+	    e $(test_arc_file "$archive_file") "file?.txt"
 
 	check_exists     "$archive_file" "file1.txt"
 	check_not_exists "$archive_file" "file2-1.txt"
@@ -619,7 +623,7 @@ test_extract_list() {
 	make_sandboxes
 
 	lha_check_output output/regression/multiple.lzh-e3.txt    \
-	    e "$test_base/archives/$archive_file"                 \
+	    e $(test_arc_file "$archive_file")                    \
 	    file1.txt file2-2.txt file4.txt
 
 	check_exists     "$archive_file" "file1.txt"
@@ -639,7 +643,7 @@ test_extract_truncated() {
 	make_sandboxes
 
 	lha_check_output output/regression/truncated.lzh-e.txt   \
-	    e "$test_base/archives/$archive_file"
+	    e $(test_arc_file "$archive_file")
 
 	remove_sandboxes
 }
