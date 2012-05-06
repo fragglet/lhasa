@@ -24,7 +24,8 @@ EXTRA_DIST=                           \
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 
-check_PROGRAMS=$(COMPILED_TESTS) fuzzer dump-headers decompress-crc
+EXTRA_PROGRAMS=fuzzer
+check_PROGRAMS=$(COMPILED_TESTS) dump-headers decompress-crc
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
