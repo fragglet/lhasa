@@ -258,7 +258,7 @@ static int make_parent_directories(LHAFileHeader *header)
 	int result;
 	char *path;
 	char *p;
-	char saved;
+	char saved = 0;
 
 	path = header->path;
 
