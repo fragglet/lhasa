@@ -27,11 +27,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 int main(int argc, char *argv[])
 {
 #if LHA_ARCH == LHA_ARCH_WINDOWS
-	printf("windows\n");
+	printf("windows");
 #endif
 #if LHA_ARCH == LHA_ARCH_UNIX
-	printf("unix\n");
+	printf("unix");
 #endif
+	fflush(stdout);
 	return 0;
 }
 

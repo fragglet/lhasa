@@ -48,8 +48,22 @@ make_sandboxes() {
 	mkdir "$gather_sandbox"
 }
 
+# "Simplify" a filename - on Windows, filenames ending in a period
+# have that period removed - ie. "gpl-2." becomes "gpl-2". So we
+# must check for the latter rather than the former.
+
+simplify_filename() {
+	local filename=$1
+	if [ "$build_arch" = "windows" ]; then
+		echo "$filename" | sed 's/\.$//'
+	else
+		echo "$filename"
+	fi
+}
+
 file_to_overwrite() {
 	local filename="$1"
+	filename=$(simplify_filename "$filename")
 	local tmpfile="$run_sandbox/$filename"
 	mkdir -p $(dirname "$tmpfile")
 	echo "__OVERWRITE_FILE__" > "$tmpfile"
@@ -58,7 +72,8 @@ file_to_overwrite() {
 check_exists() {
 	local archive_file=$1
 	local filename=$2
-	if [ ! -e "$run_sandbox/$filename" ]; then
+	x_filename=$(simplify_filename "$filename")
+	if [ ! -e "$run_sandbox/$x_filename" ]; then
 		fail "File was not extracted as expected:"  \
 		     "  archive: $archive_file"             \
 		     "  filename: $filename"
@@ -68,7 +83,8 @@ check_exists() {
 check_not_exists() {
 	local archive_file=$1
 	local filename=$2
-	if [ -e "$run_sandbox/$filename" ]; then
+	x_filename=$(simplify_filename "$filename")
+	if [ -e "$run_sandbox/$x_filename" ]; then
 		fail "File was extracted, not as expected:"  \
 		     "  archive: $archive_file"              \
 		     "  filename: $filename"
@@ -78,7 +94,8 @@ check_not_exists() {
 check_overwritten() {
 	local archive_file=$1
 	local filename=$2
-	if grep -q __OVERWRITE_FILE__ "$run_sandbox/$filename"; then
+	x_filename=$(simplify_filename "$filename")
+	if grep -q __OVERWRITE_FILE__ "$run_sandbox/$x_filename"; then
 		fail "File was not overwritten as expected:" \
 		     "  archive: $archive_file"              \
 		     "  filename: $filename"
@@ -88,7 +105,8 @@ check_overwritten() {
 check_not_overwritten() {
 	local archive_file=$1
 	local filename=$2
-	if ! grep -q __OVERWRITE_FILE__ "$run_sandbox/$filename"; then
+	x_filename=$(simplify_filename "$filename")
+	if ! grep -q __OVERWRITE_FILE__ "$run_sandbox/$x_filename"; then
 		fail "File was overwritten, not as expected:"   \
 		     "  archive: $archive_file"                 \
 		     "  filename: $filename"
@@ -103,9 +121,7 @@ check_extracted_file() {
 
 	#echo "check_extracted_file: $@"
 
-	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filename from $archive_file"
-	fi
+	check_exists "$archive_file" "$filename"
 
 	if [ "$timestamp" != "" ]; then
 		local file_ts=$(file_mod_time "$run_sandbox/$filename")
@@ -238,7 +254,8 @@ test_w_option() {
 	lha_check_output "$expected_file" \
 	                 "ew=$extract_dir" $(test_arc_file "$archive_file")
 
-	if [ ! -e "$w_sandbox/$filename" ]; then
+	x_filename=$(simplify_filename "$filename")
+	if [ ! -e "$w_sandbox/$x_filename" ]; then
 		fail "Failed to extract $filename from $archive_file"
 	fi
 
@@ -258,9 +275,7 @@ test_q1_option() {
 	lha_check_output /tmp/expected.txt \
 	                 eq1 $(test_arc_file "$archive_file")
 
-	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filename from $archive_file"
-	fi
+	check_exists "$archive_file" "$filename"
 
 	rm -f /tmp/expected.txt
 
@@ -279,9 +294,7 @@ test_q_option() {
 	file_to_overwrite "$filename"
 	lha_check_output /dev/null $cmd $(test_arc_file "$archive_file")
 
-	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filename from $archive_file"
-	fi
+	check_exists "$archive_file" "$filename"
 
 	# The -q option also causes an existing file to be overwritten
 	# without confirmation (like -f). Make sure file is overwritten.
@@ -312,9 +325,7 @@ test_i_option() {
 	lha_check_output /tmp/expected.txt \
 	                 ei $(test_arc_file "$archive_file")
 
-	if [ ! -e "$run_sandbox/$base_filename" ]; then
-		fail "Failed to extract $base_filename from $archive_file"
-	fi
+	check_exists "$archive_file" "$base_filename"
 
 	rm -f /tmp/expected.txt
 	remove_sandboxes
@@ -333,9 +344,7 @@ test_f_option() {
 	lha_check_output "$expected_file" \
 	                 ef $(test_arc_file "$archive_file")
 
-	if [ ! -e "$run_sandbox/$filename" ]; then
-		fail "Failed to extract $filename from $archive_file"
-	fi
+	check_exists "$archive_file" "$filename"
 
 	check_overwritten "$archive_file" "$filename"
 
