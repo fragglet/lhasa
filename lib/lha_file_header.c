@@ -189,11 +189,13 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 
 	// Is there a directory separator in the path?  If so, we need to
 	// split into directory name and filename.
+	// Some archives actually exist that use a Unix-style ('/') path
+	// separator instead of a DOS one, so support these, too.
 
 	sep = NULL;
 
 	for (i = 0; i < data_len; ++i) {
-		if (data[i] == '\\') {
+		if (data[i] == '\\' || data[i] == '/') {
 			sep = data + i;
 		}
 	}

@@ -191,6 +191,7 @@ test_archive lhmelt_16536/sfx_winsfxm_250.exe   "gpl-2"
 test_archive regression/abspath.lzh         "tmp/absolute_path.txt"
 test_archive regression/badterm.lzh         "tmp/?]2;malicious??"
 test_archive regression/truncated.lzh       "gpl-2"
+test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
 
 test_archive generated/lzs/lzs.lzs          "gpl-2"
 test_archive generated/lzs/long.lzs         "long.txt"

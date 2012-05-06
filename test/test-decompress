@@ -193,6 +193,7 @@ test_archive lhmelt_16536/sfx_winsfxm_250.exe   $gpl2
 
 test_archive regression/abspath.lzh             bd98d221  46
 test_archive regression/badterm.lzh             00000000  0
+test_archive regression/unixsep.lzh             $hello_world1
 
 test_archive generated/lzs/lzs.lzs              $gpl2
 test_archive generated/lzs/long.lzs             $long
