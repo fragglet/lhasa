@@ -38,6 +38,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+static uint64_t unix_epoch_offset = 0;
+
 int lha_arch_vasprintf(char **result, char *fmt, va_list args)
 {
 	int len;
@@ -76,8 +78,58 @@ int lha_arch_chmod(char *filename, int unix_perms)
 
 int lha_arch_utime(char *filename, unsigned int timestamp)
 {
-	// TODO
-	return 1;
+	SYSTEMTIME unix_epoch;
+	FILETIME filetime;
+	HANDLE file;
+	uint64_t ts_scaled;
+	int result;
+
+	// Open file handle to the file to change.
+	// The FILE_FLAG_BACKUP_SEMANTICS flag is needed so that we
+	// can obtain handles to directories as well as files.
+
+	file = CreateFileA(filename,
+	                   FILE_WRITE_ATTRIBUTES,
+	                   FILE_SHARE_READ | FILE_SHARE_WRITE,
+	                   NULL,
+	                   OPEN_EXISTING,
+	                   FILE_FLAG_BACKUP_SEMANTICS,
+	                   NULL);
+
+	if (file == INVALID_HANDLE_VALUE) {
+		return 0;
+	}
+
+	// Calculate offset between Windows FILETIME Jan 1, 1601 epoch
+	// and Unix Jan 1, 1970 offset.
+
+	if (unix_epoch_offset == 0) {
+		unix_epoch.wYear = 1970;
+		unix_epoch.wMonth = 1;
+		unix_epoch.wDayOfWeek = 4; // Thursday
+		unix_epoch.wDay = 1;
+		unix_epoch.wHour = 0;     // 00:00:00.0
+		unix_epoch.wMinute = 0;
+		unix_epoch.wSecond = 0;
+		unix_epoch.wMilliseconds = 0;
+
+		SystemTimeToFileTime(&unix_epoch, &filetime);
+		unix_epoch_offset = ((uint64_t) filetime.dwHighDateTime << 32)
+		                  + filetime.dwLowDateTime;
+	}
+
+	// Convert to Unix FILETIME.
+
+	ts_scaled = (uint64_t) timestamp * 10000000 + unix_epoch_offset;
+	filetime.dwHighDateTime = (uint32_t) ((ts_scaled >> 32) & 0xffffffff);
+	filetime.dwLowDateTime = (uint32_t) (ts_scaled & 0xffffffff);
+
+	// Set the timestamp and close the file handle.
+
+	result = SetFileTime(file, NULL, NULL, &filetime);
+	CloseHandle(file);
+
+	return result != 0;
 }
 
 FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
