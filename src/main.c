@@ -24,6 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <errno.h>
 #include <time.h>
 
+#include "lha_arch.h"
 #include "lha_reader.h"
 
 #include "config.h"
@@ -235,6 +236,14 @@ int main(int argc, char *argv[])
 {
 	ProgramMode mode;
 	LHAOptions options;
+
+#ifdef TEST_BUILD
+	// When running tests, give output to stdout in binary mode;
+	// on Windows, this gives the expected output (which was
+	// constructed for Unix):
+
+	lha_arch_set_binary(stdout);
+#endif
 
 	// Parse the command line options and run command.
 	// As a shortcut, a single argument can be provided to list the

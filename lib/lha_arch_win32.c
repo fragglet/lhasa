@@ -31,6 +31,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <fcntl.h>
 #include <unistd.h>
 #include <utime.h>
+#include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -48,6 +49,11 @@ int lha_arch_vasprintf(char **result, char *fmt, va_list args)
 
 	*result = NULL;
 	return -1;
+}
+
+void lha_arch_set_binary(FILE *handle)
+{
+	_setmode(_fileno(handle), _O_BINARY);
 }
 
 int lha_arch_mkdir(char *path, unsigned int unix_mode)

@@ -45,6 +45,12 @@ int lha_arch_vasprintf(char **result, char *fmt, va_List args)
 	return vasprintf(result, fmt, args);
 }
 
+void lha_arch_set_binary(FILE *handle)
+{
+	// No-op on Unix systems: there is no difference between
+	// "text" and "binary" files.
+}
+
 int lha_arch_mkdir(char *path, unsigned int unix_perms)
 {
 	return mkdir(path, unix_perms) == 0;

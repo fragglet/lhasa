@@ -17,7 +17,7 @@ else
 	is_gcc=false
 fi
 
-TEST_CFLAGS=""
+TEST_CFLAGS="-DTEST_BUILD"
 
 # Turn on all warnings for gcc.  Turn off optimisation for the test build.
 

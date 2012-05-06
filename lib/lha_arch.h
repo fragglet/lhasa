@@ -54,6 +54,14 @@ typedef enum
 int lha_arch_vasprintf(char **result, char *fmt, va_list args);
 
 /**
+ * Change the mode of the specified FILE handle to be binary mode.
+ *
+ * @param handle      The FILE handle.
+ */
+
+void lha_arch_set_binary(FILE *handle);
+
+/**
  * Create a directory.
  *
  * @param path        Path to the directory to create.

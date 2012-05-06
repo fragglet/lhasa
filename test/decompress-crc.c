@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 
 #include "crc32.h"
+#include "lha_arch.h"
 #include "lha_reader.h"
 
 static void decompress_file(LHAReader *reader)
@@ -57,6 +58,11 @@ int main(int argc, char *argv[])
 		printf("Usage: %s <filename>\n", argv[0]);
 		exit(-1);
 	}
+
+	// Give output in binary mode for cross-platform consistency,
+	// so that it can be compared correctly on Windows.
+
+	lha_arch_set_binary(stdout);
 
 	stream = lha_input_stream_from(argv[1]);
 

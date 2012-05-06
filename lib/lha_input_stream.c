@@ -23,6 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <ctype.h>
 
+#include "lha_arch.h"
 #include "lha_input_stream.h"
 
 // Maximum length of the self-extractor header.
@@ -370,6 +371,7 @@ LHAInputStream *lha_input_stream_from(char *filename)
 
 LHAInputStream *lha_input_stream_from_FILE(FILE *stream)
 {
+	lha_arch_set_binary(stream);
 	return lha_input_stream_new(&file_source_unowned, stream);
 }
 
