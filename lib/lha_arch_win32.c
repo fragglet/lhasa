@@ -27,16 +27,13 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #if LHA_ARCH == LHA_ARCH_WINDOWS
 
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <utime.h>
-#include <io.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <fcntl.h>
+#include <io.h>
+
+#include <stdlib.h>
+#include <stdint.h>
 
 static uint64_t unix_epoch_offset = 0;
 
@@ -63,7 +60,7 @@ void lha_arch_set_binary(FILE *handle)
 
 int lha_arch_mkdir(char *path, unsigned int unix_mode)
 {
-	return mkdir(path) == 0;
+	return CreateDirectoryA(path, NULL) != 0;
 }
 
 int lha_arch_chown(char *filename, int unix_uid, int unix_gid)
