@@ -375,7 +375,7 @@ static int confirm_file_overwrite(char *filename, LHAOptions *options)
 
 		response = prompt_user("OverWrite ?(Yes/[No]/All/Skip) ");
 
-		switch (tolower(response)) {
+		switch (tolower((unsigned int) response)) {
 			case 'y':
 				return 1;
 			case 'n':
