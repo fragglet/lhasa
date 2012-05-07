@@ -53,7 +53,7 @@ static struct {
 
 LHADecoder *lha_decoder_new(LHADecoderType *dtype,
                             LHADecoderCallback callback,
-			    void *callback_data,
+                            void *callback_data,
                             size_t stream_length)
 {
 	LHADecoder *decoder;

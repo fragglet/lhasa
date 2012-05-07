@@ -36,8 +36,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Structure used to hold data needed to build the tree.
 
-typedef struct
-{
+typedef struct {
 	// The tree data and its size (must not be exceeded)
 
 	TreeElement *tree;

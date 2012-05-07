@@ -27,8 +27,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define BLOCK_READ_SIZE 1024
 
-typedef struct
-{
+typedef struct {
 	LHADecoderCallback callback;
 	void *callback_data;
 } LHANullDecoder;

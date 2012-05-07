@@ -43,16 +43,14 @@ static float compression_percent(size_t compressed, size_t uncompressed)
 	return factor * 100.0f;
 }
 
-typedef struct
-{
+typedef struct {
 	unsigned int num_files;
 	unsigned int compressed_length;
 	unsigned int length;
 	unsigned int timestamp;
 } FileStatistics;
 
-typedef struct
-{
+typedef struct {
 	char *name;
 	unsigned int width;
 	void (*handler)(LHAFileHeader *header);

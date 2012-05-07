@@ -62,8 +62,7 @@ typedef uint16_t TreeElement;
 
 #define MAX_TEMP_CODES       19
 
-typedef struct
-{
+typedef struct {
 	// Input bit stream.
 
 	BitStreamReader bit_stream_reader;

@@ -60,8 +60,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define OUTPUT_BUFFER_SIZE   RING_BUFFER_SIZE
 
-typedef struct
-{
+typedef struct {
+
 	// If true, this node is a leaf node.
 
 	unsigned int leaf        :1;
@@ -86,8 +86,8 @@ typedef struct
 	uint16_t group;
 } Node;
 
-typedef struct
-{
+typedef struct {
+
 	// Input bit stream.
 
 	BitStreamReader bit_stream_reader;
@@ -476,7 +476,7 @@ static void reconstruct_tree(LHALH1Decoder *decoder)
 		// Before we can add a new branch node, we need at least
 		// two nodes to use as children.  If we don't have this
 		// then we need to copy some from the leaves.
-		
+
 		while ((int) child - i < 2) {
 			decoder->nodes[i] = *leaf;
 			decoder->leaf_nodes[leaf->child_index] = (uint16_t) i;
@@ -524,7 +524,7 @@ static void reconstruct_tree(LHALH1Decoder *decoder)
 	init_groups(decoder);
 
 	// Assign a group to the first node.
-	
+
 	group = alloc_group(decoder);
 	decoder->nodes[0].group = (uint16_t) group;
 	decoder->group_leader[group] = 0;

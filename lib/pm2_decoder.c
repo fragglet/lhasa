@@ -55,8 +55,7 @@ typedef uint8_t TreeElement;
 
 #define OFFSET_TREE_ELEMENTS  17
 
-typedef enum
-{
+typedef enum {
 	PM2_REBUILD_UNBUILT,          // At start of stream
 	PM2_REBUILD_BUILD1,           // After 1KiB
 	PM2_REBUILD_BUILD2,           // After 2KiB
@@ -64,14 +63,12 @@ typedef enum
 	PM2_REBUILD_CONTINUING,       // 8KiB onwards...
 } PM2RebuildState;
 
-typedef struct
-{
+typedef struct {
 	uint8_t prev;
 	uint8_t next;
 } HistoryNode;
 
-typedef struct
-{
+typedef struct {
 	BitStreamReader bit_stream_reader;
 
 	// State of decode tree.
@@ -115,8 +112,7 @@ typedef struct
 
 } LHAPM2Decoder;
 
-typedef struct
-{
+typedef struct {
 	unsigned int offset;
 	unsigned int bits;
 } VariableLengthTable;

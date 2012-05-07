@@ -90,8 +90,7 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 
 	basic_reader = lha_basic_reader_new(stream);
 
-	if (basic_reader == NULL)
-	{
+	if (basic_reader == NULL) {
 		return NULL;
 	}
 
