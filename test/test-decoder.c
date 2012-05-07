@@ -28,23 +28,20 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_decoder.h"
 
-typedef struct
-{
+typedef struct {
 	char *filename;
 	char *algorithm;
 	size_t len;
 	uint32_t crc;
 } DecoderTestData;
 
-typedef struct
-{
+typedef struct {
 	uint8_t *data;
 	size_t data_len;
 	unsigned int pos;
 } DecompressState;
 
-typedef struct
-{
+typedef struct {
 	unsigned int calls;
 	unsigned int last_pos;
 	unsigned int total;

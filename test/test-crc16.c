@@ -26,8 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "crc16.h"
 
-typedef struct
-{
+typedef struct {
 	uint8_t data[16];
 	uint16_t crc;
 	unsigned int change_bit;

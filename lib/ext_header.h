@@ -61,8 +61,7 @@ typedef struct _LHAExtHeaderType LHAExtHeaderType;
  * Structure representing an extended header type.
  */
 
-struct _LHAExtHeaderType
-{
+struct _LHAExtHeaderType {
 	uint8_t num;
 	LHAExtHeaderParser decoder;
 	size_t min_len;
