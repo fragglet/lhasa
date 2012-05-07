@@ -1,4 +1,16 @@
 
+v0.0.5 (2012-05-08):
+     * Architecture-specific functions for running on Windows have now been
+       fully implemented, and the command line tool passes all tests in the
+       test suite on Windows (thanks roytam1 for bug reports).
+     * Bug fixed where the command line tool would enter an infinite loop
+       when extracting a truncated archive (thanks Jon Dowland).
+     * Support added for archives with level 0 headers and Unix path
+       separators (thanks roytam1).
+     * The test suite now runs correctly outside of the Europe/London time
+       zone (thanks Thomas Klausner).
+     * A .spec file is now included for building rpm packages.
+
 v0.0.4 (2012-05-01):
 
      * Special handling is now included for MacBinary headers generated
