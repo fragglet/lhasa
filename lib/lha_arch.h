@@ -23,6 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #define LHA_ARCH_UNIX     1
 #define LHA_ARCH_WINDOWS  2
@@ -104,6 +105,22 @@ int lha_arch_chmod(char *filename, int unix_perms);
 
 int lha_arch_utime(char *filename, unsigned int timestamp);
 
+/**
+ * Set the file creation, modification and access times for the
+ * specified file or directory, using 64-bit Windows timestamps.
+ *
+ * @param filename           Path to the file or directory.
+ * @param creation_time      64-bit Windows FILETIME value for the
+ *                           creation time of the file.
+ * @param modification_time  Modification time of the file.
+ * @param access_time        Last access time of the file.
+ * @return                   Non-zero if set successfully.
+ */
+
+int lha_arch_set_windows_timestamps(char *filename,
+                                    uint64_t creation_time,
+                                    uint64_t modification_time,
+                                    uint64_t access_time);
 /**
  * Open a new file for writing.
  *

@@ -379,15 +379,35 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	return lha_arch_fopen(filename, unix_uid, unix_gid, unix_perms);
 }
 
+// Set file timestamp(s) for the specified file using values from the
+// specified header.
+
+static int set_timestamps_from_header(char *path, LHAFileHeader *header)
+{
+#if LHA_ARCH == LHA_ARCH_WINDOWS
+	if ((header->extra_flags & LHA_FILE_WINDOWS_TIMESTAMPS) != 0) {
+		return lha_arch_set_windows_timestamps(
+		    path,
+		    header->win_creation_time,
+		    header->win_modification_time,
+		    header->win_access_time
+		);
+	} else // ....
+#endif
+	if (header->timestamp != 0) {
+		return lha_arch_utime(path, header->timestamp);
+	} else {
+		return 1;
+	}
+}
+
 // Second stage of directory extraction: set metadata.
 
 static int set_directory_metadata(LHAFileHeader *header, char *path)
 {
 	// Set timestamp:
 
-	if (header->timestamp != 0) {
-		lha_arch_utime(path, header->timestamp);
-	}
+	set_timestamps_from_header(path, header);
 
 	// Set owner and group:
 
@@ -512,8 +532,8 @@ static int extract_file(LHAReader *reader, char *filename,
 
 	// Set timestamp on file:
 
-	if (result && reader->curr_file->timestamp != 0) {
-		lha_arch_utime(filename, reader->curr_file->timestamp);
+	if (result) {
+		set_timestamps_from_header(filename, reader->curr_file);
 	}
 
 	free(tmp_filename);

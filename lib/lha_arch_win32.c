@@ -73,12 +73,12 @@ int lha_arch_chmod(char *filename, int unix_perms)
 	return 1;
 }
 
-int lha_arch_utime(char *filename, unsigned int timestamp)
+static int set_timestamps(char *filename,
+                          FILETIME *creation_time,
+                          FILETIME *modification_time,
+                          FILETIME *access_time)
 {
-	SYSTEMTIME unix_epoch;
-	FILETIME filetime;
 	HANDLE file;
-	uint64_t ts_scaled;
 	int result;
 
 	// Open file handle to the file to change.
@@ -96,6 +96,49 @@ int lha_arch_utime(char *filename, unsigned int timestamp)
 	if (file == INVALID_HANDLE_VALUE) {
 		return 0;
 	}
+
+	// Set the timestamp and close the file handle.
+
+	result = SetFileTime(file, creation_time,
+	                     access_time, modification_time);
+	CloseHandle(file);
+
+	return result != 0;
+}
+
+int lha_arch_set_windows_timestamps(char *filename,
+                                    uint64_t creation_time,
+                                    uint64_t modification_time,
+                                    uint64_t access_time)
+{
+	FILETIME _creation_time;
+	FILETIME _modification_time;
+	FILETIME _access_time;
+
+	_creation_time.dwHighDateTime
+	    = (uint32_t) ((creation_time >> 32) & 0xffffffff);
+	_creation_time.dwLowDateTime
+	    = (uint32_t) (creation_time & 0xffffffff);
+
+	_modification_time.dwHighDateTime
+	    = (uint32_t) ((modification_time >> 32) & 0xffffffff);
+	_modification_time.dwLowDateTime
+	    = (uint32_t) (modification_time & 0xffffffff);
+
+	_access_time.dwHighDateTime
+	    = (uint32_t) ((access_time >> 32) & 0xffffffff);
+	_access_time.dwLowDateTime
+	    = (uint32_t) (access_time & 0xffffffff);
+
+	return set_timestamps(filename, &_creation_time,
+	                      &_modification_time, &_access_time);
+}
+
+int lha_arch_utime(char *filename, unsigned int timestamp)
+{
+	SYSTEMTIME unix_epoch;
+	FILETIME filetime;
+	uint64_t ts_scaled;
 
 	// Calculate offset between Windows FILETIME Jan 1, 1601 epoch
 	// and Unix Jan 1, 1970 offset.
@@ -121,12 +164,9 @@ int lha_arch_utime(char *filename, unsigned int timestamp)
 	filetime.dwHighDateTime = (uint32_t) ((ts_scaled >> 32) & 0xffffffff);
 	filetime.dwLowDateTime = (uint32_t) (ts_scaled & 0xffffffff);
 
-	// Set the timestamp and close the file handle.
+	// Set all timestamps to the same value:
 
-	result = SetFileTime(file, NULL, NULL, &filetime);
-	CloseHandle(file);
-
-	return result != 0;
+	return set_timestamps(filename, &filetime, &filetime, &filetime);
 }
 
 FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
