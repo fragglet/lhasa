@@ -19,5 +19,6 @@ configure
 libtool
 config.h
 config.hin
+rpm.spec
 stamp-h1
 INSTALL
