@@ -42,6 +42,15 @@ uint16_t lha_decode_uint16(uint8_t *buf);
 uint32_t lha_decode_uint32(uint8_t *buf);
 
 /**
+ * Decode a 64-bit little-endian unsigned integer.
+ *
+ * @param buf       Pointer to buffer containing value to decode.
+ * @return          Decoded value.
+ */
+
+uint64_t lha_decode_uint64(uint8_t *buf);
+
+/**
  * Decode a 16-bit big-endian unsigned integer.
  *
  * @param buf       Pointer to buffer containing value to decode.

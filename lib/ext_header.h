@@ -27,17 +27,19 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Extended header types:
 
-#define LHA_EXT_HEADER_COMMON           0x00
-#define LHA_EXT_HEADER_FILENAME         0x01
-#define LHA_EXT_HEADER_PATH             0x02
-#define LHA_EXT_HEADER_MULTI_DISC       0x39
-#define LHA_EXT_HEADER_COMMENT          0x3f
+#define LHA_EXT_HEADER_COMMON              0x00
+#define LHA_EXT_HEADER_FILENAME            0x01
+#define LHA_EXT_HEADER_PATH                0x02
+#define LHA_EXT_HEADER_MULTI_DISC          0x39
+#define LHA_EXT_HEADER_COMMENT             0x3f
 
-#define LHA_EXT_HEADER_UNIX_PERMISSION  0x50
-#define LHA_EXT_HEADER_UNIX_UID_GID     0x51
-#define LHA_EXT_HEADER_UNIX_GROUP       0x52
-#define LHA_EXT_HEADER_UNIX_USER        0x53
-#define LHA_EXT_HEADER_UNIX_TIMESTAMP   0x54
+#define LHA_EXT_HEADER_WINDOWS_TIMESTAMPS  0x41
+
+#define LHA_EXT_HEADER_UNIX_PERMISSION     0x50
+#define LHA_EXT_HEADER_UNIX_UID_GID        0x51
+#define LHA_EXT_HEADER_UNIX_GROUP          0x52
+#define LHA_EXT_HEADER_UNIX_USER           0x53
+#define LHA_EXT_HEADER_UNIX_TIMESTAMP      0x54
 
 /**
  * Callback function for parsing an extended header block.

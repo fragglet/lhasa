@@ -50,6 +50,14 @@ static void print_header(LHAFileHeader *header)
 	if (header->timestamp != 0) {
 		printf("timestamp: %i\n", header->timestamp);
 	}
+	if ((header->extra_flags & LHA_FILE_WINDOWS_TIMESTAMPS) != 0) {
+		printf("win_creation_time: %" PRIu64 "\n",
+		       header->win_creation_time);
+		printf("win_modification_time: %" PRIu64 "\n",
+		       header->win_modification_time);
+		printf("win_access_time: %" PRIu64 "\n",
+		       header->win_access_time);
+	}
 	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
 		printf("unix_perms: 0%o\n", header->unix_perms);
 	}

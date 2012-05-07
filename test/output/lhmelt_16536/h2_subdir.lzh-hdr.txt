@@ -7,6 +7,9 @@ header_level: 2
 os_type: 77 ('M')
 crc: 9778
 timestamp: 1262304000
+win_creation_time: 129067776000000000
+win_modification_time: 129067776000000000
+win_access_time: 129799137040000000
 common_crc: 5519
 --
 path: /subdir/subdir2/
@@ -17,5 +20,8 @@ header_level: 2
 os_type: 77 ('M')
 crc: 0000
 timestamp: 946684800
+win_creation_time: 125911584000000000
+win_modification_time: 125911584000000000
+win_access_time: 129799477190000000
 common_crc: 1eeb
 --

@@ -34,6 +34,10 @@ extern LHAExtHeaderType lha_ext_header_unix_username;
 extern LHAExtHeaderType lha_ext_header_unix_group;
 extern LHAExtHeaderType lha_ext_header_unix_timestamp;
 
+// ext_win.c:
+
+extern LHAExtHeaderType lha_ext_header_windows_timestamps;
+
 static const LHAExtHeaderType *ext_header_types[] = {
 	&lha_ext_header_common,
 	&lha_ext_header_filename,
@@ -42,7 +46,8 @@ static const LHAExtHeaderType *ext_header_types[] = {
 	&lha_ext_header_unix_uid_gid,
 	&lha_ext_header_unix_username,
 	&lha_ext_header_unix_group,
-	&lha_ext_header_unix_timestamp
+	&lha_ext_header_unix_timestamp,
+	&lha_ext_header_windows_timestamps,
 };
 
 /**
