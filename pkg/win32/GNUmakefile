@@ -19,6 +19,7 @@ staging: $(EXE_FILES) $(patsubst %,$(TOPLEVEL)/%,$(DOC_FILES))
 	    cp $(TOPLEVEL)/$$f staging/$$f.txt;        \
 	    unix2dos staging/$$f.txt;                  \
 	done
+	groff -Thtml -mandoc $(TOPLEVEL)/doc/lha.1 > staging/lha.html
 
 clean:
 	rm -rf $(ZIP)
