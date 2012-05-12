@@ -25,7 +25,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_arch.h"
 #include "lha_decoder.h"
 #include "lha_basic_reader.h"
-#include "lha_reader.h"
+#include "public/lha_reader.h"
 #include "macbinary.h"
 
 typedef enum {

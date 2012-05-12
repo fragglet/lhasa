@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "lha_arch.h"
+#include "lib/lha_arch.h"
 
 // Routines for safe terminal output.
 //

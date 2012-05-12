@@ -11,11 +11,11 @@ SOURCE_FILES=                             \
 	safe.c        safe.h
 
 lha_SOURCES=$(SOURCE_FILES)
-lha_CFLAGS=$(MAIN_CFLAGS) -I$(top_builddir)/lib
+lha_CFLAGS=$(MAIN_CFLAGS) -I$(top_builddir)/lib/public -I$(top_builddir)
 lha_LDADD=$(top_builddir)/lib/liblhasa.la
 
 test_lha_SOURCES=$(SOURCE_FILES)
-test_lha_CFLAGS=$(TEST_CFLAGS) -I$(top_builddir)/lib
+test_lha_CFLAGS=$(TEST_CFLAGS) -I$(top_builddir)/lib/public -I$(top_builddir)
 test_lha_LDADD=$(top_builddir)/lib/liblhasatest.a
 
 clean-local:

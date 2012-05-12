@@ -1,5 +1,5 @@
 
-AM_CFLAGS=$(TEST_CFLAGS) -I../lib -g
+AM_CFLAGS=$(TEST_CFLAGS) -I$(top_builddir)/lib/public -I$(top_builddir) -g
 LDADD=$(top_builddir)/lib/liblhasatest.a libtestframework.a
 
 COMPILED_TESTS=                       \

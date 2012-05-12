@@ -26,7 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 
 #include "crc32.h"
-#include "lha_arch.h"
+#include "lib/lha_arch.h"
 #include "lha_reader.h"
 
 static void decompress_file(LHAReader *reader)

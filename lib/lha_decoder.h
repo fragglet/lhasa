@@ -40,7 +40,7 @@ typedef struct _LHADecoderType LHADecoderType;
 typedef size_t (*LHADecoderCallback)(void *buf, size_t buf_len, void *user_data);
 
 /**
- * Callback function used for monitoring decoode progress.
+ * Callback function used for monitoring decode progress.
  * The callback is invoked for every block processed (block size depends on
  * decode algorithm).
  *

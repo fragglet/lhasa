@@ -24,8 +24,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 
-#include "lha_arch.h"
-#include "lha_basic_reader.h"
+#include "lib/lha_arch.h"
+#include "lib/lha_basic_reader.h"
 
 static void print_header(LHAFileHeader *header)
 {

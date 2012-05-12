@@ -78,6 +78,7 @@ AC_OUTPUT([
     Makefile
     doc/Makefile
     lib/Makefile
+    lib/public/Makefile
     pkg/Makefile
     pkg/config.make
     src/Makefile

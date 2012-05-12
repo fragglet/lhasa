@@ -24,7 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <assert.h>
 #include <inttypes.h>
 
-#include "crc16.h"
+#include "lib/crc16.h"
 
 typedef struct {
 	uint8_t data[16];

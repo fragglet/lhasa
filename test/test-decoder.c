@@ -25,8 +25,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <inttypes.h>
 
 #include "crc32.h"
-
-#include "lha_decoder.h"
+#include "lib/lha_decoder.h"
 
 typedef struct {
 	char *filename;

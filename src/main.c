@@ -24,7 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <errno.h>
 #include <time.h>
 
-#include "lha_arch.h"
+#include "lib/lha_arch.h"
 #include "lha_reader.h"
 
 #include "config.h"

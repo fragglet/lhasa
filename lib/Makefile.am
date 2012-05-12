@@ -1,10 +1,7 @@
+SUBDIRS = public
+
 lib_LTLIBRARIES=liblhasa.la
 check_LIBRARIES=liblhasatest.a
-
-HEADER_FILES =                     \
-	lha_file_header.h          \
-	lha_input_stream.h         \
-	lha_reader.h
 
 EXTRA_DIST =                                            \
 	bit_stream_reader.c                             \
@@ -21,8 +18,8 @@ SRC =                                                   \
 	lha_arch_win32.c                                \
 	lha_decoder.c           lha_decoder.h           \
 	lha_endian.c            lha_endian.h            \
-	lha_file_header.c                               \
-	lha_input_stream.c                              \
+	lha_file_header.c       lha_file_header.h       \
+	lha_input_stream.c      lha_input_stream.h      \
 	lha_basic_reader.c      lha_basic_reader.h      \
 	lha_reader.c                                    \
 	macbinary.c             macbinary.h             \
@@ -40,9 +37,6 @@ liblhasatest_a_SOURCES=$(SRC) $(HEADER_FILES)
 
 liblhasa_la_CFLAGS=$(MAIN_CFLAGS)
 liblhasa_la_SOURCES=$(SRC) $(HEADER_FILES)
-
-headerfilesdir=$(includedir)/liblhasa-1.0
-headerfiles_HEADERS=$(HEADER_FILES)
 
 clean-local:
 	rm -f *.gcno *.gcda *.c.gcov
