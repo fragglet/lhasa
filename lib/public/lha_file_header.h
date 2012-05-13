@@ -101,6 +101,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #define LHA_FILE_WINDOWS_TIMESTAMPS    0x08
 
+typedef struct _LHAFileHeader LHAFileHeader;
+
 /**
  * Structure containing a decoded LZH file header.
  *
@@ -111,7 +113,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * archive, and the operating system on which it was created.
  */
 
-typedef struct {
+struct _LHAFileHeader {
 
 	// Internal fields, do not touch!
 
@@ -210,7 +212,7 @@ typedef struct {
 	 * @ref LHA_FILE_WINDOWS_TIMESTAMPS is set.
 	 */
 	uint64_t win_access_time;
-} LHAFileHeader;
+};
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_FILE_HEADER_H */
 
