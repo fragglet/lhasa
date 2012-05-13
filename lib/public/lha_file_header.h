@@ -23,98 +23,194 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <inttypes.h>
 
-#define LHA_FILE_UNIX_PERMS            0x01
-#define LHA_FILE_UNIX_UID_GID          0x02
-#define LHA_FILE_COMMON_CRC            0x04
-#define LHA_FILE_WINDOWS_TIMESTAMPS    0x08
+/**
+ * @file lha_file_header.h
+ *
+ * @brief LHA file header structure.
+ *
+ * This file contains the definition of the @ref LHAFileHeader structure,
+ * representing a decoded file header from an LZH file.
+ */
 
-// Common OS types:
-
+/** OS type value for an unknown OS. */
 #define LHA_OS_TYPE_UNKNOWN            0x00
-#define LHA_OS_TYPE_MSDOS              'M'  /* Microsoft MS/DOS */
-#define LHA_OS_TYPE_WIN95              'w'  /* Microsoft Windows 95 */
-#define LHA_OS_TYPE_WINNT              'W'  /* Microsoft Windows NT */
-#define LHA_OS_TYPE_UNIX               'U'  /* Generic Unix */
-#define LHA_OS_TYPE_OS2                '2'  /* IBM OS/2 */
-#define LHA_OS_TYPE_MACOS              'm'  /* Apple classic Mac OS */
-#define LHA_OS_TYPE_AMIGA              'A'  /* Amiga */
-#define LHA_OS_TYPE_ATARI              'a'  /* Atari ST */
+/** OS type value for Microsoft MS/DOS. */
+#define LHA_OS_TYPE_MSDOS              'M'
+/** OS type value for Microsoft Windows 95. */
+#define LHA_OS_TYPE_WIN95              'w'
+/** OS type value for Microsoft Windows NT. */
+#define LHA_OS_TYPE_WINNT              'W'
+/** OS type value for Unix. */
+#define LHA_OS_TYPE_UNIX               'U'
+/** OS type value for IBM OS/2. */
+#define LHA_OS_TYPE_OS2                '2'
+/** OS type for Apple Mac OS (Classic). */
+#define LHA_OS_TYPE_MACOS              'm'
+/** OS type for Amiga OS. */
+#define LHA_OS_TYPE_AMIGA              'A'
+/** OS type for Atari TOS. */
+#define LHA_OS_TYPE_ATARI              'a'
 
 // Obscure:
 
-#define LHA_OS_TYPE_JAVA               'J'  /* Java */
-#define LHA_OS_TYPE_CPM                'C'  /* Digital Research CP/M */
-#define LHA_OS_TYPE_FLEX               'F'  /* Digital Research FlexOS */
+/** OS type for Sun (Oracle) Java. */
+#define LHA_OS_TYPE_JAVA               'J'
+/** OS type for Digital Research CP/M. */
+#define LHA_OS_TYPE_CPM                'C'
+/** OS type for Digital Research FlexOS. */
+#define LHA_OS_TYPE_FLEX               'F'
+/** OS type for Runser (?). */
 #define LHA_OS_TYPE_RUNSER             'R'
-#define LHA_OS_TYPE_TOWNSOS            'T'  /* Fujitsu FM Towns */
-#define LHA_OS_TYPE_OS9                '9'  /* Microware OS-9 */
-#define LHA_OS_TYPE_OS9_68K            'K'  /* Microware OS-9 - 68k */
+/** OS type for Fujitsu FM Towns OS. */
+#define LHA_OS_TYPE_TOWNSOS            'T'
+/** OS type for Microware OS-9. */
+#define LHA_OS_TYPE_OS9                '9'
+/** OS type for Microware OS-9/68k. */
+#define LHA_OS_TYPE_OS9_68K            'K'
+/** OS type for OS/386 (?). */
 #define LHA_OS_TYPE_OS386              '3'
-#define LHA_OS_TYPE_HUMAN68K           'H'  /* Sharp X68000 Human68K OS */
+/** OS type for Sharp X68000 Human68K OS. */
+#define LHA_OS_TYPE_HUMAN68K           'H'
 
-// Compression type for a stored directory:
-
+/** Compression type for a stored directory */
 #define LHA_COMPRESS_TYPE_DIR   "-lhd-"
 
-typedef struct _LHAFileHeader LHAFileHeader;
+/**
+ * Bit field value set in extra_flags to indicate that the
+ * Unix file permission header (0x50) was parsed.
+ */
+#define LHA_FILE_UNIX_PERMS            0x01
 
-struct _LHAFileHeader {
+/**
+ * Bit field value set in extra_flags to indicate that the
+ * Unix UID/GID header (0x51) was parsed.
+ */
+#define LHA_FILE_UNIX_UID_GID          0x02
+
+/**
+ * Bit field value set in extra_flags to indicate that the 'common
+ * header' extended header (0x00) was parsed, and the common_crc
+ * field has been set.
+ */
+#define LHA_FILE_COMMON_CRC            0x04
+
+/**
+ * Bit field value set in extra_flags to indicate that the
+ * Windows time stamp header (0x41) was parsed, and the Windows
+ * FILETIME timestamp fields have been set.
+ */
+#define LHA_FILE_WINDOWS_TIMESTAMPS    0x08
+
+/**
+ * Structure containing a decoded LZH file header.
+ *
+ * A file header precedes the compressed data of each file stored
+ * within an LZH archive. It contains the name of the file, and
+ * various additional metadata, some of which is optional, and
+ * can depend on the header format, the tool used to create the
+ * archive, and the operating system on which it was created.
+ */
+
+typedef struct {
 
 	// Internal fields, do not touch!
 
 	unsigned int _refcount;
 	LHAFileHeader *_next;
 
-	// Path (directory) and filename. Either of these may be NULL,
-	// but not both - a directory entry (LHA_COMPRESS_TYPE_DIR) always
-	// has a non-NULL path, and a non-directory entry always has a
-	// non-NULL filename.
-
+	/**
+	 * Stored path, with Unix-style ('/') path separators.
+	 *
+	 * This may be NULL, although for a directory entry
+	 * (@ref LHA_COMPRESS_TYPE_DIR) it is never NULL.
+	 */
 	char *path;
+
+	/**
+	 * File name.
+	 *
+	 * This is never NULL, except for a directory entry
+	 * (@ref LHA_COMPRESS_TYPE_DIR), where it is always NULL.
+	 */
 	char *filename;
 
-	// Decoded fields:
-
+	/**
+	 * Compression method.
+	 *
+	 * If the header represents a directory, the compression method
+	 * is equal to @ref LHA_COMPRESS_TYPE_DIR.
+	 */
 	char compress_method[6];
+
+	/** Length of the compressed data. */
 	size_t compressed_length;
+
+	/** Length of the uncompressed data. */
 	size_t length;
+
+	/** LZH header format used to store this header. */
 	uint8_t header_level;
+
+	/**
+	 * OS type indicator, identifying the OS on which
+	 * the archive was created.
+	 */
 	uint8_t os_type;
+
+	/** 16-bit CRC of the compressed data. */
 	uint16_t crc;
+
+	/** Unix timestamp of the modification time of the file. */
 	unsigned int timestamp;
+
+	/** Pointer to a buffer containing the raw header data. */
 	uint8_t *raw_data;
+
+	/** Length of the raw header data. */
 	size_t raw_data_len;
+
+	/**
+	 * Flags bitfield identifying extra data decoded from extended
+	 * headers.
+	 */
 	unsigned int extra_flags;
 
-	// Optional data (from extended headers):
-
+	/** Unix permissions, set if @ref LHA_FILE_UNIX_PERMS is set. */
 	unsigned int unix_perms;
+
+	/** Unix user ID, set if @ref LHA_FILE_UNIX_UID_GID is set. */
 	unsigned int unix_uid;
+
+	/** Unix group ID, set if @ref LHA_FILE_UNIX_UID_GID is set. */
 	unsigned int unix_gid;
-	char *unix_group;
+
+	/** Unix username. */
 	char *unix_username;
+
+	/** Unix group name. */
+	char *unix_group;
+
+	/** 16-bit CRC of header contents. */
 	uint16_t common_crc;
+
+	/**
+	 * Windows FILETIME file creation time, set if
+	 * @ref LHA_FILE_WINDOWS_TIMESTAMPS is set.
+	 */
 	uint64_t win_creation_time;
+
+	/**
+	 * Windows FILETIME file modification time, set if
+	 * @ref LHA_FILE_WINDOWS_TIMESTAMPS is set.
+	 */
 	uint64_t win_modification_time;
+
+	/**
+	 * Windows FILETIME file access time, set if
+	 * @ref LHA_FILE_WINDOWS_TIMESTAMPS is set.
+	 */
 	uint64_t win_access_time;
-};
-
-/**
- * Free a file header structure.
- *
- * @param header         The file header to free.
- */
-
-void lha_file_header_free(LHAFileHeader *header);
-
-/**
- * Add a reference to the specified file header, to stop it from being
- * freed.
- *
- * @param header         The file header to add a reference to.
- */
-
-void lha_file_header_add_ref(LHAFileHeader *header);
+} LHAFileHeader;
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_FILE_HEADER_H */
 
