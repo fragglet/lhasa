@@ -74,6 +74,7 @@ AC_SUBST(ac_aux_dir)
 AM_CONFIG_HEADER(config.h:config.hin)
 
 AC_OUTPUT([
+    liblhasa.pc
     rpm.spec
     Makefile
     doc/Makefile
