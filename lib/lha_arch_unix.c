@@ -22,11 +22,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // Architecture-specific files for compilation on Unix.
 //
 
+#define _GNU_SOURCE
 #include "lha_arch.h"
 
 #if LHA_ARCH == LHA_ARCH_UNIX
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
