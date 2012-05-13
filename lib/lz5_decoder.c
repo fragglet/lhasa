@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lz5_decoder.h"
+#include "lha_decoder.h"
 
 // Parameters for ring buffer, used for storing history.  This acts
 // as the dictionary for copy operations.

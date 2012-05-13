@@ -16,21 +16,21 @@ SRC =                                                   \
 	ext_header.c            ext_header.h            \
 	lha_arch_unix.c         lha_arch.h              \
 	lha_arch_win32.c                                \
-	lha_decoder.c           lha_decoder.h           \
+	lha_decoder.c                                   \
 	lha_endian.c            lha_endian.h            \
 	lha_file_header.c       lha_file_header.h       \
 	lha_input_stream.c      lha_input_stream.h      \
 	lha_basic_reader.c      lha_basic_reader.h      \
 	lha_reader.c                                    \
 	macbinary.c             macbinary.h             \
-	null_decoder.c          null_decoder.h          \
-	lh1_decoder.c           lh1_decoder.h           \
-	lh5_decoder.c           lh5_decoder.h           \
-	lh6_decoder.c           lh6_decoder.h           \
-	lh7_decoder.c           lh7_decoder.h           \
-	lz5_decoder.c           lz5_decoder.h           \
-	lzs_decoder.c           lzs_decoder.h           \
-	pm2_decoder.c           pm2_decoder.h
+	null_decoder.c                                  \
+	lh1_decoder.c                                   \
+	lh5_decoder.c                                   \
+	lh6_decoder.c                                   \
+	lh7_decoder.c                                   \
+	lz5_decoder.c                                   \
+	lzs_decoder.c                                   \
+	pm2_decoder.c
 
 liblhasatest_a_CFLAGS=$(TEST_CFLAGS) -DALLOC_TESTING -I../test -g
 liblhasatest_a_SOURCES=$(SRC) $(HEADER_FILES)

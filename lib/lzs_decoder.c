@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lzs_decoder.h"
+#include "lha_decoder.h"
 
 #include "bit_stream_reader.c"
 

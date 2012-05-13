@@ -25,14 +25,22 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "crc16.h"
 #include "lha_decoder.h"
 
-#include "null_decoder.h"
-#include "lz5_decoder.h"
-#include "lzs_decoder.h"
-#include "lh1_decoder.h"
-#include "lh5_decoder.h"
-#include "lh6_decoder.h"
-#include "lh7_decoder.h"
-#include "pm2_decoder.h"
+// Null decoder, used for -lz4-, -lh0-, -pm0-:
+extern LHADecoderType lha_null_decoder;
+
+// LArc compression algorithms:
+extern LHADecoderType lha_lz5_decoder;
+extern LHADecoderType lha_lzs_decoder;
+
+// LHarc compression algorithms:
+extern LHADecoderType lha_lh1_decoder;
+extern LHADecoderType lha_lh4_decoder;
+extern LHADecoderType lha_lh5_decoder;
+extern LHADecoderType lha_lh6_decoder;
+extern LHADecoderType lha_lh7_decoder;
+
+// PMarc compression algorithm:
+extern LHADecoderType lha_pm2_decoder;
 
 static struct {
 	char *name;
