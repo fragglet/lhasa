@@ -459,7 +459,12 @@ static int extract_directory(LHAReader *reader, char *path)
 	}
 
 	if (!lha_arch_mkdir(path, mode)) {
-		return 0;
+
+		// If the attempt to create the directory failed, it may
+		// be because the directory already exists. Return success
+		// if this is the case; it isn't really an error.
+
+		return lha_arch_exists(path) == LHA_FILE_DIRECTORY;
 	}
 
 	// The directory has been created, but the metadata has not yet

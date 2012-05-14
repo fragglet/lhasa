@@ -651,12 +651,12 @@ test_extract_truncated() {
 
 	make_sandboxes
 
-	lha_check_output output/regression/truncated.lzh-e.txt   \
-	    e $(test_arc_file "$archive_file")
+	SUCCESS_EXPECTED=false \
+	  lha_check_output output/regression/truncated.lzh-e.txt \
+	      e $(test_arc_file "$archive_file")
 
 	remove_sandboxes
 }
-
 
 test_overwrite_prompt
 test_overwrite_all a
