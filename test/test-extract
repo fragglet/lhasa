@@ -243,10 +243,14 @@ test_w_option() {
 	local archive_file=$1
 	local filename=$2
 	local expected_file="$test_base/output/$archive_file-e.txt"
-	local extract_dir="$w_sandbox"
+
+	# Extract into a subdirectory of the 'w' sandbox that does not
+	# exist: the path should be created as part of the extract.
+
+	local extract_dir="$w_sandbox/dir"
 
 	if $is_cygwin; then
-		extract_dir=$(cygpath -w "$w_sandbox")
+		extract_dir=$(cygpath -w "$w_sandbox/dir")
 	fi
 
 	make_sandboxes
@@ -255,7 +259,8 @@ test_w_option() {
 	                 "ew=$extract_dir" $(test_arc_file "$archive_file")
 
 	x_filename=$(simplify_filename "$filename")
-	if [ ! -e "$w_sandbox/$x_filename" ]; then
+
+	if [ ! -e "$w_sandbox/dir/$x_filename" ]; then
 		fail "Failed to extract $filename from $archive_file"
 	fi
 

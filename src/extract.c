@@ -253,26 +253,18 @@ static int check_parent_directory(char *path)
 }
 
 // Given a file header, create its parent directories as necessary.
+// If include_final is zero, the final directory in the path is not
+// created.
 
-static int make_parent_directories(LHAFileHeader *header)
+static int make_parent_directories(char *orig_path, int include_final)
 {
 	int result;
-	char *path;
 	char *p;
+	char *path;
 	char saved = 0;
 
-	path = header->path;
-
-	while (path[0] == '/') {
-		++path;
-	}
-
-	if (path[0] == '\0') {
-		return 1;
-	}
-
 	result = 1;
-	path = strdup(path);
+	path = strdup(orig_path);
 
 	// Iterate through the string, finding each path separator. At
 	// each place, temporarily chop off the end of the path to get
@@ -291,18 +283,18 @@ static int make_parent_directories(LHAFileHeader *header)
 		}
 
 		// Check if this parent directory exists and create it;
-		// however, if this file header is for a directory,
-		// only create its missing parent headers - not the
-		// directory itself. That is to say, for an entry:
+		// however, don't create the final directory in the path
+		// if include_final is false. This is used for handling
+		// directories, where we should only create missing
+		// parent directories - not the directory itself.
+		// eg. for:
 		//
 		//  -lhd-  subdir/subdir2/
 		//
 		// Only create subdir/ - subdir/subdir2/ is created
 		// by the call to lha_reader_extract.
 
-		if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0
-		 || strcmp(header->path, path) != 0) {
-
+		if (include_final || strcmp(orig_path, path) != 0) {
 			if (!check_parent_directory(path)) {
 				result = 0;
 				break;
@@ -419,6 +411,7 @@ static void extract_archived_file(LHAReader *reader,
                                   LHAOptions *options)
 {
 	ProgressCallbackData progress;
+	char *path;
 	char *filename;
 	int success;
 	int is_dir;
@@ -460,7 +453,13 @@ static void extract_archived_file(LHAReader *reader,
 	// Create parent directories for file:
 
 	if (options->use_path && header->path != NULL) {
-		if (!make_parent_directories(header)) {
+		path = header->path;
+
+		while (path[0] == '/') {
+			++path;
+		}
+
+		if (*path != '\0' && !make_parent_directories(path, !is_dir)) {
 			free(filename);
 			return;
 		}
@@ -518,6 +517,13 @@ void extract_archive(LHAFilter *filter, LHAOptions *options)
 	// Change directory before extract? (-w option).
 
 	if (options->extract_path != NULL) {
+		if (!make_parent_directories(options->extract_path, 1)) {
+			fprintf(stderr,
+			        "Failed to create extract directory: %s.\n",
+			        options->extract_path);
+			exit(-1);
+		}
+
 		if (!lha_arch_chdir(options->extract_path)) {
 			fprintf(stderr, "Failed to change directory to %s.\n",
 			        options->extract_path);
