@@ -1,5 +1,20 @@
 
+v0.0.6 (2012-05-17):
+
+     * When the -w option is used during extraction, the path specified
+       is now first created if it does not already exist.
+     * The command line tool now exits with a failure return code if an
+       error occurs during extraction.
+     * A "catch-all" header file (lhasa.h) has been added.
+     * The public header files installed with the library can now be
+       included and used externally.
+     * A pkgconfig file is now installed as part of the library
+       (thanks Jan Engelhardt).
+     * Make targets have been added for building Doxygen documentation
+       and including them as part of the distribution.
+
 v0.0.5 (2012-05-08):
+
      * Architecture-specific functions for running on Windows have now been
        fully implemented, and the command line tool passes all tests in the
        test suite on Windows (thanks roytam1 for bug reports).
