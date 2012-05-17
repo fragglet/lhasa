@@ -32,6 +32,10 @@ set -eu
 TZ=Europe/London
 export TZ
 
+# Expected result of invoking the lha command.
+
+SUCCESS_EXPECTED=true
+
 # Is this a Cygwin build?
 
 if uname -s | grep -qi cygwin; then
@@ -62,8 +66,14 @@ test_arc_file() {
 # if the command exits with a failure.
 
 test_lha() {
-	if ! "$test_base/../src/test-lha" "$@"; then
-		fail "Command failed: lha $*"
+	if $SUCCESS_EXPECTED; then
+		if ! "$test_base/../src/test-lha" "$@"; then
+			fail "Command failed: lha $*"
+		fi
+	else
+		if "$test_base/../src/test-lha" "$@"; then
+			fail "Command succeeded, should have failed: lha $*"
+		fi
 	fi
 }
 

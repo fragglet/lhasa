@@ -24,6 +24,20 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_input_stream.h"
 #include "lha_file_header.h"
 
+/**
+ * @file lha_reader.h
+ *
+ * @brief LHA file reader.
+ *
+ * This file contains the interface functions for the @ref LHAReader
+ * structure, used to decode data from a compressed LZH file and
+ * extract compressed files.
+ */
+
+/**
+ * Opaque structure used to decode the contents of an LZH file.
+ */
+
 typedef struct _LHAReader LHAReader;
 
 /**
@@ -33,7 +47,7 @@ typedef struct _LHAReader LHAReader;
  *
  * @param num_blocks      Number of blocks processed so far.
  * @param total_blocks    Total number of blocks to process.
- * @paaram callback_data  Extra user-specified data passed to the callback.
+ * @param callback_data   Extra user-specified data passed to the callback.
  */
 
 typedef void (*LHAReaderProgressCallback)(unsigned int num_blocks,
@@ -104,26 +118,27 @@ typedef enum {
 } LHAReaderDirPolicy;
 
 /**
- * Create a new LHA reader to read data from an input stream.
+ * Create a new @ref LHAReader to read data from an @ref LHAInputStream.
  *
- * @param stream     The input stream to read from.
- * @return           Pointer to an LHAReader structure, or NULL for error.
+ * @param stream     The input stream to read data from.
+ * @return           Pointer to a new @ref LHAReader structure,
+ *                   or NULL for error.
  */
 
 LHAReader *lha_reader_new(LHAInputStream *stream);
 
 /**
- * Free an LHA reader.
+ * Free a @ref LHAReader structure.
  *
- * @param reader     The LHAReader structure.
+ * @param reader     The @ref LHAReader structure.
  */
 
 void lha_reader_free(LHAReader *reader);
 
 /**
- * Set the policy used to extract directories.
+ * Set the @ref LHAReaderDirPolicy used to extract directories.
  *
- * @param reader     The LHAReader structure.
+ * @param reader     The @ref LHAReader structure.
  * @param policy     The policy to use for directories.
  */
 
@@ -133,8 +148,8 @@ void lha_reader_set_dir_policy(LHAReader *reader,
 /**
  * Read the header of the next archived file from the input stream.
  *
- * @param reader     The LHAReader structure.
- * @return           Pointer to an LHAFileHeader structure, or NULL if
+ * @param reader     The @ref LHAReader structure.
+ * @return           Pointer to an @ref LHAFileHeader structure, or NULL if
  *                   an error occurred.  This pointer is only valid until
  *                   the next time that lha_reader_next_file is called.
  */
@@ -142,12 +157,14 @@ void lha_reader_set_dir_policy(LHAReader *reader,
 LHAFileHeader *lha_reader_next_file(LHAReader *reader);
 
 /**
- * Read some of the data for the current archived file, decompressing
- * as appropriate.
+ * Read some of the (decompresed) data for the current archived file,
+ * decompressing as appropriate.
  *
- * @param reader     The LHAReader structure.
- * @param buf        Pointer to the buffer in which to store the data.
+ * @param reader     The @ref LHAReader structure.
+ * @param buf        Pointer to a buffer in which to store the data.
  * @param buf_len    Size of the buffer, in bytes.
+ * @return           Number of bytes stored in the buffer, or zero if
+ *                   there is no more data to decompress.
  */
 
 size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len);
@@ -156,7 +173,7 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len);
  * Decompress the contents of the current archived file, and check
  * that the checksum matches correctly.
  *
- * @param reader         The LHAReader structure.
+ * @param reader         The @ref LHAReader structure.
  * @param callback       Callback function to invoke to monitor progress (or
  *                       NULL if progress does not need to be monitored).
  * @param callback_data  Extra data to pass to the callback function.
@@ -170,7 +187,7 @@ int lha_reader_check(LHAReader *reader,
 /**
  * Extract the contents of the current archived file.
  *
- * @param reader         The LHAReader structure.
+ * @param reader         The @ref LHAReader structure.
  * @param filename       Filename to extract the archived file to, or NULL
  *                       to use the path and filename from the header.
  * @param callback       Callback function to invoke to monitor progress (or

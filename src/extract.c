@@ -165,9 +165,9 @@ static void progress_callback(unsigned int block,
 
 // Perform CRC check of an archived file.
 
-static void test_archived_file_crc(LHAReader *reader,
-                                   LHAFileHeader *header,
-                                   LHAOptions *options)
+static int test_archived_file_crc(LHAReader *reader,
+                                  LHAFileHeader *header,
+                                  LHAOptions *options)
 {
 	ProgressCallbackData progress;
 	char *filename;
@@ -183,7 +183,7 @@ static void test_archived_file_crc(LHAReader *reader,
 		}
 
 		free(filename);
-		return;
+		return 1;
 	}
 
 	progress.invoked = 0;
@@ -211,6 +211,8 @@ static void test_archived_file_crc(LHAReader *reader,
 	}
 
 	free(filename);
+
+	return success;
 }
 
 // Check that the specified directory exists, and create it if it
@@ -406,9 +408,9 @@ static int file_exists(char *filename)
 
 // Extract an archived file.
 
-static void extract_archived_file(LHAReader *reader,
-                                  LHAFileHeader *header,
-                                  LHAOptions *options)
+static int extract_archived_file(LHAReader *reader,
+                                 LHAFileHeader *header,
+                                 LHAOptions *options)
 {
 	ProgressCallbackData progress;
 	char *path;
@@ -435,7 +437,7 @@ static void extract_archived_file(LHAReader *reader,
 		printf("\n");
 
 		free(filename);
-		return;
+		return 1;
 	}
 
 	// If a file already exists with this name, confirm overwrite.
@@ -447,7 +449,13 @@ static void extract_archived_file(LHAReader *reader,
 			printf("\n");
 		}
 		free(filename);
-		return;
+		return 1;
+	}
+
+	// No need to extract directories if use_path is disabled.
+
+	if (!options->use_path && is_dir) {
+		return 1;
 	}
 
 	// Create parent directories for file:
@@ -461,7 +469,7 @@ static void extract_archived_file(LHAReader *reader,
 
 		if (*path != '\0' && !make_parent_directories(path, !is_dir)) {
 			free(filename);
-			return;
+			return 0;
 		}
 	}
 
@@ -491,12 +499,18 @@ static void extract_archived_file(LHAReader *reader,
 	}
 
 	free(filename);
+
+	return success;
 }
 
 // lha -t command.
 
-void test_file_crc(LHAFilter *filter, LHAOptions *options)
+int test_file_crc(LHAFilter *filter, LHAOptions *options)
 {
+	int result;
+
+	result = 1;
+
 	for (;;) {
 		LHAFileHeader *header;
 
@@ -506,14 +520,20 @@ void test_file_crc(LHAFilter *filter, LHAOptions *options)
 			break;
 		}
 
-		test_archived_file_crc(filter->reader, header, options);
+		if (!test_archived_file_crc(filter->reader, header, options)) {
+			result = 0;
+		}
 	}
+
+	return result;
 }
 
 // lha -e / -x
 
-void extract_archive(LHAFilter *filter, LHAOptions *options)
+int extract_archive(LHAFilter *filter, LHAOptions *options)
 {
+	int result;
+
 	// Change directory before extract? (-w option).
 
 	if (options->extract_path != NULL) {
@@ -531,6 +551,8 @@ void extract_archive(LHAFilter *filter, LHAOptions *options)
 		}
 	}
 
+	result = 1;
+
 	for (;;) {
 		LHAFileHeader *header;
 
@@ -540,7 +562,11 @@ void extract_archive(LHAFilter *filter, LHAOptions *options)
 			break;
 		}
 
-		extract_archived_file(filter->reader, header, options);
+		if (!extract_archived_file(filter->reader, header, options)) {
+			result = 0;
+		}
 	}
+
+	return result;
 }
 

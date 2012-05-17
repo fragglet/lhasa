@@ -24,8 +24,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "filter.h"
 #include "options.h"
 
-void test_file_crc(LHAFilter *filter, LHAOptions *options);
-void extract_archive(LHAFilter *filter, LHAOptions *options);
+int test_file_crc(LHAFilter *filter, LHAOptions *options);
+int extract_archive(LHAFilter *filter, LHAOptions *options);
 
 #endif /* #ifndef LHASA_EXTRACT_H */
 

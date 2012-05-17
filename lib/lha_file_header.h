@@ -36,5 +36,22 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 LHAFileHeader *lha_file_header_read(LHAInputStream *stream);
 
+/**
+ * Free a file header structure.
+ *
+ * @param header         The file header to free.
+ */
+
+void lha_file_header_free(LHAFileHeader *header);
+
+/**
+ * Add a reference to the specified file header, to stop it from being
+ * freed.
+ *
+ * @param header         The file header to add a reference to.
+ */
+
+void lha_file_header_add_ref(LHAFileHeader *header);
+
 #endif /* #ifndef LHASA_LHA_FILE_HEADER_H */
 

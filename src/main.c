@@ -57,14 +57,15 @@ static void help_page(char *progname)
 	exit(-1);
 }
 
-static void do_command(ProgramMode mode, char *filename,
-                       LHAOptions *options,
-                       char **filters, unsigned int num_filters)
+static int do_command(ProgramMode mode, char *filename,
+                      LHAOptions *options,
+                      char **filters, unsigned int num_filters)
 {
 	FILE *fstream;
 	LHAInputStream *stream;
 	LHAReader *reader;
 	LHAFilter filter;
+	int result;
 
 	if (!strcmp(filename, "-")) {
 		fstream = stdin;
@@ -82,6 +83,8 @@ static void do_command(ProgramMode mode, char *filename,
 	reader = lha_reader_new(stream);
 	lha_filter_init(&filter, reader, filters, num_filters);
 
+	result = 1;
+
 	switch (mode) {
 		case MODE_LIST:
 			list_file_basic(&filter, options, fstream);
@@ -92,11 +95,11 @@ static void do_command(ProgramMode mode, char *filename,
 			break;
 
 		case MODE_CRC_CHECK:
-			test_file_crc(&filter, options);
+			result = test_file_crc(&filter, options);
 			break;
 
 		case MODE_EXTRACT:
-			extract_archive(&filter, options);
+			result = extract_archive(&filter, options);
 			break;
 
 		case MODE_UNKNOWN:
@@ -107,6 +110,8 @@ static void do_command(ProgramMode mode, char *filename,
 	lha_input_stream_free(stream);
 
 	fclose(fstream);
+
+	return result;
 }
 
 static void init_options(LHAOptions *options)
@@ -252,13 +257,13 @@ int main(int argc, char *argv[])
 	init_options(&options);
 
 	if (argc >= 3 && parse_command_line(argv[1], &mode, &options)) {
-		do_command(mode, argv[2], &options, argv + 3, argc - 3);
+		return !do_command(mode, argv[2], &options,
+		                   argv + 3, argc - 3);
 	} else if (argc == 2) {
-		do_command(MODE_LIST, argv[1], &options, NULL, 0);
+		return !do_command(MODE_LIST, argv[1], &options, NULL, 0);
 	} else {
 		help_page(argv[0]);
+		return 0;
 	}
-
-	return 0;
 }
 

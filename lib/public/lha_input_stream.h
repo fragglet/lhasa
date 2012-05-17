@@ -24,10 +24,26 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 
+/**
+ * @file lha_input_stream.h
+ *
+ * @brief LHA input stream structure.
+ *
+ * This file defines the functions relating to the @ref LHAInputStream
+ * structure, used to read data from an LZH file.
+ */
+
+/**
+ * Opaque structure, representing an input stream used to read data from
+ * an LZH file.
+ */
+
 typedef struct _LHAInputStream LHAInputStream;
 
-/** Structure containing pointers to callback functions to read data from
-    the input stream. */
+/**
+ * Structure containing pointers to callback functions to read data from
+ * the input stream.
+ */
 
 typedef struct {
 
@@ -65,41 +81,41 @@ typedef struct {
 } LHAInputStreamType;
 
 /**
- * Create new LHA input stream structure, using a set of generic functions
+ * Create new @ref LHAInputStream structure, using a set of generic functions
  * to provide LHA data.
  *
- * @param type         Pointer to @param LHAInputStreamType structure
+ * @param type         Pointer to a @ref LHAInputStreamType structure
  *                     containing callback functions to read data.
- * @param handle       Handle pointer to pass to callback functions.
- * @return             Pointer to LHAInputStream or NULL for error.
+ * @param handle       Handle pointer to be passed to callback functions.
+ * @return             Pointer to a new @ref LHAInputStream or NULL for error.
  */
 
 LHAInputStream *lha_input_stream_new(const LHAInputStreamType *type,
                                      void *handle);
 
 /**
- * Create new LHA input stream reading from the specified filenamme.
+ * Create new @ref LHAInputStream, reading from the specified filename.
  * The file is automatically closed when the input stream is freed.
  *
  * @param filename     Name of the file to read from.
- * @return             Pointer to LHAInputStream or NULL for error.
+ * @return             Pointer to a new @ref LHAInputStream or NULL for error.
  */
 
 LHAInputStream *lha_input_stream_from(char *filename);
 
 /**
- * Create new LHA input stream to read from the specified open FILE pointer.
- * The file is not closed when the input stream structure is freed; the
- * calling code must close the file.
+ * Create new @ref LHAInputStream, to read from an already-open FILE pointer.
+ * The FILE is not closed when the input stream is freed; the calling code
+ * must close it.
  *
- * @param stream       The open file from which to read data.
- * @return             Pointer to LHAInputStream or NULL for error.
+ * @param stream       The open FILE structure from which to read data.
+ * @return             Pointer to a new @ref LHAInputStream or NULL for error.
  */
 
 LHAInputStream *lha_input_stream_from_FILE(FILE *stream);
 
 /**
- * Free an LHA input stream object.
+ * Free an @ref LHAInputStream structure.
  *
  * @param stream       The input stream.
  */

@@ -198,7 +198,7 @@ test_archive lhmelt_16536/sfx_winsfxm_250.exe
 
 test_archive regression/abspath.lzh
 test_archive regression/badterm.lzh
-test_archive regression/truncated.lzh
+SUCCESS_EXPECTED=false test_archive regression/truncated.lzh
 
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs
