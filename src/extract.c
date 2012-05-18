@@ -416,11 +416,12 @@ static int extract_archived_file(LHAReader *reader,
 	char *path;
 	char *filename;
 	int success;
-	int is_dir;
+	int is_dir, is_symlink;
 
 	filename = file_full_path(header, options);
+	is_symlink = header->symlink_target != NULL;
 	is_dir = !strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)
-	      && header->symlink_target == NULL;
+	      && !is_symlink;
 
 	// Print appropriate message and stop if we are performing a dry run.
 	// The message if we have an existing file is weird, but this is just
@@ -448,7 +449,7 @@ static int extract_archived_file(LHAReader *reader,
 
 	// If a file already exists with this name, confirm overwrite.
 
-	if (!is_dir && file_exists(filename)
+	if (!is_dir && !is_symlink && file_exists(filename)
 	 && !confirm_file_overwrite(filename, options)) {
 		if (options->overwrite_policy == LHA_OVERWRITE_SKIP) {
 			safe_printf("%s : Skipped...", filename);
@@ -488,12 +489,18 @@ static int extract_archived_file(LHAReader *reader,
 	success = lha_reader_extract(reader, filename,
 	                             progress_callback, &progress);
 
-	if (progress.invoked && options->quiet < 2) {
-		if (success) {
-			print_filename(filename, "Melted");
-			printf("\n");
-		} else {
-			print_filename(filename, "Failure");
+	if (options->quiet < 2) {
+		if (progress.invoked) {
+			if (success) {
+				print_filename(filename, "Melted");
+				printf("\n");
+			} else {
+				print_filename(filename, "Failure");
+				printf("\n");
+			}
+		} else if (is_symlink) {
+			safe_printf("Symbolic Link %s -> %s", filename,
+			            header->symlink_target);
 			printf("\n");
 		}
 

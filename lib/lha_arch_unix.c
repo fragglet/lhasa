@@ -162,6 +162,7 @@ int lha_arch_chdir(char *path)
 
 int lha_arch_symlink(char *path, char *target)
 {
+	unlink(path);
 	return symlink(target, path) == 0;
 }
 

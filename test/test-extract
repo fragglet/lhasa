@@ -66,14 +66,15 @@ file_to_overwrite() {
 	filename=$(simplify_filename "$filename")
 	local tmpfile="$run_sandbox/$filename"
 	mkdir -p $(dirname "$tmpfile")
-	echo "__OVERWRITE_FILE__" > "$tmpfile"
+	echo "__OW_FILE__" > "$tmpfile"
 }
 
 check_exists() {
 	local archive_file=$1
 	local filename=$2
 	x_filename=$(simplify_filename "$filename")
-	if [ ! -e "$run_sandbox/$x_filename" ]; then
+	if [ ! -e "$run_sandbox/$x_filename" ] && \
+	   [ ! -L "$run_sandbox/$x_filename" ]; then
 		fail "File was not extracted as expected:"  \
 		     "  archive: $archive_file"             \
 		     "  filename: $filename"
@@ -84,7 +85,8 @@ check_not_exists() {
 	local archive_file=$1
 	local filename=$2
 	x_filename=$(simplify_filename "$filename")
-	if [ -e "$run_sandbox/$x_filename" ]; then
+	if [ -e "$run_sandbox/$x_filename" ] || \
+	   [ -L "$run_sandbox/$x_filename" ]; then
 		fail "File was extracted, not as expected:"  \
 		     "  archive: $archive_file"              \
 		     "  filename: $filename"
@@ -95,7 +97,7 @@ check_overwritten() {
 	local archive_file=$1
 	local filename=$2
 	x_filename=$(simplify_filename "$filename")
-	if grep -q __OVERWRITE_FILE__ "$run_sandbox/$x_filename"; then
+	if grep -q __OW_FILE__ "$run_sandbox/$x_filename" 2>/dev/null; then
 		fail "File was not overwritten as expected:" \
 		     "  archive: $archive_file"              \
 		     "  filename: $filename"
@@ -106,7 +108,7 @@ check_not_overwritten() {
 	local archive_file=$1
 	local filename=$2
 	x_filename=$(simplify_filename "$filename")
-	if ! grep -q __OVERWRITE_FILE__ "$run_sandbox/$x_filename"; then
+	if ! grep -q __OW_FILE__ "$run_sandbox/$x_filename" 2>/dev/null; then
 		fail "File was overwritten, not as expected:"   \
 		     "  archive: $archive_file"                 \
 		     "  filename: $filename"
@@ -118,10 +120,29 @@ check_extracted_file() {
 	local filename=$2
 	local timestamp=$3
 	local unix_perms=$4
+	local symlink_target=$5
 
 	#echo "check_extracted_file: $@"
 
 	check_exists "$archive_file" "$filename"
+
+	# Symbolic links are treated specially. Just check where the
+	# link points to. If this isn't Unix, don't expect anything.
+
+	if [ "$symlink_target" != "" ]; then
+		if [ "$build_arch" != "unix" ]; then
+			return
+		fi
+
+		local link_value=$(readlink "$run_sandbox/$filename")
+
+		if [ "$link_value" != "$symlink_target" ]; then
+			fail "Symlink mismatch for $archive_file" \
+			     "'$link_value' != '$symlink_target'"
+		fi
+
+		return
+	fi
 
 	if [ "$timestamp" != "" ]; then
 		local file_ts=$(file_mod_time "$run_sandbox/$filename")
@@ -154,23 +175,27 @@ check_extracted_files() {
 	local filename=""
 	local timestamp=""
 	local unix_perms=""
+	local symlink_target=""
 
 	while read; do
 		if [ "$REPLY" = "--" ]; then
-			check_extracted_file "$archive_file" \
-			    "$path$filename" "$timestamp" "$unix_perms"
+			check_extracted_file "$archive_file"            \
+			    "$path$filename" "$timestamp" "$unix_perms" \
+			    "$symlink_target"
 			path=""
 			filename=""
 			timestamp=""
 			unix_perms=""
+			symlink_target=""
 			continue
 		fi
 
 		case "$REPLY" in
-		path:*)       path=${REPLY/path: /} ;;
-		filename:*)   filename=${REPLY/filename: /} ;;
-		timestamp:*)  timestamp=${REPLY/timestamp: /} ;;
+		path:*) path=${REPLY/path: /} ;;
+		filename:*) filename=${REPLY/filename: /} ;;
+		timestamp:*) timestamp=${REPLY/timestamp: /} ;;
 		unix_perms:*) unix_perms=${REPLY/unix_perms: /} ;;
+		symlink_target:*) symlink_target=${REPLY/symlink_target: /} ;;
 		*) ;;
 		esac
 	done < "output/$archive_file-hdr.txt"
@@ -183,8 +208,6 @@ lha_check_output() {
 	#echo "lha_check_output: $@"
 	local expected_output="$1"
 	shift
-
-	#echo "lha $@"
 
 	cd "$run_sandbox"
 	test_lha "$@" >/tmp/output.txt 2>&1
@@ -260,7 +283,8 @@ test_w_option() {
 
 	x_filename=$(simplify_filename "$filename")
 
-	if [ ! -e "$w_sandbox/dir/$x_filename" ]; then
+	if [ ! -e "$w_sandbox/dir/$x_filename" ] && \
+	   [ ! -L "$w_sandbox/dir/$x_filename" ]; then
 		fail "Failed to extract $filename from $archive_file"
 	fi
 
@@ -275,7 +299,11 @@ test_q1_option() {
 
 	make_sandboxes
 
-	printf "\r$filename :\r$filename\t- Melted  \n" >/tmp/expected.txt
+	if [ "$filename" = "symlink" ]; then
+		printf "Symbolic Link symlink -> target\n"
+	else
+		printf "\r$filename :\r$filename\t- Melted  \n"
+	fi >/tmp/expected.txt
 
 	lha_check_output /tmp/expected.txt \
 	                 eq1 $(test_arc_file "$archive_file")
@@ -399,19 +427,19 @@ test_archive lha_unix114i/h0_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h0_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h0_lh7.lzh        "gpl-2"
 #test_archive lha_unix114i/h0_subdir.lzh     "subdir/subdir2/hello.txt"
-#test_archive lha_unix114i/h0_symlink.lzh    "symlink"
+test_archive lha_unix114i/h0_symlink.lzh    "symlink"
 test_archive lha_unix114i/h1_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h1_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h1_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h1_lh7.lzh        "gpl-2"
 test_archive lha_unix114i/h1_subdir.lzh     "subdir/subdir2/hello.txt"
-#test_archive lha_unix114i/h1_symlink.lzh    "symlink"
+test_archive lha_unix114i/h1_symlink.lzh    "symlink"
 test_archive lha_unix114i/h2_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h2_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h2_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h2_lh7.lzh        "gpl-2"
 test_archive lha_unix114i/h2_subdir.lzh     "subdir/subdir2/hello.txt"
-#test_archive lha_unix114i/h2_symlink.lzh    "symlink"
+test_archive lha_unix114i/h2_symlink.lzh    "symlink"
 test_archive lha_unix114i/lh6_long.lzh      "long.txt"
 test_archive lha_unix114i/lh7_long.lzh      "long.txt"
 
