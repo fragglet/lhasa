@@ -199,5 +199,11 @@ int lha_arch_chdir(char *path)
 	return SetCurrentDirectoryA(path) != 0;
 }
 
+int lha_arch_symlink(char *path, char *target)
+{
+	// No-op.
+	return 1;
+}
+
 #endif /* LHA_ARCH_WINDOWS */
 

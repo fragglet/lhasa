@@ -483,6 +483,30 @@ static int extract_directory(LHAReader *reader, char *path)
 	return 1;
 }
 
+static char *full_path_for_header(LHAFileHeader *header)
+{
+	char *result;
+	size_t filename_len;
+
+	if (header->path != NULL) {
+		filename_len = strlen(header->filename)
+		             + strlen(header->path)
+		             + 1;
+
+		result = malloc(filename_len);
+
+		if (result == NULL) {
+			return NULL;
+		}
+
+		sprintf(result, "%s%s", header->path, header->filename);
+
+		return result;
+	} else {
+		return strdup(header->filename);
+	}
+}
+
 static int extract_file(LHAReader *reader, char *filename,
                         LHADecoderProgressCallback callback,
                         void *callback_data)
@@ -491,47 +515,32 @@ static int extract_file(LHAReader *reader, char *filename,
 	char *tmp_filename = NULL;
 	int result;
 
-	// Create decoder. If the file cannot be created, there is no
-	// need to even create an output file.
-
-	if (!open_decoder(reader, callback, callback_data)) {
-		return 0;
-	}
-
 	// Construct filename?
 
 	if (filename == NULL) {
-		size_t filename_len;
+		tmp_filename = full_path_for_header(reader->curr_file);
 
-		if (reader->curr_file->path != NULL) {
-			filename_len = strlen(reader->curr_file->filename)
-			             + strlen(reader->curr_file->path)
-			             + 1;
-
-			tmp_filename = malloc(filename_len);
-
-			if (tmp_filename == NULL) {
-				return 0;
-			}
-
-			sprintf(tmp_filename, "%s%s", reader->curr_file->path,
-			                      reader->curr_file->filename);
-
-			filename = tmp_filename;
-		} else {
-			filename = reader->curr_file->filename;
+		if (tmp_filename == NULL) {
+			return 0;
 		}
+
+		filename = tmp_filename;
 	}
 
-	// Open output file and perform decode:
+	// Create decoder. If the file cannot be created, there is no
+	// need to even create an output file. If successful, open the
+	// output file and decode.
 
-	fstream = open_output_file(reader, filename);
+	result = 0;
 
-	if (fstream == NULL) {
-		result = 0;
-	} else {
-		result = do_decode(reader, fstream);
-		fclose(fstream);
+	if (open_decoder(reader, callback, callback_data)) {
+
+		fstream = open_output_file(reader, filename);
+
+		if (fstream != NULL) {
+			result = do_decode(reader, fstream);
+			fclose(fstream);
+		}
 	}
 
 	// Set timestamp on file:
@@ -545,17 +554,44 @@ static int extract_file(LHAReader *reader, char *filename,
 	return result;
 }
 
+static int extract_symlink(LHAReader *reader, char *filename)
+{
+	char *tmp_filename = NULL;
+	int result;
+
+	// Construct filename?
+
+	if (filename == NULL) {
+		tmp_filename = full_path_for_header(reader->curr_file);
+
+		if (tmp_filename == NULL) {
+			return 0;
+		}
+
+		filename = tmp_filename;
+	}
+
+	result = lha_arch_symlink(filename, reader->curr_file->symlink_target);
+
+	// TODO: Set symlink timestamp.
+
+	free(tmp_filename);
+
+	return result;
+}
+
 static int extract_normal(LHAReader *reader,
                           char *filename,
                           LHADecoderProgressCallback callback,
                           void *callback_data)
 {
-	// Directories are a special case:
-
-	if (!strcmp(reader->curr_file->compress_method, LHA_COMPRESS_TYPE_DIR)) {
-		return extract_directory(reader, filename);
-	} else {
+	if (strcmp(reader->curr_file->compress_method,
+	           LHA_COMPRESS_TYPE_DIR) != 0) {
 		return extract_file(reader, filename, callback, callback_data);
+	} else if (reader->curr_file->symlink_target != NULL) {
+		return extract_symlink(reader, filename);
+	} else {
+		return extract_directory(reader, filename);
 	}
 }
 

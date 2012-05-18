@@ -160,5 +160,10 @@ int lha_arch_chdir(char *path)
 	return chdir(path) == 0;
 }
 
+int lha_arch_symlink(char *path, char *target)
+{
+	return symlink(target, path) == 0;
+}
+
 #endif /* LHA_ARCH_UNIX */
 
