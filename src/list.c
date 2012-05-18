@@ -30,19 +30,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "list.h"
 #include "safe.h"
 
-static float compression_percent(size_t compressed, size_t uncompressed)
-{
-	float factor;
-
-	if (uncompressed > 0) {
-		factor = (float) compressed / (float) uncompressed;
-	} else {
-		factor = 1.0f;
-	}
-
-	return factor * 100.0f;
-}
-
 typedef struct {
 	unsigned int num_files;
 	unsigned int compressed_length;
@@ -115,10 +102,12 @@ static void permission_column_print(LHAFileHeader *header)
 		return;
 	}
 
-	if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)) {
-		printf("d");
-	} else {
+	if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0) {
 		printf("-");
+	} else if (header->symlink_target != NULL) {
+		printf("l");
+	} else {
+		printf("d");
 	}
 
 	for (i = 0; i < 9; ++i) {
@@ -208,6 +197,15 @@ static ListColumn size_column = {
 
 // Compression ratio
 
+static float compression_percent(size_t compressed, size_t uncompressed)
+{
+	if (uncompressed > 0) {
+		return ((float) compressed * 100.0f) / (float) uncompressed;
+	} else {
+		return 100.0f;
+	}
+}
+
 static void ratio_column_print(LHAFileHeader *header)
 {
 	if (!strcmp(header->compress_method, "-lhd-")) {
@@ -220,8 +218,12 @@ static void ratio_column_print(LHAFileHeader *header)
 
 static void ratio_column_footer(FileStatistics *stats)
 {
-	printf("%5.1f%%", compression_percent(stats->compressed_length,
-	                                      stats->length));
+	if (stats->length == 0) {
+		printf("******");
+	} else {
+		printf("%5.1f%%", compression_percent(stats->compressed_length,
+		                                      stats->length));
+	}
 }
 
 static ListColumn ratio_column = {
@@ -303,6 +305,9 @@ static void name_column_print(LHAFileHeader *header)
 	if (header->filename != NULL) {
 		safe_printf("%s", header->filename);
 	}
+	if (header->symlink_target != NULL) {
+		safe_printf(" -> %s", header->symlink_target);
+	}
 }
 
 static ListColumn name_column = {
@@ -326,6 +331,16 @@ static void whole_line_name_column_print(LHAFileHeader *header)
 	if (header->filename != NULL) {
 		safe_printf("%s", header->filename);
 	}
+
+	// For wide filename mode (-v), | is used as the symlink separator,
+	// instead of ->. The reason is that this is how symlinks are
+	// represented within the file headers - the Unix LHA tool only
+	// does the parsing in normal list mode.
+
+	if (header->symlink_target != NULL) {
+		safe_printf("|%s", header->symlink_target);
+	}
+
 	printf("\n");
 }
 
