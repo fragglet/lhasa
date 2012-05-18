@@ -88,21 +88,19 @@ test_archive lha_unix114i/h0_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h0_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h0_lh7.lzh        "gpl-2"
 #test_archive lha_unix114i/h0_subdir.lzh     "subdir/subdir2/hello.txt"
-#test_archive lha_unix114i/h0_symlink.lzh    "symlink"
 test_archive lha_unix114i/h1_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h1_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h1_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h1_lh7.lzh        "gpl-2"
 test_archive lha_unix114i/h1_subdir.lzh     "subdir/subdir2/hello.txt"
-#test_archive lha_unix114i/h1_symlink.lzh    "symlink"
 test_archive lha_unix114i/h2_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h2_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h2_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h2_lh7.lzh        "gpl-2"
 test_archive lha_unix114i/h2_subdir.lzh     "subdir/subdir2/hello.txt"
-#test_archive lha_unix114i/h2_symlink.lzh    "symlink"
 test_archive lha_unix114i/lh6_long.lzh      "long.txt"
 test_archive lha_unix114i/lh7_long.lzh      "long.txt"
+# ... tests for symlink archives are below.
 
 test_archive lha_os2_208/lh0.lzh            "GPL-2.gz"
 test_archive lha_os2_208/lh5.lzh            "gpl-2"
@@ -223,4 +221,13 @@ test_dry_run en regression/dir.lzh "EXTRACT dir/ (directory)"
 touch gpl-2
 test_dry_run en lharc113/lh1.lzh "EXTRACT gpl-2 but file is exist."
 rm -f gpl-2
+
+# Output for Unix LHA symlink archives:
+
+test_dry_run en lha_unix114i/h0_symlink.lzh \
+    "EXTRACT symlink|target (directory)"
+test_dry_run en lha_unix114i/h1_symlink.lzh \
+    "EXTRACT symlink|target (directory)"
+test_dry_run en lha_unix114i/h2_symlink.lzh \
+    "EXTRACT symlink|target (directory)"
 

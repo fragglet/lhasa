@@ -419,16 +419,22 @@ static int extract_archived_file(LHAReader *reader,
 	int is_dir;
 
 	filename = file_full_path(header, options);
-	is_dir = !strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR);
+	is_dir = !strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)
+	      && header->symlink_target == NULL;
 
-	// Print appropriate message and stop if we are performing
-	// a dry run. The message if we have an existing file is
-	// weird, but this is just accurately duplicating what the
-	// Unix lha tool says.
+	// Print appropriate message and stop if we are performing a dry run.
+	// The message if we have an existing file is weird, but this is just
+	// accurately duplicating what the Unix LHA tool says.
+	// The symlink handling is particularly odd - they are treated as
+	// directories (a bleed-through of the way in which symlinks are
+	// stored).
 
 	if (options->dry_run) {
 		if (is_dir) {
 			safe_printf("EXTRACT %s (directory)", filename);
+		} else if (header->symlink_target != NULL) {
+			safe_printf("EXTRACT %s|%s (directory)",
+			            filename, header->symlink_target);
 		} else if (file_exists(filename)) {
 			safe_printf("EXTRACT %s but file is exist.", filename);
 		} else {
