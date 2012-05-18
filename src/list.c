@@ -107,7 +107,7 @@ static char *os_type_to_string(uint8_t os_type)
 
 static void permission_column_print(LHAFileHeader *header)
 {
-	const char *perms = "drwxrwxrwx";
+	const char *perms = "rwxrwxrwx";
 	unsigned int i;
 
 	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) == 0) {
@@ -115,8 +115,14 @@ static void permission_column_print(LHAFileHeader *header)
 		return;
 	}
 
-	for (i = 0; i < 10; ++i) {
-		if (header->unix_perms & (1U << (9 - i))) {
+	if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)) {
+		printf("d");
+	} else {
+		printf("-");
+	}
+
+	for (i = 0; i < 9; ++i) {
+		if (header->unix_perms & (1U << (8 - i))) {
 			printf("%c", perms[i]);
 		} else {
 			printf("-");
