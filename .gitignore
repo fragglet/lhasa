@@ -17,6 +17,7 @@ autotools
 config.log
 config.status
 configure
+liblhasa.pc
 libtool
 config.h
 config.hin
