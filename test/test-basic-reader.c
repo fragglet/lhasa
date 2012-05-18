@@ -109,10 +109,10 @@ static void test_read_directory(void)
 	check_directory_for("archives/lha_amiga_212/lh1.lzh", "gpl-2");
 	check_directory_for("archives/lha_amiga_212/lh6.lzh", "gpl-2");
 
-	check_directory_for("archives/lha_unix114i/lh0.lzh",  "gpl-2.gz");
-	check_directory_for("archives/lha_unix114i/lh5.lzh",  "gpl-2");
-	check_directory_for("archives/lha_unix114i/lh6.lzh",  "gpl-2");
-	check_directory_for("archives/lha_unix114i/lh7.lzh",  "gpl-2");
+	check_directory_for("archives/lha_unix114i/h1_lh0.lzh", "gpl-2.gz");
+	check_directory_for("archives/lha_unix114i/h1_lh5.lzh", "gpl-2");
+	check_directory_for("archives/lha_unix114i/h1_lh6.lzh", "gpl-2");
+	check_directory_for("archives/lha_unix114i/h1_lh7.lzh", "gpl-2");
 
 	check_directory_for("archives/lharc113/lh0.lzh",      "gpl-2.gz");
 	check_directory_for("archives/lharc113/lh1.lzh",      "gpl-2");
@@ -229,10 +229,10 @@ static void test_decode(void)
 	check_decode_for("archives/lha_amiga_212/lh1.lzh");
 	check_decode_for("archives/lha_amiga_212/lh6.lzh");
 
-	check_decode_for("archives/lha_unix114i/lh0.lzh");
-	check_decode_for("archives/lha_unix114i/lh5.lzh");
-	check_decode_for("archives/lha_unix114i/lh6.lzh");
-	check_decode_for("archives/lha_unix114i/lh7.lzh");
+	check_decode_for("archives/lha_unix114i/h1_lh0.lzh");
+	check_decode_for("archives/lha_unix114i/h1_lh5.lzh");
+	check_decode_for("archives/lha_unix114i/h1_lh6.lzh");
+	check_decode_for("archives/lha_unix114i/h1_lh7.lzh");
 
 	check_decode_for("archives/lharc113/lh0.lzh");
 	check_decode_for("archives/lharc113/lh1.lzh");

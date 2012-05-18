@@ -80,13 +80,24 @@ test_archive lha255e/lh5.lzh                    $gpl2
 test_archive lha255e/sfx.exe                    $gpl2
 test_archive lha255e/subdir.lzh                 $hello_world1
 
-test_archive lha_unix114i/lh0.lzh               $gpl2_gz
-test_archive lha_unix114i/lh5.lzh               $gpl2
-test_archive lha_unix114i/lh6.lzh               $gpl2
+test_archive lha_unix114i/h0_lh0.lzh            $gpl2_gz
+test_archive lha_unix114i/h0_lh5.lzh            $gpl2
+test_archive lha_unix114i/h0_lh6.lzh            $gpl2
+test_archive lha_unix114i/h0_lh7.lzh            $gpl2
+#test_archive lha_unix114i/h0_subdir.lzh         $hello_world1
+test_archive lha_unix114i/h1_lh0.lzh            $gpl2_gz
+test_archive lha_unix114i/h1_lh5.lzh            $gpl2
+test_archive lha_unix114i/h1_lh6.lzh            $gpl2
+test_archive lha_unix114i/h1_lh7.lzh            $gpl2
+test_archive lha_unix114i/h1_subdir.lzh         $hello_world1
+test_archive lha_unix114i/h2_lh0.lzh            $gpl2_gz
+test_archive lha_unix114i/h2_lh5.lzh            $gpl2
+test_archive lha_unix114i/h2_lh6.lzh            $gpl2
+test_archive lha_unix114i/h2_lh7.lzh            $gpl2
+test_archive lha_unix114i/h2_subdir.lzh         $hello_world1
 test_archive lha_unix114i/lh6_long.lzh          $long
-test_archive lha_unix114i/lh7.lzh               $gpl2
 test_archive lha_unix114i/lh7_long.lzh          $long
-test_archive lha_unix114i/subdir.lzh            $hello_world1
+
 
 test_archive lha_os2_208/lh0.lzh                $gpl2_gz
 test_archive lha_os2_208/lh5.lzh                $gpl2
