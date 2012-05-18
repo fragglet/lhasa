@@ -176,6 +176,33 @@ static void msdos_path_to_unix(char *path)
 	}
 }
 
+// Parse a Unix symbolic link. These are stored in the format:
+// header->filename = symlink|target
+
+static int parse_symlink(LHAFileHeader *header)
+{
+	char *p;
+
+	p = strchr(header->filename, '|');
+
+	if (p == NULL) {
+		return 0;
+	}
+
+	header->symlink_target = strdup(p + 1);
+
+	if (header->symlink_target == NULL) {
+		return 0;
+	}
+
+	// Cut the string in half at the separator. Keep the left side
+	// as the value for filename.
+
+	*p = '\0';
+
+	return 1;
+}
+
 // Decode the path field in the header.
 
 static int process_level0_path(LHAFileHeader *header, uint8_t *data,
@@ -726,14 +753,24 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	// Sanity check that we got some headers, at least.
 	// Directory entries must have a path, and files must have a
-	// filename.
+	// filename. Symlinks are stored using the same compression method
+	// field string (-lhd-) as directories.
 
-	if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)) {
-		if (header->path == NULL) {
+	if (strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR) != 0) {
+		if (header->filename == NULL) {
 			goto fail;
 		}
+	} else if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)
+	        && (header->extra_flags & LHA_FILE_UNIX_PERMS) != 0
+		&& header->filename != NULL
+		&& (header->unix_perms & 0170000) == 0120000) {
+
+		if (!parse_symlink(header)) {
+			goto fail;
+		}
+
 	} else {
-		if (header->filename == NULL) {
+		if (header->path == NULL) {
 			goto fail;
 		}
 	}
@@ -780,6 +817,7 @@ void lha_file_header_free(LHAFileHeader *header)
 
 	free(header->filename);
 	free(header->path);
+	free(header->symlink_target);
 	free(header->unix_username);
 	free(header->unix_group);
 	free(header);

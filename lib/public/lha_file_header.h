@@ -72,7 +72,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /** OS type for Sharp X68000 Human68K OS. */
 #define LHA_OS_TYPE_HUMAN68K           'H'
 
-/** Compression type for a stored directory */
+/**
+ * Compression type for a stored directory. The same value is also
+ * used for Unix symbolic links.
+ */
 #define LHA_COMPRESS_TYPE_DIR   "-lhd-"
 
 /**
@@ -123,24 +126,32 @@ struct _LHAFileHeader {
 	/**
 	 * Stored path, with Unix-style ('/') path separators.
 	 *
-	 * This may be NULL, although for a directory entry
-	 * (@ref LHA_COMPRESS_TYPE_DIR) it is never NULL.
+	 * This may be NULL, although if this is a directory
+	 * (@ref LHA_COMPRESS_TYPE_DIR), it is never NULL.
 	 */
 	char *path;
 
 	/**
 	 * File name.
 	 *
-	 * This is never NULL, except for a directory entry
+	 * This is never NULL, except if this is a directory
 	 * (@ref LHA_COMPRESS_TYPE_DIR), where it is always NULL.
 	 */
 	char *filename;
 
 	/**
+	 * Target for symbolic link.
+	 *
+	 * This is NULL unless this header represents a symbolic link
+	 * (@ref LHA_COMPRESS_TYPE_DIR).
+	 */
+	char *symlink_target;
+
+	/**
 	 * Compression method.
 	 *
-	 * If the header represents a directory, the compression method
-	 * is equal to @ref LHA_COMPRESS_TYPE_DIR.
+	 * If the header represents a directory or a symbolic link, the
+	 * compression method is equal to @ref LHA_COMPRESS_TYPE_DIR.
 	 */
 	char compress_method[6];
 

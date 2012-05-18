@@ -35,6 +35,9 @@ static void print_header(LHAFileHeader *header)
 	if (header->filename != NULL) {
 		printf("filename: %s\n", header->filename);
 	}
+	if (header->symlink_target != NULL) {
+		printf("symlink_target: %s\n", header->symlink_target);
+	}
 
 	printf("compress_method: %s\n", header->compress_method);
 	printf("compressed_length: %i\n", (int) header->compressed_length);
