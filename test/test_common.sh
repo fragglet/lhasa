@@ -66,12 +66,18 @@ test_arc_file() {
 # if the command exits with a failure.
 
 test_lha() {
+	local test_binary="$test_base/../src/test-lha"
+
+	if [ "$build_arch" = "windows" ]; then
+		test_binary="$test_base/../src/.libs/test-lha.exe"
+	fi
+
 	if $SUCCESS_EXPECTED; then
-		if ! "$test_base/../src/test-lha" "$@"; then
+		if ! "$test_binary" "$@"; then
 			fail "Command failed: lha $*"
 		fi
 	else
-		if "$test_base/../src/test-lha" "$@"; then
+		if "$test_binary" "$@"; then
 			fail "Command succeeded, should have failed: lha $*"
 		fi
 	fi

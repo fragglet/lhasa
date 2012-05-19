@@ -130,10 +130,6 @@ check_extracted_file() {
 	# link points to. If this isn't Unix, don't expect anything.
 
 	if [ "$symlink_target" != "" ]; then
-		if [ "$build_arch" != "unix" ]; then
-			return
-		fi
-
 		local link_value=$(readlink "$run_sandbox/$filename")
 
 		if [ "$link_value" != "$symlink_target" ]; then
@@ -387,6 +383,15 @@ test_f_option() {
 test_archive() {
 	local archive_file=$1
 	local filename=$2
+
+	#echo "test_archive $archive_file"
+
+	# Don't check symlink archives on non-Unix systems that
+	# don't support them.
+
+	if [ "$build_arch" != "unix" ] && [ "$filename" = "symlink" ]; then
+		return
+	fi
 
 	test_basic_extract "$archive_file" "$filename"
 	test_stdin_extract "$archive_file" "$filename"
