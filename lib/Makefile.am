@@ -10,9 +10,6 @@ EXTRA_DIST =                                            \
 
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
-	ext_common.c                                    \
-	ext_unix.c                                      \
-	ext_win.c                                       \
 	ext_header.c            ext_header.h            \
 	lha_arch_unix.c         lha_arch.h              \
 	lha_arch_win32.c                                \
