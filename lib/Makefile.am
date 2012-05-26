@@ -6,6 +6,7 @@ check_LIBRARIES=liblhasatest.a
 EXTRA_DIST =                                            \
 	bit_stream_reader.c                             \
 	lh_new_decoder.c                                \
+	pma_common.c                                    \
 	tree_decode.c
 
 SRC =                                                   \
