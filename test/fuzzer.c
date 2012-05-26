@@ -31,7 +31,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <unistd.h>
 #include <time.h>
 
-#include "lha_decoder.h"
+#include "lib/lha_decoder.h"
 
 // Maximum amount of data to read before stopping.
 
