@@ -444,7 +444,8 @@ static size_t read_copy_command(LHAPM1Decoder *decoder, uint8_t *buf)
 	history_distance = decode_variable_length(&decoder->bit_stream_reader,
 	                                          copy_ranges, range_index);
 
-	if (history_distance < 0) {
+	if (history_distance < 0
+	 || (unsigned) history_distance > decoder->output_stream_pos) {
 		return 0;
 	}
 
@@ -493,7 +494,7 @@ static int read_byte_decode_index(LHAPM1Decoder *decoder)
 
 		// Reached a leaf node?
 
-		if (child < 10) {
+		if (child >= 10) {
 			return child - 10;
 		}
 
@@ -626,8 +627,7 @@ static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 		outputted_byte(decoder, byteval);
 	}
 
-	result = (size_t) i;
-	decoder->output_stream_pos += i;
+	result = (size_t) block_len;
 
 	// Because this is a block of bytes, it can be assumed that the
 	// block ended for a copy command. The one exception is that if
