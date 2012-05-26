@@ -34,12 +34,24 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_decoder.h"
 #include "bit_stream_reader.c"
-
-#define BLOCK_READ_SIZE 1024
+#include "pma_common.c"
 
 // Size of the ring buffer used to hold the history.
 
 #define RING_BUFFER_SIZE 16384
+
+// Maximum length of a command representing a block of bytes:
+
+#define MAX_BYTE_BLOCK_LEN 216
+
+// Maximum number of bytes that can be copied by a single copy command.
+
+#define MAX_COPY_BLOCK_LEN 244
+
+// Output buffer length. A single call to lha_pm1_read can perform one
+// byte block output followed by a copy command.
+
+#define OUTPUT_BUFFER_SIZE (MAX_BYTE_BLOCK_LEN + MAX_COPY_BLOCK_LEN)
 
 typedef struct {
 	BitStreamReader bit_stream_reader;
@@ -48,37 +60,50 @@ typedef struct {
 
 	unsigned int output_stream_pos;
 
-	// If true, the initial 5 bits have been read from the start
-	// of the stream.
+	// Pointer to the entry in byte_decode_table used to decode
+	// byte value indices.
 
-	int read_start_header;
+	const uint8_t *byte_decode_tree;
 
 	// History ring buffer.
 
 	uint8_t ringbuf[RING_BUFFER_SIZE];
 	unsigned int ringbuf_pos;
 
+	// History linked list, for adaptively encoding byte values.
+
+	HistoryLinkedList history_list;
 } LHAPM1Decoder;
 
-static const struct {
-	unsigned short bits;
-	unsigned short offset;
-} copy_ranges[] = {
-	{ 6,  0 },         // 0 + (1 << 6)  = 64
-	{ 8,  64 },        //   + (1 << 8)  = 320
-	{ 6,  0 },         // 0 + (1 << 6)  = 64
-	{ 9,  64 },        //   + (1 << 9)  = 576
-	{ 11, 576 },       //   + (1 << 11) = 2624
-	{ 13, 2624 },      //   + (1 << 13) = 10816
+// Table used to decode distance into history buffer to copy data.
+
+static const VariableLengthTable copy_ranges[] = {
+	{    0,  6 },  //    0 +  (1 << 6) =    64
+	{   64,  8 },  //   64 +  (1 << 8) =   320
+	{    0,  6 },  //    0 +  (1 << 6) =    64
+	{   64,  9 },  //   64 +  (1 << 9) =   576
+	{  576, 11 },  //  576 + (1 << 11) =  2624
+	{ 2624, 13 },  // 2624 + (1 << 13) = 10816
 };
 
-// This table is used to decode byte values.
+// Table used to decode byte values.
+
+static const VariableLengthTable byte_ranges[] = {
+	{   0, 4 },  //   0 + (1 << 4) = 16
+	{  16, 4 },  //  16 + (1 << 4) = 32
+	{  32, 5 },  //  32 + (1 << 5) = 64
+	{  64, 6 },  //  64 + (1 << 6) = 128
+	{ 128, 6 },  // 128 + (1 << 6) = 191
+	{ 192, 6 },  // 192 + (1 << 6) = 255
+};
+
+// This table is a list of trees to decode indices into byte_ranges.
 // Each line is actually a mini binary tree, starting with the first
 // byte as the root node. Each nybble of the byte is one of the two
 // branches: either a leaf value (a-f) or an offset to the child node.
 // Expanded representation is shown in comments below.
 
-static const uint8_t byte_decode_table[][5] = {
+static const uint8_t byte_decode_trees[][5] = {
        { 0x12, 0x2d, 0xef, 0x1c, 0xab },    // ((((a b) c) d) (e f))
        { 0x12, 0x23, 0xde, 0xab, 0xcf },    // (((a b) (c f)) (d e))
        { 0x12, 0x2c, 0xd2, 0xab, 0xef },    // (((a b) c) (d (e f)))
@@ -125,14 +150,16 @@ static int lha_pm1_init(void *data, LHADecoderCallback callback,
 {
 	LHAPM1Decoder *decoder = data;
 
-	memset(&decoder, 0, sizeof(LHAPM1Decoder));
+	memset(decoder, 0, sizeof(LHAPM1Decoder));
 
 	bit_stream_reader_init(&decoder->bit_stream_reader,
 	                       callback, callback_data);
 
 	decoder->output_stream_pos = 0;
-	decoder->read_start_header = 0;
+	decoder->byte_decode_tree = NULL;
 	decoder->ringbuf_pos = 0;
+
+	init_history_list(&decoder->history_list);
 
 	return 1;
 }
@@ -142,17 +169,15 @@ static int lha_pm1_init(void *data, LHADecoderCallback callback,
 
 static int read_start_header(LHAPM1Decoder *decoder)
 {
-	int value;
+	int index;
 
-	value = read_bits(&decoder->bit_stream_reader, 5);
+	index = read_bits(&decoder->bit_stream_reader, 5);
 
-	if (value < 0) {
+	if (index < 0) {
 		return 0;
 	}
 
-	// TODO
-
-	decoder->read_start_header = 1;
+	decoder->byte_decode_tree = byte_decode_trees[index];
 
 	return 1;
 }
@@ -346,18 +371,89 @@ static size_t read_copy_command(LHAPM1Decoder *reader, uint8_t *buf)
 	// Calculate the number of bytes back into the history buffer
 	// to read.
 
-	history_distance = read_bits(&reader->bit_stream_reader,
-	                             copy_ranges[range_index].bits);
+	history_distance = decode_variable_length(&reader->bit_stream_reader,
+	                                          copy_ranges, range_index);
 
 	if (history_distance < 0) {
 		return 0;
 	}
 
-	history_distance += copy_ranges[range_index].offset;
-
 	// TODO: Perform the copy.
 
 	return count;
+}
+
+// Read the index into the byte decode table, using the byte_decode_tree
+// set at the start of the stream. Returns -1 for failure.
+
+static int read_byte_decode_index(LHAPM1Decoder *decoder)
+{
+	const uint8_t *ptr;
+	unsigned int child;
+	int bit;
+
+	ptr = decoder->byte_decode_tree;
+
+	if (ptr[0] == 0) {
+		return 0;
+	}
+
+	// Walk down the tree, reading a bit at each node to determine
+	// which path to take.
+
+	for (;;) {
+		bit = read_bit(&decoder->bit_stream_reader);
+
+		if (bit < 0) {
+			return -1;
+		} else if (bit == 0) {
+			child = (*ptr >> 4) & 0x0f;
+		} else {
+			child = *ptr & 0x0f;
+		}
+
+		// Reached a leaf node?
+
+		if (child < 10) {
+			return child - 10;
+		}
+
+		ptr += child;
+	}
+}
+
+// Read a single byte value from the input stream.
+// Returns -1 for failure.
+
+static int read_byte(LHAPM1Decoder *decoder)
+{
+	int index;
+	int count;
+
+	// Read the index into the byte_ranges table to use.
+
+	index = read_byte_decode_index(decoder);
+
+	if (index < 0) {
+		return -1;
+	}
+
+	// Decode value using byte_ranges table. This is actually
+	// a distance to walk along the history linked list - it
+	// is static huffman encoding, so that recently used byte
+	// values use fewer bits.
+
+	count = decode_variable_length(&decoder->bit_stream_reader,
+	                               byte_ranges, index);
+
+	if (count < 0) {
+		return -1;
+	}
+
+	// Walk through the history linked list to get the actual
+	// value.
+
+	return find_in_history_list(&decoder->history_list, count);
 }
 
 // Read the length of a block of bytes.
@@ -426,6 +522,7 @@ static int read_byte_block_count(BitStreamReader *reader)
 static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 {
 	size_t result, result2;
+	int byteval;
 	int block_len;
 	int i;
 
@@ -440,8 +537,13 @@ static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 	// Decode the byte values and add them to the output buffer.
 
 	for (i = 0; i < block_len; ++i) {
-		// TODO
-		// buf[i] = ...
+		byteval = read_byte(decoder);
+
+		if (byteval < 0) {
+			return 0;
+		}
+
+		// TODO: output byteval
 	}
 
 	result = (size_t) i;
@@ -452,7 +554,7 @@ static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 	// the maximum block length was reached, the block may have
 	// ended just because it could not be any larger.
 
-	if (result == 216) {
+	if (result == MAX_BYTE_BLOCK_LEN) {
 		return result;
 	}
 
@@ -472,7 +574,7 @@ static size_t lha_pm1_read(void *data, uint8_t *buf)
 
 	// Start of input stream? Read the header.
 
-	if (!decoder->read_start_header
+	if (decoder->byte_decode_tree == NULL
 	 && !read_start_header(decoder)) {
 		return 0;
 	}
@@ -497,7 +599,7 @@ LHADecoderType lha_pm1_decoder = {
 	NULL,
 	lha_pm1_read,
 	sizeof(LHAPM1Decoder),
-	BLOCK_READ_SIZE,
+	OUTPUT_BUFFER_SIZE,
 	2048
 };
 
