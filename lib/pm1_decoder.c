@@ -84,6 +84,27 @@ static const VariableLengthTable copy_ranges[] = {
 	{   64,  9 },  //   64 +  (1 << 9) =   576
 	{  576, 11 },  //  576 + (1 << 11) =  2624
 	{ 2624, 13 },  // 2624 + (1 << 13) = 10816
+
+	// The above table entries are used after a certain number of
+	// bytes have been decoded.
+	// Early in the stream, some of the copy ranges are more limited
+	// in their range, so that fewer bits are needed. The above
+	// table entries are redirected to these entries instead.
+
+	// Table entry #3 (64):
+	{   64,  8 },   // < 320 bytes
+
+	// Table entry #4 (576):
+	{  576,  8 },   // < 832 bytes
+	{  576,  9 },   // < 1088 bytes
+	{  576, 10 },   // < 1600 bytes
+
+	// Table entry #5 (2624):
+	{ 2624,  8 },   // < 2880 bytes
+	{ 2624,  9 },   // < 3136 bytes
+	{ 2624, 10 },   // < 3648 bytes
+	{ 2624, 11 },   // < 4672 bytes
+	{ 2624, 12 },   // < 6720 bytes
 };
 
 // Table used to decode byte values.
@@ -180,6 +201,23 @@ static int read_start_header(LHAPM1Decoder *decoder)
 	decoder->byte_decode_tree = byte_decode_trees[index];
 
 	return 1;
+}
+
+// Function called when a new byte is outputted, to update the
+// appropriate data structures.
+
+static void outputted_byte(LHAPM1Decoder *decoder, uint8_t b)
+{
+	// Add to history ring buffer.
+
+	decoder->ringbuf[decoder->ringbuf_pos] = b;
+	decoder->ringbuf_pos
+	    = (decoder->ringbuf_pos + 1) % RING_BUFFER_SIZE;
+
+	// Other updates: history linked list, output stream position:
+
+	update_history_list(&decoder->history_list, b);
+	++decoder->output_stream_pos;
 }
 
 // Decode a count of the number of bytes to copy in a copy command.
@@ -342,13 +380,14 @@ static int read_copy_type_range(LHAPM1Decoder *decoder)
 // Read a copy command from the input stream and copy from history.
 // Returns 0 for failure.
 
-static size_t read_copy_command(LHAPM1Decoder *reader, uint8_t *buf)
+static size_t read_copy_command(LHAPM1Decoder *decoder, uint8_t *buf)
 {
 	int range_index;
 	int history_distance;
+	int copy_index, i;
 	int count;
 
-	range_index = read_copy_type_range(reader);
+	range_index = read_copy_type_range(decoder);
 
 	if (range_index < 0) {
 		return 0;
@@ -361,24 +400,64 @@ static size_t read_copy_command(LHAPM1Decoder *reader, uint8_t *buf)
 	if (range_index < 2) {
 		count = 2;
 	} else {
-		count = read_copy_byte_count(reader);
+		count = read_copy_byte_count(decoder);
 
 		if (count < 0) {
 			return 0;
 		}
 	}
 
+	// The 'range_index' variable is an index into the copy_ranges
+	// array. As a special-case hack, early in the output stream
+	// some history ranges are inaccessible, so fewer bits can be
+	// used. Redirect range_index to special entries to do this.
+
+	if (range_index == 3) {
+		if (decoder->output_stream_pos < 320) {
+			range_index = 6;
+		}
+	} else if (range_index == 4) {
+		if (decoder->output_stream_pos < 832) {
+			range_index = 7;
+		} else if (decoder->output_stream_pos < 1088) {
+			range_index = 8;
+		} else if (decoder->output_stream_pos < 1600) {
+			range_index = 9;
+		}
+	} else if (range_index == 5) {
+		if (decoder->output_stream_pos < 2880) {
+			range_index = 10;
+		} else if (decoder->output_stream_pos < 3136) {
+			range_index = 11;
+		} else if (decoder->output_stream_pos < 3648) {
+			range_index = 12;
+		} else if (decoder->output_stream_pos < 4672) {
+			range_index = 13;
+		} else if (decoder->output_stream_pos < 6720) {
+			range_index = 14;
+		}
+	}
+
 	// Calculate the number of bytes back into the history buffer
 	// to read.
 
-	history_distance = decode_variable_length(&reader->bit_stream_reader,
+	history_distance = decode_variable_length(&decoder->bit_stream_reader,
 	                                          copy_ranges, range_index);
 
 	if (history_distance < 0) {
 		return 0;
 	}
 
-	// TODO: Perform the copy.
+	// Copy from the ring buffer.
+
+	copy_index = (decoder->ringbuf_pos + RING_BUFFER_SIZE
+	              - history_distance) % RING_BUFFER_SIZE;
+
+	for (i = 0; i < count; ++i) {
+		buf[i] = decoder->ringbuf[copy_index];
+		outputted_byte(decoder, decoder->ringbuf[copy_index]);
+		copy_index = (copy_index + 1) % RING_BUFFER_SIZE;
+	}
 
 	return count;
 }
@@ -543,7 +622,8 @@ static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 			return 0;
 		}
 
-		// TODO: output byteval
+		buf[i] = byteval;
+		outputted_byte(decoder, byteval);
 	}
 
 	result = (size_t) i;
