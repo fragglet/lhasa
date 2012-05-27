@@ -445,14 +445,14 @@ static size_t read_copy_command(LHAPM1Decoder *decoder, uint8_t *buf)
 	                                          copy_ranges, range_index);
 
 	if (history_distance < 0
-	 || (unsigned) history_distance > decoder->output_stream_pos) {
+	 || (unsigned) history_distance >= decoder->output_stream_pos) {
 		return 0;
 	}
 
 	// Copy from the ring buffer.
 
 	copy_index = (decoder->ringbuf_pos + RING_BUFFER_SIZE
-	              - history_distance) % RING_BUFFER_SIZE;
+	              - history_distance - 1) % RING_BUFFER_SIZE;
 
 	for (i = 0; i < count; ++i) {
 		buf[i] = decoder->ringbuf[copy_index];
