@@ -28,6 +28,7 @@ SRC =                                                   \
 	lh7_decoder.c                                   \
 	lz5_decoder.c                                   \
 	lzs_decoder.c                                   \
+	pm1_decoder.c                                   \
 	pm2_decoder.c
 
 liblhasatest_a_CFLAGS=$(TEST_CFLAGS) -DALLOC_TESTING -I../test -g
