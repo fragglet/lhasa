@@ -131,6 +131,10 @@ struct _LHADecoder {
 	unsigned int outbuf_pos, outbuf_len;
 	uint8_t *outbuf;
 
+	/** If true, the decoder read() function returned zero. */
+
+	unsigned int decoder_failed;
+
 	/** Current CRC of the output stream. */
 
 	uint16_t crc;
