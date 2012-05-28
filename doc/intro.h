@@ -35,7 +35,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * As such, it may be reused in any project, either proprietary or
  * open source.
  *
- * @section Public_interfaces Public interfaces
+ * @section Main_interfaces Main interfaces
  *
  * @li @link lha_input_stream.h @endlink - abstracts
  *     the process of reading data from an LZH file; convenience
@@ -45,5 +45,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *     extract the contents of an LZH file from a stream.
  * @li @link lha_file_header.h @endlink - structure
  *     representing the decoded contents of an LZH file header.
+ *
+ * @section Additional_interfaces Additional interfaces
+ *
+ * @li @link lha_decoder.h @endlink - routines to decode raw LZH
+ *     compressed data.
  */
 

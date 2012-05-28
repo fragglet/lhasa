@@ -21,37 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_LHA_DECODER_H
 #define LHASA_LHA_DECODER_H
 
-#include <stdlib.h>
-#include <inttypes.h>
-
-typedef struct _LHADecoder LHADecoder;
-typedef struct _LHADecoderType LHADecoderType;
-
-/**
- * Callback function invoked when a decoder wants to read more compressed
- * data.
- *
- * @param buf        Pointer to the buffer in which to store the data.
- * @param buf_len    Size of the buffer, in bytes.
- * @param user_data  Extra pointer to pass to the decoder.
- * @return           Number of bytes read.
- */
-
-typedef size_t (*LHADecoderCallback)(void *buf, size_t buf_len, void *user_data);
-
-/**
- * Callback function used for monitoring decode progress.
- * The callback is invoked for every block processed (block size depends on
- * decode algorithm).
- *
- * @param num_blocks      Number of blocks processed so far.
- * @param total_blocks    Total number of blocks to process.
- * @paaram callback_data  Extra user-specified data passed to the callback.
- */
-
-typedef void (*LHADecoderProgressCallback)(unsigned int num_blocks,
-                                           unsigned int total_blocks,
-                                           void *callback_data);
+#include "public/lha_decoder.h"
 
 struct _LHADecoderType {
 
@@ -139,64 +109,6 @@ struct _LHADecoder {
 
 	uint16_t crc;
 };
-
-/**
- * Allocate a new decoder for the specified type.
- *
- * @param dtype          The decoder type.
- * @param callback       Callback function for the decoder to call to read
- *                       more compressed data.
- * @param callback_data  Extra data to pass to the callback function.
- * @param stream_length  Length of the uncompressed data, in bytes. When
- *                       this point is reached decompression will stop.
- * @return               Pointer to the new decoder, or NULL for failure.
- */
-
-LHADecoder *lha_decoder_new(LHADecoderType *dtype,
-                            LHADecoderCallback callback,
-                            void *callback_data,
-                            size_t stream_length);
-
-/**
- * Get the decoder type for the specified name.
- *
- * @param name           The decoder type.
- * @return               Pointer to the decoder type, or NULL for unknown
- *                       decoder type.
- */
-
-LHADecoderType *lha_decoder_for_name(char *name);
-
-/**
- * Free a decoder.
- *
- * @param decoder        The decoder to free.
- */
-
-void lha_decoder_free(LHADecoder *decoder);
-
-/**
- * Set a callback function to monitor decode progress.
- *
- * @param decoder        The decoder.
- * @param callback       Callback function to monitor decode progress.
- * @param callback_data  Extra data to pass to the decoder.
- */
-
-void lha_decoder_monitor(LHADecoder *decoder,
-                         LHADecoderProgressCallback callback,
-                         void *callback_data);
-
-/**
- * Decode (decompress) more data.
- *
- * @param decoder        The decoder.
- * @param buf            Pointer to buffer to store decompressed data.
- * @param buf_len        Size of the buffer, in bytes.
- * @return               Number of bytes decompressed.
- */
-
-size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len);
 
 #endif /* #ifndef LHASA_LHA_DECODER_H */
 

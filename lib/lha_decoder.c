@@ -242,3 +242,13 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 	return filled;
 }
 
+uint16_t lha_decoder_get_crc(LHADecoder *decoder)
+{
+	return decoder->crc;
+}
+
+size_t lha_decoder_get_length(LHADecoder *decoder)
+{
+	return decoder->stream_pos;
+}
+

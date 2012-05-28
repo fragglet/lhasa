@@ -21,6 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_PUBLIC_LHASA_H
 #define LHASA_PUBLIC_LHASA_H
 
+#include "lha_decoder.h"
 #include "lha_file_header.h"
 #include "lha_input_stream.h"
 #include "lha_reader.h"

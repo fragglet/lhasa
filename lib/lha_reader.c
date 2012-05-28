@@ -334,8 +334,10 @@ static int do_decode(LHAReader *reader, FILE *output)
 	// Decoder stores output position and performs running CRC.
 	// At the end of the stream these should match the header values.
 
-	return reader->inner_decoder->stream_pos == reader->curr_file->length
-	    && reader->inner_decoder->crc == reader->curr_file->crc;
+	return lha_decoder_get_length(reader->inner_decoder)
+	         == reader->curr_file->length
+	    && lha_decoder_get_crc(reader->inner_decoder)
+	         == reader->curr_file->crc;
 }
 
 int lha_reader_check(LHAReader *reader,
