@@ -23,6 +23,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file lha_file_header.h
  *
@@ -224,6 +228,10 @@ struct _LHAFileHeader {
 	 */
 	uint64_t win_access_time;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_FILE_HEADER_H */
 

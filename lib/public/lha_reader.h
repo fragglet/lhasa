@@ -24,6 +24,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_input_stream.h"
 #include "lha_file_header.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file lha_reader.h
  *
@@ -201,6 +205,10 @@ int lha_reader_extract(LHAReader *reader,
                        char *filename,
                        LHAReaderProgressCallback callback,
                        void *callback_data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_READER_H */
 

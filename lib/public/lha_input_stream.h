@@ -24,6 +24,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file lha_input_stream.h
  *
@@ -121,6 +125,10 @@ LHAInputStream *lha_input_stream_from_FILE(FILE *stream);
  */
 
 void lha_input_stream_free(LHAInputStream *stream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_INPUT_STREAM_H */
 
