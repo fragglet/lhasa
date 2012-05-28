@@ -238,38 +238,6 @@ int lha_input_stream_read(LHAInputStream *stream, void *buf, size_t buf_len)
 	return total_bytes == buf_len;
 }
 
-int lha_input_stream_read_byte(LHAInputStream *stream, uint8_t *result)
-{
-	return lha_input_stream_read(stream, result, 1);
-}
-
-int lha_input_stream_read_short(LHAInputStream *stream, uint16_t *result)
-{
-	uint8_t buf[2];
-
-	if (!lha_input_stream_read(stream, buf, 2)) {
-		return 0;
-	}
-
-	*result = (uint16_t) (buf[0] | (buf[1] << 8));
-
-	return 1;
-}
-
-int lha_input_stream_read_long(LHAInputStream *stream, uint32_t *result)
-{
-	uint8_t buf[4];
-
-	if (!lha_input_stream_read(stream, buf, 4)) {
-		return 0;
-	}
-
-	*result = (uint32_t) (buf[0] | (buf[1] << 8)
-	                    | (buf[2] << 16) | (buf[3] << 24));
-
-	return 1;
-}
-
 int lha_input_stream_skip(LHAInputStream *stream, size_t bytes)
 {
 	// If we have a dedicated skip function, use it; otherwise,

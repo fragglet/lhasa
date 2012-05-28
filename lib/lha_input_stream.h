@@ -38,36 +38,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 int lha_input_stream_read(LHAInputStream *stream, void *buf, size_t buf_len);
 
 /**
- * Read a byte of data from the LHA stream.
- *
- * @param stream       The input stream.
- * @param result       Pointer to variable in which to store the result.
- * @return             Non-zero for success.
- */
-
-int lha_input_stream_read_byte(LHAInputStream *stream, uint8_t *result);
-
-/**
- * Read a 16-bit integer (little endian) from the LHA stream.
- *
- * @param stream       The input stream.
- * @param result       Pointer to variable in which to store the result.
- * @return             Non-zero for success.
- */
-
-int lha_input_stream_read_short(LHAInputStream *stream, uint16_t *result);
-
-/**
- * Read a 32-bit integer (little endian) from the LHA stream.
- *
- * @param stream       The input stream.
- * @param result       Pointer to variable in which to store the result.
- * @return             Non-zero for success.
- */
-
-int lha_input_stream_read_long(LHAInputStream *stream, uint32_t *result);
-
-/**
  * Skip over the specified number of bytes.
  *
  * @param stream       The input stream.
