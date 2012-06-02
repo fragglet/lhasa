@@ -32,6 +32,17 @@ set -eu
 TZ=Europe/London
 export TZ
 
+# When listing files, the list output (eg. from 'lha l') can vary
+# depending on the date. Files less than 6 months old show the time in
+# addition to the date, whereas after 6 months this is replaced by the
+# year instead for disambiguation reasons.
+# Unfortunately this functionality means that some tests can break as
+# the date changes. So run the tests using a fixed date (2012-05-01)
+# for repeatability.
+
+TEST_NOW_TIME=1335830400
+export TEST_NOW_TIME
+
 # Expected result of invoking the lha command.
 
 SUCCESS_EXPECTED=true

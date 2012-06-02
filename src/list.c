@@ -244,6 +244,29 @@ static ListColumn method_crc_column = {
 	method_crc_column_print
 };
 
+// Get the current time.
+
+static time_t get_now_time(void)
+{
+	// For test builds, allow the current time to be overridden using
+	// an environment variable. This is because the list output can
+	// change depending on the current date.
+
+#ifdef TEST_BUILD
+	char *env_val;
+	unsigned int result;
+
+	env_val = getenv("TEST_NOW_TIME");
+
+	if (env_val != NULL
+	 && sscanf(env_val, "%u", &result) == 1) {
+		return (time_t) result;
+	}
+#endif
+
+	return time(NULL);
+}
+
 // File timestamp
 
 static void output_timestamp(unsigned int timestamp)
@@ -270,7 +293,7 @@ static void output_timestamp(unsigned int timestamp)
 	// If this is an old time (more than 6 months), print the year.
 	// For recent timestamps, print the time.
 
-	tmp = time(NULL);
+	tmp = get_now_time();
 
 	if ((time_t) timestamp > tmp - 6 * 30 * 24 * 60 * 60) {
 		printf("%02i:%02i", ts->tm_hour, ts->tm_min);
