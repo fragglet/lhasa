@@ -1,4 +1,25 @@
 
+v0.0.7 (2012-06-02):
+
+     * Extraction and listing of Unix symbolic links is now supported.
+     * Decompression code for the "old" PMarc archive algorithm (-pm1-) has
+       been added.
+     * Support has been added for Unix LHA level 0 header extended areas
+       (so level 0 archives with Unix metadata are now listed and extracted
+       correctly).
+     * The Unix permissions field in the list output for directory entries
+       has been fixed.
+     * The library header files have been fixed so that they can be included
+       in C++ code.
+     * The LHADecoder interface, for extracting raw compressed data, has been
+       added to the public header files.
+     * The Unix LHA test archives have been regenerated and improved.
+     * A "ghost testing" tool has been added for testing ghost compression
+       algorithms such as -pm1-.
+     * The list output tests have been fixed to be repeatable regardless of
+       the current date.
+     * Build of the fuzzer tool has been fixed.
+
 v0.0.6 (2012-05-17):
 
      * When the -w option is used during extraction, the path specified

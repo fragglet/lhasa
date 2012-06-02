@@ -1,4 +1,4 @@
-AC_INIT(Lhasa, 0.0.6, fraggle@gmail.com, lhasa)
+AC_INIT(Lhasa, 0.0.7, fraggle@gmail.com, lhasa)
 AC_CONFIG_AUX_DIR(autotools)
 
 AM_INIT_AUTOMAKE($PACKAGE_TARNAME, $PACKAGE_VERSION, no-define)
