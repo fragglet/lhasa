@@ -11,9 +11,7 @@ Library:
     * UNLHA32
  * Decompressors for obscure algorithms (need to write compressors):
     * -lh2-, -lh3- (experimental LHA?)
-    * -pm1- (Old PMArc)
     * -lx1-, -lhx- (unlha32 obscure/experimental?)
- * Conditional compile to remove POSIX dependency.  Add Windows build.
 
 Command line tool:
  * Create/update/modify archives.
