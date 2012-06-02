@@ -209,3 +209,8 @@ test_archive regression/unixsep.lzh             $hello_world1
 test_archive generated/lzs/lzs.lzs              $gpl2
 test_archive generated/lzs/long.lzs             $long
 
+# -pm1- decompress. Unfortunately only the first file in the archive
+# will be tested.
+
+test_archive generated/pm1/pm1.pma              41fe9947  32768
+

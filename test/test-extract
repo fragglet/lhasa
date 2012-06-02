@@ -61,58 +61,83 @@ simplify_filename() {
 	fi
 }
 
-file_to_overwrite() {
-	local filename="$1"
-	filename=$(simplify_filename "$filename")
-	local tmpfile="$run_sandbox/$filename"
-	mkdir -p $(dirname "$tmpfile")
-	echo "__OW_FILE__" > "$tmpfile"
+# Generate the specified files to overwrite in the run sandbox:
+
+files_to_overwrite() {
+	for filename in "$@"; do
+		filename=$(simplify_filename "$filename")
+		local tmpfile="$run_sandbox/$filename"
+		mkdir -p $(dirname "$tmpfile")
+		echo "__OW_FILE__" > "$tmpfile"
+	done
 }
+
+# Check that the specified filenames exist in the run sandbox:
 
 check_exists() {
 	local archive_file=$1
-	local filename=$2
-	x_filename=$(simplify_filename "$filename")
-	if [ ! -e "$run_sandbox/$x_filename" ] && \
-	   [ ! -L "$run_sandbox/$x_filename" ]; then
-		fail "File was not extracted as expected:"  \
-		     "  archive: $archive_file"             \
-		     "  filename: $filename"
-	fi
+	shift
+
+	for filename in "$@"; do
+		x_filename=$(simplify_filename "$filename")
+		if [ ! -e "$run_sandbox/$x_filename" ] && \
+		   [ ! -L "$run_sandbox/$x_filename" ]; then
+			fail "File was not extracted as expected:"  \
+			     "  archive: $archive_file"             \
+			     "  filename: $filename"
+		fi
+	done
 }
+
+# Check that the specified filenames do not exist in the run sandbox:
 
 check_not_exists() {
 	local archive_file=$1
-	local filename=$2
-	x_filename=$(simplify_filename "$filename")
-	if [ -e "$run_sandbox/$x_filename" ] || \
-	   [ -L "$run_sandbox/$x_filename" ]; then
-		fail "File was extracted, not as expected:"  \
-		     "  archive: $archive_file"              \
-		     "  filename: $filename"
-	fi
+	shift
+
+	for filename in "$@"; do
+		x_filename=$(simplify_filename "$filename")
+		if [ -e "$run_sandbox/$x_filename" ] || \
+		   [ -L "$run_sandbox/$x_filename" ]; then
+			fail "File was extracted, not as expected:"  \
+			     "  archive: $archive_file"              \
+			     "  filename: $filename"
+		fi
+	done
 }
+
+# Check that the specified filenames have been overwritten in the run sandbox:
 
 check_overwritten() {
 	local archive_file=$1
-	local filename=$2
-	x_filename=$(simplify_filename "$filename")
-	if grep -q __OW_FILE__ "$run_sandbox/$x_filename" 2>/dev/null; then
-		fail "File was not overwritten as expected:" \
-		     "  archive: $archive_file"              \
-		     "  filename: $filename"
-	fi
+	shift
+
+	for filename in "$@"; do
+		x_filename=$(simplify_filename "$filename")
+		if grep -q __OW_FILE__ "$run_sandbox/$x_filename" 2>/dev/null;
+		then
+			fail "File was not overwritten as expected:" \
+			     "  archive: $archive_file"              \
+			     "  filename: $filename"
+		fi
+	done
 }
+
+# Check that the specified filenames in the run sandbox were not overwritten:
 
 check_not_overwritten() {
 	local archive_file=$1
-	local filename=$2
-	x_filename=$(simplify_filename "$filename")
-	if ! grep -q __OW_FILE__ "$run_sandbox/$x_filename" 2>/dev/null; then
-		fail "File was overwritten, not as expected:"   \
-		     "  archive: $archive_file"                 \
-		     "  filename: $filename"
-	fi
+	shift
+
+	for filename in "$@"; do
+		x_filename=$(simplify_filename "$filename")
+		if ! grep -q __OW_FILE__ "$run_sandbox/$x_filename" 2>/dev/null;
+		then
+			fail "File was overwritten, not as expected:"   \
+			     "  archive: $archive_file"                 \
+			     "  filename: $filename"
+		fi
+	done
 }
 
 check_extracted_file() {
@@ -227,7 +252,6 @@ lha_check_output() {
 
 test_basic_extract() {
 	local archive_file=$1
-	local filename=$2
 	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	make_sandboxes
@@ -243,7 +267,6 @@ test_basic_extract() {
 
 test_stdin_extract() {
 	local archive_file=$1
-	local filename=$2
 	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	make_sandboxes
@@ -260,7 +283,8 @@ test_stdin_extract() {
 
 test_w_option() {
 	local archive_file=$1
-	local filename=$2
+	shift
+
 	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	# Extract into a subdirectory of the 'w' sandbox that does not
@@ -277,12 +301,16 @@ test_w_option() {
 	lha_check_output "$expected_file" \
 	                 "ew=$extract_dir" $(test_arc_file "$archive_file")
 
-	x_filename=$(simplify_filename "$filename")
+	# Check that the specified filenames exist in w_sandbox.
 
-	if [ ! -e "$w_sandbox/dir/$x_filename" ] && \
-	   [ ! -L "$w_sandbox/dir/$x_filename" ]; then
-		fail "Failed to extract $filename from $archive_file"
-	fi
+	for filename in "$@"; do
+		x_filename=$(simplify_filename "$filename")
+
+		if [ ! -e "$w_sandbox/dir/$x_filename" ] && \
+		   [ ! -L "$w_sandbox/dir/$x_filename" ]; then
+			fail "Failed to extract $filename from $archive_file"
+		fi
+	done
 
 	remove_sandboxes
 }
@@ -291,20 +319,22 @@ test_w_option() {
 
 test_q1_option() {
 	local archive_file=$1
-	local filename=$2
+	shift
 
 	make_sandboxes
 
-	if [ "$filename" = "symlink" ]; then
-		printf "Symbolic Link symlink -> target\n"
-	else
-		printf "\r$filename :\r$filename\t- Melted  \n"
-	fi >/tmp/expected.txt
+	for filename in "$@"; do
+		if [ "$filename" = "symlink" ]; then
+			printf "Symbolic Link symlink -> target\n"
+		else
+			printf "\r$filename :\r$filename\t- Melted  \n"
+		fi
+	done >/tmp/expected.txt
 
 	lha_check_output /tmp/expected.txt \
 	                 eq1 $(test_arc_file "$archive_file")
 
-	check_exists "$archive_file" "$filename"
+	check_exists "$archive_file" "$@"
 
 	rm -f /tmp/expected.txt
 
@@ -316,19 +346,19 @@ test_q1_option() {
 test_q_option() {
 	local cmd=$1
 	local archive_file=$2
-	local filename=$3
+	shift; shift
 
 	make_sandboxes
 
-	file_to_overwrite "$filename"
+	files_to_overwrite "$@"
 	lha_check_output /dev/null $cmd $(test_arc_file "$archive_file")
 
 	check_exists "$archive_file" "$filename"
 
 	# The -q option also causes an existing file to be overwritten
-	# without confirmation (like -f). Make sure file is overwritten.
+	# without confirmation (like -f). Make sure files are overwritten.
 
-	check_overwritten "$archive_file" "$filename"
+	check_overwritten "$archive_file" "$@"
 
 	remove_sandboxes
 }
@@ -337,9 +367,7 @@ test_q_option() {
 
 test_i_option() {
 	local archive_file=$1
-	local filename=$2
-
-	local base_filename=$(basename "$filename")
+	shift
 
 	make_sandboxes
 
@@ -354,7 +382,10 @@ test_i_option() {
 	lha_check_output /tmp/expected.txt \
 	                 ei $(test_arc_file "$archive_file")
 
-	check_exists "$archive_file" "$base_filename"
+	for filename in "$@"; do
+		local base_filename=$(basename "$filename")
+		check_exists "$archive_file" "$base_filename"
+	done
 
 	rm -f /tmp/expected.txt
 	remove_sandboxes
@@ -364,43 +395,43 @@ test_i_option() {
 
 test_f_option() {
 	local archive_file=$1
-	local filename=$2
+	shift
+
 	local expected_file="$test_base/output/$archive_file-e.txt"
 
 	make_sandboxes
-	file_to_overwrite "$filename"
+	files_to_overwrite "$@"
 
 	lha_check_output "$expected_file" \
 	                 ef $(test_arc_file "$archive_file")
 
-	check_exists "$archive_file" "$filename"
-
-	check_overwritten "$archive_file" "$filename"
+	check_exists "$archive_file" "$@"
+	check_overwritten "$archive_file" "$@"
 
 	remove_sandboxes
 }
 
 test_archive() {
 	local archive_file=$1
-	local filename=$2
+	shift
 
 	#echo "test_archive $archive_file"
 
 	# Don't check symlink archives on non-Unix systems that
 	# don't support them.
 
-	if [ "$build_arch" != "unix" ] && [ "$filename" = "symlink" ]; then
+	if [ "$build_arch" != "unix" ] && [ "$1" = "symlink" ]; then
 		return
 	fi
 
-	test_basic_extract "$archive_file" "$filename"
-	test_stdin_extract "$archive_file" "$filename"
-	test_w_option "$archive_file" "$filename"
-	test_q_option eq "$archive_file" "$filename"
-	test_q_option eq2 "$archive_file" "$filename"
-	test_q1_option "$archive_file" "$filename"
-	test_i_option "$archive_file" "$filename"
-	test_f_option "$archive_file" "$filename"
+	test_basic_extract "$archive_file" "$@"
+	test_stdin_extract "$archive_file" "$@"
+	test_w_option "$archive_file" "$@"
+	test_q_option eq "$archive_file" "$@"
+	test_q_option eq2 "$archive_file" "$@"
+	test_q1_option "$archive_file" "$@"
+	test_i_option "$archive_file" "$@"
+	test_f_option "$archive_file" "$@"
 	# TODO: check v option
 }
 
@@ -552,6 +583,18 @@ test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
 test_archive generated/lzs/lzs.lzs          "gpl-2"
 test_archive generated/lzs/long.lzs         "long.txt"
 
+# The test -pm1- archive contains lots of archived files:
+
+test_archive generated/pm1/pm1.pma                          \
+    "data_00.bin" "data_01.bin" "data_02.bin" "data_03.bin" \
+    "data_04.bin" "data_05.bin" "data_06.bin" "data_07.bin" \
+    "data_08.bin" "data_09.bin" "data_10.bin" "data_11.bin" \
+    "data_12.bin" "data_13.bin" "data_14.bin" "data_15.bin" \
+    "data_16.bin" "data_17.bin" "data_18.bin" "data_19.bin" \
+    "data_20.bin" "data_21.bin" "data_22.bin" "data_23.bin" \
+    "data_24.bin" "data_25.bin" "data_26.bin" "data_27.bin" \
+    "data_28.bin" "data_29.bin" "data_30.bin" "data_31.bin"
+
 # ======================================================================
 #
 # Special cases:
@@ -564,11 +607,8 @@ test_overwrite_prompt() {
 
 	local archive_file=regression/multiple.lzh
 
-	file_to_overwrite "file1.txt"
-	file_to_overwrite "file2-1.txt"
-	file_to_overwrite "file2-2.txt"
-	file_to_overwrite "file3.txt"
-	file_to_overwrite "file4.txt"
+	files_to_overwrite \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	(echo y; echo n; echo Y; echo N; echo "") |               \
 	lha_check_output output/regression/multiple.lzh-ow1.txt   \
@@ -591,21 +631,15 @@ test_overwrite_all() {
 
 	make_sandboxes
 
-	file_to_overwrite "file1.txt"
-	file_to_overwrite "file2-1.txt"
-	file_to_overwrite "file2-2.txt"
-	file_to_overwrite "file3.txt"
-	file_to_overwrite "file4.txt"
+	files_to_overwrite \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	echo $cmd |                                               \
 	lha_check_output output/regression/multiple.lzh-ow2.txt   \
 	    e $(test_arc_file "$archive_file")
 
-	check_overwritten "$archive_file" "file1.txt"
-	check_overwritten "$archive_file" "file2-1.txt"
-	check_overwritten "$archive_file" "file2-2.txt"
-	check_overwritten "$archive_file" "file3.txt"
-	check_overwritten "$archive_file" "file4.txt"
+	check_overwritten "$archive_file" \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	remove_sandboxes
 }
@@ -618,21 +652,15 @@ test_overwrite_skip() {
 
 	make_sandboxes
 
-	file_to_overwrite "file1.txt"
-	file_to_overwrite "file2-1.txt"
-	file_to_overwrite "file2-2.txt"
-	file_to_overwrite "file3.txt"
-	file_to_overwrite "file4.txt"
+	files_to_overwrite \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	echo $cmd |                                               \
 	lha_check_output output/regression/multiple.lzh-ow3.txt   \
 	    e $(test_arc_file "$archive_file")
 
-	check_not_overwritten "$archive_file" "file1.txt"
-	check_not_overwritten "$archive_file" "file2-1.txt"
-	check_not_overwritten "$archive_file" "file2-2.txt"
-	check_not_overwritten "$archive_file" "file3.txt"
-	check_not_overwritten "$archive_file" "file4.txt"
+	check_not_overwritten "$archive_file" \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	remove_sandboxes
 }

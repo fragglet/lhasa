@@ -188,3 +188,5 @@ test_archive regression/unixsep.lzh
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs
 
+test_archive generated/pm1/pm1.pma
+

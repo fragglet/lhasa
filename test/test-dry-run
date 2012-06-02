@@ -207,6 +207,8 @@ test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
 test_archive generated/lzs/lzs.lzs          "gpl-2"
 test_archive generated/lzs/long.lzs         "long.txt"
 
+test_archive generated/pm1/pm1.pma          "data_31.bin"
+
 # ======================================================================
 #
 # Special cases:
