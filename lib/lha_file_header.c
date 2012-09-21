@@ -612,6 +612,18 @@ static int decode_level2_header(LHAFileHeader **header, LHAInputStream *stream)
 
 	(*header)->os_type = RAW_DATA(header, 23);
 
+	// LHA for OS-9/68k generates broken level 2 archives: the header
+	// length field is the length of the remainder of the header, not
+	// the complete header length. As a result it's two bytes too
+	// short. We can use the OS type field to detect these archives
+	// and compensate.
+
+	if ((*header)->os_type == LHA_OS_TYPE_OS9_68K) {
+		if (!extend_raw_data(header, stream, 2)) {
+			return 0;
+		}
+	}
+
 	if (!decode_extended_headers(header, 24)) {
 		return 0;
 	}
