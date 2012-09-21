@@ -802,7 +802,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	if ((header->extra_flags & LHA_FILE_COMMON_CRC) != 0
 	 && !check_common_crc(header)) {
-		return 0;
+		goto fail;
 	}
 
 	return header;
