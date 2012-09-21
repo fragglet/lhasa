@@ -183,7 +183,7 @@ static void msdos_path_to_unix(char *path)
 
 static void fix_osk_permissions(LHAFileHeader *header)
 {
-	unsigned int or, ow, oe, pr, pw, pe;
+	unsigned int or, ow, oe, pr, pw, pe, d;
 
 	// Save a copy of the original OSK permissions.
 
@@ -199,8 +199,10 @@ static void fix_osk_permissions(LHAFileHeader *header)
 	pr = (header->osk_perms & 0x08) != 0;
 	pw = (header->osk_perms & 0x10) != 0;
 	pe = (header->osk_perms & 0x20) != 0;
+	d = (header->osk_perms & 0x80) != 0;
 
-	header->unix_perms = (or << 8) | (ow << 7) | (oe << 6)  // owner
+	header->unix_perms = (d << 14)
+	                   | (or << 8) | (ow << 7) | (oe << 6)  // owner
 	                   | (pr << 5) | (pw << 4) | (pe << 3)  // group
 	                   | (pr << 2) | (pw << 1) | (pe << 0); // everyone
 }

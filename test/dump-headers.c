@@ -64,6 +64,9 @@ static void print_header(LHAFileHeader *header)
 	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
 		printf("unix_perms: 0%o\n", header->unix_perms);
 	}
+	if ((header->extra_flags & LHA_FILE_OSK_PERMS) != 0) {
+		printf("osk_perms: 0%o\n", header->osk_perms);
+	}
 	if ((header->extra_flags & LHA_FILE_UNIX_UID_GID) != 0) {
 		printf("unix_uid: %i\n", header->unix_uid);
 		printf("unix_gid: %i\n", header->unix_gid);
