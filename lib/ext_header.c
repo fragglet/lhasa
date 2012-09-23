@@ -48,6 +48,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_EXT_HEADER_UNIX_USER           0x53
 #define LHA_EXT_HEADER_UNIX_TIMESTAMP      0x54
 
+#define LHA_EXT_HEADER_OS9                 0xcc
+
 /**
  * Structure representing an extended header type.
  */
@@ -330,6 +332,30 @@ static LHAExtHeaderType lha_ext_header_unix_timestamp = {
 	4
 };
 
+// OS-9 (6809) header (0xcc)
+//
+// This stores OS-9 filesystem metadata.
+
+static int ext_header_os9_decoder(LHAFileHeader *header,
+                                  uint8_t *data,
+                                  size_t data_len)
+{
+	// TODO: The OS-9 extended header contains various data, but
+	// it's not clear what it's all for. Just extract the
+	// permissions for now.
+
+	header->os9_perms = lha_decode_uint16(data + 7);
+	header->extra_flags |= LHA_FILE_OS9_PERMS;
+
+	return 1;
+}
+
+static LHAExtHeaderType lha_ext_header_os9 = {
+	LHA_EXT_HEADER_OS9,
+	ext_header_os9_decoder,
+	12
+};
+
 // Table of extended headers.
 
 static const LHAExtHeaderType *ext_header_types[] = {
@@ -342,6 +368,7 @@ static const LHAExtHeaderType *ext_header_types[] = {
 	&lha_ext_header_unix_group,
 	&lha_ext_header_unix_timestamp,
 	&lha_ext_header_windows_timestamps,
+	&lha_ext_header_os9,
 };
 
 #define NUM_HEADER_TYPES (sizeof(ext_header_types) / sizeof(*ext_header_types))

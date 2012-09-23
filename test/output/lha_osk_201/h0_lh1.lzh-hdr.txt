@@ -7,7 +7,7 @@ os_type: 75 ('K')
 crc: a33a
 timestamp: 1262325600
 unix_perms: 0711
-osk_perms: 047
+os9_perms: 047
 unix_uid: 0
 unix_gid: 0
 --

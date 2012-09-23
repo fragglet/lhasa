@@ -7,7 +7,7 @@ os_type: 75 ('K')
 crc: 0000
 timestamp: 1277960400
 unix_perms: 040777
-osk_perms: 0177677
+os9_perms: 0177677
 unix_uid: 0
 unix_gid: 0
 --
@@ -20,7 +20,7 @@ os_type: 75 ('K')
 crc: 0000
 timestamp: 1277960400
 unix_perms: 040777
-osk_perms: 0177677
+os9_perms: 0177677
 unix_uid: 0
 unix_gid: 0
 --
@@ -34,7 +34,7 @@ os_type: 75 ('K')
 crc: 9778
 timestamp: 1262325600
 unix_perms: 0711
-osk_perms: 047
+os9_perms: 047
 unix_uid: 0
 unix_gid: 0
 --

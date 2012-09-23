@@ -109,10 +109,10 @@ extern "C" {
 #define LHA_FILE_WINDOWS_TIMESTAMPS    0x08
 
 /**
- * Bit field value set in extra_flags to indicate that the OS-9/68k
+ * Bit field value set in extra_flags to indicate that the OS-9
  * permissions field is set.
  */
-#define LHA_FILE_OSK_PERMS             0x10
+#define LHA_FILE_OS9_PERMS             0x10
 
 typedef struct _LHAFileHeader LHAFileHeader;
 
@@ -207,8 +207,8 @@ struct _LHAFileHeader {
 	/** Unix group ID, set if @ref LHA_FILE_UNIX_UID_GID is set. */
 	unsigned int unix_gid;
 
-	/** OS-9/68k permissions, set if @ref LHA_FILE_OSK_PERMS is set. */
-	unsigned int osk_perms;
+	/** OS-9 permissions, set if @ref LHA_FILE_OS9_PERMS is set. */
+	unsigned int os9_perms;
 
 	/** Unix username. */
 	char *unix_username;

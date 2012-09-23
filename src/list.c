@@ -114,9 +114,9 @@ static void unix_permissions_print(LHAFileHeader *header)
 	}
 }
 
-// Print OSK file permissions.
+// Print OS-9 file permissions.
 
-static void osk_permissions_print(LHAFileHeader *header)
+static void os9_permissions_print(LHAFileHeader *header)
 {
 	const char *perms = "sewrewr";
 	unsigned int i;
@@ -128,7 +128,7 @@ static void osk_permissions_print(LHAFileHeader *header)
 	}
 
 	for (i = 0; i < 7; ++i) {
-		if (header->osk_perms & (1U << (6 - i))) {
+		if (header->os9_perms & (1U << (6 - i))) {
 			printf("%c", perms[i]);
 		} else {
 			printf("-");
@@ -145,8 +145,8 @@ static void permission_column_print(LHAFileHeader *header)
 	// Print permissions. If we do not have any permissions to
 	// print, fall back to printing the OS type.
 
-	if ((header->extra_flags & LHA_FILE_OSK_PERMS) != 0) {
-		osk_permissions_print(header);
+	if ((header->extra_flags & LHA_FILE_OS9_PERMS) != 0) {
+		os9_permissions_print(header);
 	} else if ((header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
 		unix_permissions_print(header);
 	} else {
