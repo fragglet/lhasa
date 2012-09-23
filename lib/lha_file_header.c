@@ -46,7 +46,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LEVEL_3_MAX_HEADER_LEN (1024 * 1024) /* 1 MB */
 
 // Length of a level 0 Unix extended area.
-#define LEVEL_0_UNIX_EXTENDED_LEN 12
+#define LEVEL_0_UNIX_EXTENDED_LEN 12 /* bytes */
+
+// Length of a level 0 OS-9 extended area.
+#define LEVEL_0_OS9_EXTENDED_LEN 22 /* bytes */
 
 #define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
 #define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)
@@ -448,13 +451,69 @@ static int read_l1_extended_headers(LHAFileHeader **header,
 	return 1;
 }
 
+// Process a level 0 Unix extended area.
+
+static void process_level0_unix_area(LHAFileHeader *header,
+                                     uint8_t *data, size_t data_len)
+{
+	// A typical Unix extended area:
+	//
+	// 00000000  55 00 00 3b 3d 4b 80 81  e8 03 e8 03
+
+	// Sanity check.
+
+	if (data_len < LEVEL_0_UNIX_EXTENDED_LEN || data[1] != 0x00) {
+		return;
+	}
+
+	// OS-9/68k generates an extended area that is broadly compatible
+	// with the Unix one.
+
+	// Fill in the header fields from the data from the extended area.
+	// There's one minor point to note here: OS-9/68k LHA includes the
+	// timestamp twice - I have no idea why. In order to support both
+	// variants, read the end fields from the end of the extended area.
+
+	header->os_type = data[0];
+	header->timestamp = lha_decode_uint32(data + 2);
+
+	header->unix_perms = lha_decode_uint16(data + data_len - 6);
+	header->unix_uid = lha_decode_uint16(data + data_len - 4);
+	header->unix_gid = lha_decode_uint16(data + data_len - 2);
+
+	header->extra_flags |= LHA_FILE_UNIX_PERMS | LHA_FILE_UNIX_UID_GID;
+}
+
+// Process a level 0 OS-9 extended area.
+
+static void process_level0_os9_area(LHAFileHeader *header,
+                                    uint8_t *data, size_t data_len)
+{
+	// A typical OS-9 extended area:
+	//
+	// 00000000  39 13 00 00 c3 16 00 0f  00 cc 18 07 09 03 01 16
+	// 00000010  00 13 00 00 00 00
+
+	// Sanity checks:
+
+	if (data_len < LEVEL_0_OS9_EXTENDED_LEN
+	 || data[9] != 0xcc || data[1] != data[17] || data[2] != data[18]) {
+		return;
+	}
+
+	// The contents resemble the contents of the OS-9 extended header.
+	// We just want the permissions field.
+
+	header->os_type = LHA_OS_TYPE_OS9;
+	header->os9_perms = lha_decode_uint16(data + 1);
+	header->extra_flags |= LHA_FILE_OS9_PERMS;
+}
+
 // Handling for level 0 extended areas.
 
 static void process_level0_extended_area(LHAFileHeader *header,
                                          uint8_t *data, size_t data_len)
 {
-	uint8_t os_type;
-
 	// PMarc archives can include comments that are stored in the
 	// extended area. It is possible that this could conflict with
 	// the logic below, so specifically exclude them.
@@ -463,31 +522,23 @@ static void process_level0_extended_area(LHAFileHeader *header,
 		return;
 	}
 
-	// Only Unix extended areas are supported for now, although some
-	// tools can generate other types. OS-9/68k generates an extended
-	// area that is broadly compatible with the Unix one.
+	// Different tools include different extended areas. Try to
+	// identify which tool generated this one, based on the first
+	// byte.
 
-	os_type = data[0];
+	switch (data[0]) {
+		case LHA_OS_TYPE_UNIX:
+		case LHA_OS_TYPE_OS9_68K:
+			process_level0_unix_area(header, data, data_len);
+			break;
 
-	if (data_len < LEVEL_0_UNIX_EXTENDED_LEN
-	 || !(os_type == LHA_OS_TYPE_UNIX || os_type == LHA_OS_TYPE_OS9_68K)
-	 || data[1] != 0) {
-		return;
+		case LHA_OS_TYPE_OS9:
+			process_level0_os9_area(header, data, data_len);
+			break;
+
+		default:
+			break;
 	}
-
-	// Fill in the header fields from the data from the extended area.
-	// There's one minor point to note here: OS-9/68k LHA includes the
-	// timestamp twice - I have no idea why. In order to support both
-	// variants, read the end fields from the end of the extended area.
-
-	header->os_type = os_type;
-	header->timestamp = lha_decode_uint32(data + 2);
-
-	header->unix_perms = lha_decode_uint16(data + data_len - 6);
-	header->unix_uid = lha_decode_uint16(data + data_len - 4);
-	header->unix_gid = lha_decode_uint16(data + data_len - 2);
-
-	header->extra_flags |= LHA_FILE_UNIX_PERMS | LHA_FILE_UNIX_UID_GID;
 }
 
 // Decode a level 0 or 1 header.
