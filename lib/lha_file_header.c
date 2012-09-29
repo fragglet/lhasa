@@ -25,31 +25,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lha_endian.h"
 #include "lha_file_header.h"
-#include "ext_header.h"
 #include "crc16.h"
-
-#define COMMON_HEADER_LEN 22 /* bytes */
-
-// Minimum length of a level 0 header (with zero-length filename).
-#define LEVEL_0_MIN_HEADER_LEN 22 /* bytes */
-
-// Minimum length of a level 1 base header (with zero-length filename).
-#define LEVEL_1_MIN_HEADER_LEN 25 /* bytes */
-
-// Length of a level 2 base header.
-#define LEVEL_2_HEADER_LEN 26 /* bytes */
-
-// Length of a level 3 base header.
-#define LEVEL_3_HEADER_LEN 32 /* bytes */
-
-// Maximum length of a level 3 header (including extended headers).
-#define LEVEL_3_MAX_HEADER_LEN (1024 * 1024) /* 1 MB */
-
-// Length of a level 0 Unix extended area.
-#define LEVEL_0_UNIX_EXTENDED_LEN 12 /* bytes */
-
-// Length of a level 0 OS-9 extended area.
-#define LEVEL_0_OS9_EXTENDED_LEN 22 /* bytes */
+#include "ext_header.h"
+#include "header_defs.h"
 
 #define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
 #define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)

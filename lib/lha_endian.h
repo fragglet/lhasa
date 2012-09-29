@@ -68,5 +68,33 @@ uint16_t lha_decode_be_uint16(uint8_t *buf);
 
 uint32_t lha_decode_be_uint32(uint8_t *buf);
 
+
+/**
+ * Encode a 16-bit little-endian unsigned integer.
+ *
+ * @param buf       Pointer to buffer into which to store the value.
+ * @param value     Value to encode.
+ */
+
+void lha_encode_uint16(uint8_t *buf, uint16_t value);
+
+/**
+ * Encode a 32-bit little-endian unsigned integer.
+ *
+ * @param buf       Pointer to buffer into which to store the value.
+ * @param value     Value to encode.
+ */
+
+void lha_encode_uint32(uint8_t *buf, uint32_t value);
+
+/**
+ * Encode a 64-bit little-endian unsigned integer.
+ *
+ * @param buf       Pointer to buffer into which to store the value.
+ * @param value     Value to encode.
+ */
+
+void lha_encode_uint64(uint8_t *buf, uint64_t value);
+
 #endif /* #ifndef LHASA_LHA_ENDIAN_H */
 

@@ -54,3 +54,30 @@ uint32_t lha_decode_be_uint32(uint8_t *buf)
 	                 | (buf[2] << 8) | buf[3]);
 }
 
+
+void lha_encode_uint16(uint8_t *buf, uint16_t value)
+{
+	buf[0] = value & 0xff;
+	buf[1] = (value >> 8) & 0xff;
+}
+
+void lha_encode_uint32(uint8_t *buf, uint32_t value)
+{
+	buf[0] = value & 0xff;
+	buf[1] = (value >> 8) & 0xff;
+	buf[2] = (value >> 16) & 0xff;
+	buf[3] = (value >> 24) & 0xff;
+}
+
+void lha_encode_uint64(uint8_t *buf, uint64_t value)
+{
+	buf[0] = value & 0xff;
+	buf[1] = (value >> 8) & 0xff;
+	buf[2] = (value >> 16) & 0xff;
+	buf[3] = (value >> 24) & 0xff;
+	buf[4] = (value >> 32) & 0xff;
+	buf[5] = (value >> 40) & 0xff;
+	buf[6] = (value >> 48) & 0xff;
+	buf[7] = (value >> 56) & 0xff;
+}
+

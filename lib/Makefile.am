@@ -12,6 +12,7 @@ EXTRA_DIST =                                            \
 SRC =                                                   \
 	crc16.c                 crc16.h                 \
 	ext_header.c            ext_header.h            \
+	                        header_defs.h           \
 	lha_arch_unix.c         lha_arch.h              \
 	lha_arch_win32.c                                \
 	lha_decoder.c           lha_decoder.h           \
@@ -20,6 +21,7 @@ SRC =                                                   \
 	lha_input_stream.c      lha_input_stream.h      \
 	lha_basic_reader.c      lha_basic_reader.h      \
 	lha_reader.c                                    \
+	lha_writer.c                                    \
 	macbinary.c             macbinary.h             \
 	null_decoder.c                                  \
 	lh1_decoder.c                                   \
