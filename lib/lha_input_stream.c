@@ -326,6 +326,7 @@ static const LHAInputStreamType file_source_unowned = {
 
 LHAInputStream *lha_input_stream_from(char *filename)
 {
+	LHAInputStream *result;
 	FILE *fstream;
 
 	fstream = fopen(filename, "rb");
@@ -334,7 +335,13 @@ LHAInputStream *lha_input_stream_from(char *filename)
 		return NULL;
 	}
 
-	return lha_input_stream_new(&file_source_owned, fstream);
+	result = lha_input_stream_new(&file_source_owned, fstream);
+
+	if (result == NULL) {
+		fclose(fstream);
+	}
+
+	return result;
 }
 
 LHAInputStream *lha_input_stream_from_FILE(FILE *stream)
