@@ -24,6 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_decoder.h"
 #include "lha_file_header.h"
 #include "lha_input_stream.h"
+#include "lha_output_stream.h"
 #include "lha_reader.h"
 
 #endif /* #ifndef LHASA_PUBLIC_LHASA_H */

@@ -15,11 +15,12 @@ SRC =                                                   \
 	                        header_defs.h           \
 	lha_arch_unix.c         lha_arch.h              \
 	lha_arch_win32.c                                \
+	lha_basic_reader.c      lha_basic_reader.h      \
 	lha_decoder.c           lha_decoder.h           \
 	lha_endian.c            lha_endian.h            \
 	lha_file_header.c       lha_file_header.h       \
 	lha_input_stream.c      lha_input_stream.h      \
-	lha_basic_reader.c      lha_basic_reader.h      \
+	lha_output_stream.c     lha_output_stream.h     \
 	lha_reader.c                                    \
 	lha_writer.c                                    \
 	macbinary.c             macbinary.h             \
