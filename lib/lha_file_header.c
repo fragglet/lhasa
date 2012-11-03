@@ -269,12 +269,12 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 			return 0;
 		}
 
-		memcpy(header->path, data, (size_t) (sep - data) + 1);
+		memcpy(header->path, data, (size_t) (sep - data + 1));
 		header->path[sep - data + 1] = '\0';
 		msdos_path_to_unix(header->path);
 
 		filename = sep + 1;
-		filename_len = data_len - 1 - (size_t) (sep - data);
+		filename_len = data_len - (size_t) (sep - data + 1);
 	} else {
 		filename = data;
 		filename_len = data_len;
@@ -437,6 +437,10 @@ static int read_l1_extended_headers(LHAFileHeader **header,
 		// For backwards compatibility with level 0 headers,
 		// the compressed length field is actually "compressed
 		// length + length of all extended headers":
+
+		if ((*header)->compressed_length < ext_header_len) {
+			return 0;
+		}
 
 		(*header)->compressed_length -= ext_header_len;
 

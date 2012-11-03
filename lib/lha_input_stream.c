@@ -96,13 +96,13 @@ static int file_header_match(uint8_t *buf)
 
 	// LHA algorithm?
 
-	if (!strncmp((char *) buf + 3, "lh", 2)) {
+	if (buf[3] == 'l' && buf[4] == 'h') {
 		return 1;
 	}
 
 	// LArc algorithm (lz4, lz5, lzs)?
 
-	if (!strncmp((char *) buf + 3, "lz", 2)
+	if (buf[3] == 'l' && buf[4] == 'z'
 	 && (buf[5] == '4' || buf[5] == '5' || buf[5] == 's')) {
 		return 1;
 	}
@@ -111,7 +111,7 @@ static int file_header_match(uint8_t *buf)
 	// Note: PMarc SFX archives have a -pms- string in them that must
 	// be ignored.
 
-	if (!strncmp((char *) buf + 3, "pm", 2) && buf[5] != 's') {
+	if (buf[3] == 'p' && buf[4] == 'm' && buf[5] != 's') {
 		return 1;
 	}
 

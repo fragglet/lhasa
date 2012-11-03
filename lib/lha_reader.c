@@ -227,6 +227,13 @@ LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 		lha_basic_reader_next_file(reader->reader);
 	}
 
+	// If the last file we returned was a 'fake' directory, we must
+	// now unreference it.
+
+	if (reader->curr_file_type == CURR_FILE_FAKE_DIR) {
+		lha_file_header_free(reader->curr_file);
+	}
+
 	// Pop off all appropriate directories from the stack first.
 
 	if (end_of_top_dir(reader)) {
