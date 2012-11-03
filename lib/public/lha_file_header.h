@@ -116,6 +116,8 @@ extern "C" {
 
 typedef struct _LHAFileHeader LHAFileHeader;
 
+#define LHA_FILE_HAVE_EXTRA(header, flag) \
+	(((header)->extra_flags & (flag)) != 0)
 /**
  * Structure containing a decoded LZH file header.
  *

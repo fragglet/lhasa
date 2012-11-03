@@ -865,7 +865,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 			goto fail;
 		}
 	} else if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)
-	        && (header->extra_flags & LHA_FILE_UNIX_PERMS) != 0
+	        && LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)
 		&& header->filename != NULL
 		&& (header->unix_perms & 0170000) == 0120000) {
 
@@ -893,21 +893,21 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 	// permissions are actually OS-9 permissions.
 
 	if (header->os_type == LHA_OS_TYPE_OS9_68K
-	 && (header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
+	 && LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)) {
 		header->os9_perms = header->unix_perms;
 		header->extra_flags |= LHA_FILE_OS9_PERMS;
 	}
 
 	// If OS-9 permissions were read, translate into Unix permissions.
 
-	if ((header->extra_flags & LHA_FILE_OS9_PERMS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_OS9_PERMS)) {
 		os9_to_unix_permissions(header);
 	}
 
 	// Was the "common" extended header read, which contains a CRC of
 	// the full header? If so, perform a CRC check now.
 
-	if ((header->extra_flags & LHA_FILE_COMMON_CRC) != 0
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_COMMON_CRC)
 	 && !check_common_crc(header)) {
 		goto fail;
 	}

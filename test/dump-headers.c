@@ -53,7 +53,7 @@ static void print_header(LHAFileHeader *header)
 	if (header->timestamp != 0) {
 		printf("timestamp: %i\n", header->timestamp);
 	}
-	if ((header->extra_flags & LHA_FILE_WINDOWS_TIMESTAMPS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_WINDOWS_TIMESTAMPS)) {
 		printf("win_creation_time: %" PRIu64 "\n",
 		       header->win_creation_time);
 		printf("win_modification_time: %" PRIu64 "\n",
@@ -61,13 +61,13 @@ static void print_header(LHAFileHeader *header)
 		printf("win_access_time: %" PRIu64 "\n",
 		       header->win_access_time);
 	}
-	if ((header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)) {
 		printf("unix_perms: 0%o\n", header->unix_perms);
 	}
-	if ((header->extra_flags & LHA_FILE_OS9_PERMS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_OS9_PERMS)) {
 		printf("os9_perms: 0%o\n", header->os9_perms);
 	}
-	if ((header->extra_flags & LHA_FILE_UNIX_UID_GID) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_UID_GID)) {
 		printf("unix_uid: %i\n", header->unix_uid);
 		printf("unix_gid: %i\n", header->unix_gid);
 	}
@@ -77,7 +77,7 @@ static void print_header(LHAFileHeader *header)
 	if (header->unix_username != NULL) {
 		printf("unix_username: %s\n", header->unix_username);
 	}
-	if ((header->extra_flags & LHA_FILE_COMMON_CRC) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_COMMON_CRC)) {
 		printf("common_crc: %04x\n", header->common_crc);
 	}
 }

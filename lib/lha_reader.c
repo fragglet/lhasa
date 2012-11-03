@@ -375,12 +375,12 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 {
 	int unix_uid = -1, unix_gid = -1, unix_perms = -1;
 
-	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_UID_GID) {
+	if (LHA_FILE_HAVE_EXTRA(reader->curr_file, LHA_FILE_UNIX_UID_GID)) {
 		unix_uid = reader->curr_file->unix_uid;
 		unix_gid = reader->curr_file->unix_gid;
 	}
 
-	if (reader->curr_file->extra_flags & LHA_FILE_UNIX_PERMS) {
+	if (LHA_FILE_HAVE_EXTRA(reader->curr_file, LHA_FILE_UNIX_PERMS)) {
 		unix_perms = reader->curr_file->unix_perms;
 	}
 
@@ -393,7 +393,7 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 static int set_timestamps_from_header(char *path, LHAFileHeader *header)
 {
 #if LHA_ARCH == LHA_ARCH_WINDOWS
-	if ((header->extra_flags & LHA_FILE_WINDOWS_TIMESTAMPS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_WINDOWS_TIMESTAMPS)) {
 		return lha_arch_set_windows_timestamps(
 		    path,
 		    header->win_creation_time,
@@ -419,7 +419,7 @@ static int set_directory_metadata(LHAFileHeader *header, char *path)
 
 	// Set owner and group:
 
-	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_UID_GID)) {
 		if (!lha_arch_chown(path, header->unix_uid,
 		                    header->unix_gid)) {
 			// On most Unix systems, only root can change
@@ -435,7 +435,7 @@ static int set_directory_metadata(LHAFileHeader *header, char *path)
 
 	// Set permissions on directory:
 
-	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)) {
 		if (!lha_arch_chmod(path, header->unix_perms)) {
 			return 0;
 		}
@@ -461,7 +461,7 @@ static int extract_directory(LHAReader *reader, char *path)
 	// the directory with minimal permissions limited to the running
 	// user. Otherwise use the default umask.
 
-	if (header->extra_flags & LHA_FILE_UNIX_PERMS) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)) {
 		mode = 0700;
 	} else {
 		mode = 0777;
