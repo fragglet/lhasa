@@ -83,7 +83,15 @@ struct _LHAReader {
 	LHAFileHeader *dir_stack;
 };
 
-// Free the current decoder structure and reset the decoder pointer to NULL.
+/**
+ * Free the current decoder structure.
+ *
+ * If the reader has an allocated decoder being used to decompress the
+ * current file, the decoder is freed and the decoder pointer reset
+ * to NULL.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ */
 
 static void close_decoder(LHAReader *reader)
 {
@@ -102,8 +110,15 @@ static void close_decoder(LHAReader *reader)
 	}
 }
 
-// Create the decoder structure to decompress the data from the
-// current file. Returns 1 for success.
+/**
+ * Create the decoder structure to decompress the data from the
+ * current file.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param callback       Callback function to invoke to track progress.
+ * @param callback_data  Extra pointer to pass to the callback function.
+ * @return               Non-zero for success, zero for failure.
+ */
 
 static int open_decoder(LHAReader *reader,
                         LHADecoderProgressCallback callback,
@@ -202,7 +217,17 @@ void lha_reader_set_dir_policy(LHAReader *reader,
 	reader->dir_policy = policy;
 }
 
-// Returns true if the top directory in the stack should be popped off.
+/**
+ * Check if the directory at the top of the stack should be popped.
+ *
+ * Extracting a directory is a two stage process; after the directory
+ * is created, it is pushed onto the directory stack. Later the
+ * directory must be popped off the stack and its metadata applied.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @return               Non-zero if there is a directory at the top of
+ *                       the stack that should be popped.
+ */
 
 static int end_of_top_dir(LHAReader *reader)
 {
@@ -314,11 +339,17 @@ size_t lha_reader_read(LHAReader *reader, void *buf, size_t buf_len)
 	return lha_decoder_read(reader->decoder, buf, buf_len);
 }
 
-// Decompress the current file, invoking the specified callback function
-// to monitor progress (if not NULL). Assumes that open_decoder() has
-// already been called to initialize decode the file. Decompressed data
-// is written to 'output' if it is not NULL.
-// Returns true if the file decompressed successfully.
+/**
+ * Decompress the current file.
+ *
+ * Assumes that @param open_decoder has already been called to
+ * start the decode process.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param output         FILE handle to write decompressed data, or NULL
+ *                       if the decompressed data should be discarded.
+ * @return               Non-zero if the file decompressed successfully.
+ */
 
 static int do_decode(LHAReader *reader, FILE *output)
 {
@@ -368,9 +399,14 @@ int lha_reader_check(LHAReader *reader,
 	    && do_decode(reader, NULL);
 }
 
-// Open an output stream into which to decompress the current file.
-// The filename is constructed from the file header of the current file,
-// or 'filename' is used if it is not NULL.
+/**
+ * Open an output stream into which to decompress the current file.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param filename       Name of the file to open.
+ * @return               FILE handle of the opened file, or NULL in
+ *                       case of failure.
+ */
 
 static FILE *open_output_file(LHAReader *reader, char *filename)
 {
@@ -388,8 +424,18 @@ static FILE *open_output_file(LHAReader *reader, char *filename)
 	return lha_arch_fopen(filename, unix_uid, unix_gid, unix_perms);
 }
 
-// Set file timestamp(s) for the specified file using values from the
-// specified header.
+/**
+ * Set file timestamps for the specified file.
+ *
+ * If possible, the more accurate Windows timestamp values are used;
+ * otherwise normal Unix timestamps are used.
+ *
+ * @param path     Path to the file or directory to set.
+ * @param header   Pointer to file header structure containing the
+ *                 timestamps to set.
+ * @return         Non-zero if the timestamps were set successfully,
+ *                 or zero for failure.
+ */
 
 static int set_timestamps_from_header(char *path, LHAFileHeader *header)
 {
@@ -410,7 +456,18 @@ static int set_timestamps_from_header(char *path, LHAFileHeader *header)
 	}
 }
 
-// Second stage of directory extraction: set metadata.
+/**
+ * Set directory metadata.
+ *
+ * This is the second stage of directory extraction. Metadata (timestamps
+ * and permissions) should be set on a dictory after the contents of
+ * the directory has been extracted.
+ *
+ * @param header     Pointer to file header structure containing the
+ *                   metadata to set.
+ * @param path       Path to the directory on which to set the metadata.
+ * @return           Non-zero for success, or zero for failure.
+ */
 
 static int set_directory_metadata(LHAFileHeader *header, char *path)
 {
@@ -444,6 +501,21 @@ static int set_directory_metadata(LHAFileHeader *header, char *path)
 
 	return 1;
 }
+
+/**
+ * "Extract" (create) a directory.
+ *
+ * The current file is assumed to be a directory. This is the first
+ * stage in extracting a directory; after the directory is created,
+ * it is added to the directory stack so that the metadata apply stage
+ * runs later. (If the LHA_READER_DIR_PLAIN policy is used, metadata
+ * is just applied now).
+ *
+ * @param reader    Pointer to the LHA reader structure.
+ * @param path      Path to the directory, or NULL to use the path from
+ *                  the file header.
+ * @return          Non-zero for success, or zero for failure.
+ */
 
 static int extract_directory(LHAReader *reader, char *path)
 {
@@ -493,6 +565,15 @@ static int extract_directory(LHAReader *reader, char *path)
 	return 1;
 }
 
+/**
+ * Get the full path for the given file header.
+ *
+ * @param header     Pointer to the file header structure.
+ * @return           Pointer to an allocated string containing the full
+ *                   file or directory path, or NULL for failure. The
+ *                   string must be freed by the caller.
+ */
+
 static char *full_path_for_header(LHAFileHeader *header)
 {
 	char *result;
@@ -516,6 +597,18 @@ static char *full_path_for_header(LHAFileHeader *header)
 		return strdup(header->filename);
 	}
 }
+
+/**
+ * Extract the current file.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param filename       Filename into which to extract the file, or NULL
+ *                       to use the filename from the file header.
+ * @param callback       Callback function to invoke to track progress.
+ * @param callback_data  Extra pointer to pass to the callback function.
+ * @return               Non-zero if the file was successfully extracted,
+ *                       or zero for failure.
+ */
 
 static int extract_file(LHAReader *reader, char *filename,
                         LHADecoderProgressCallback callback,
@@ -564,6 +657,16 @@ static int extract_file(LHAReader *reader, char *filename,
 	return result;
 }
 
+/**
+ * Extract a Unix symbolic link.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param filename       Filename into which to extract the symlink, or NULL
+ *                       to use the filename from the file header.
+ * @return               Non-zero if the symlink was extracted successfully,
+ *                       or zero for failure.
+ */
+
 static int extract_symlink(LHAReader *reader, char *filename)
 {
 	char *tmp_filename = NULL;
@@ -589,6 +692,21 @@ static int extract_symlink(LHAReader *reader, char *filename)
 
 	return result;
 }
+
+/**
+ * Extract a "normal" file.
+ *
+ * This just extracts the file header most recently read by the
+ * BasicReader.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param filename       Filename into which to extract the file, or NULL
+ *                       to use the filename from the file header.
+ * @param callback       Callback function to invoke to track progress.
+ * @param callback_data  Extra pointer to pass to the callback function.
+ * @return               Non-zero if the file was successfully extracted,
+ *                       or zero for failure.
+ */
 
 static int extract_normal(LHAReader *reader,
                           char *filename,
