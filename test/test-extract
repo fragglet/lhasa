@@ -776,6 +776,23 @@ test_symlink() {
 	remove_sandboxes
 }
 
+# '..' path check. It should not be possible to escape the extract
+# directory.
+
+test_dotdot() {
+	local archive_file=regression/dotdot.lzh
+
+	make_sandboxes
+
+	lha_check_output output/regression/dotdot.lzh-e.txt \
+	    ef $(test_arc_file "$archive_file")
+
+	check_not_exists "$archive_file" "../evil1.txt"
+	check_not_exists "$archive_file" "../evil2.txt"
+
+	remove_sandboxes
+}
+
 test_overwrite_prompt
 test_overwrite_all a
 test_overwrite_all A
@@ -788,4 +805,5 @@ test_extract_list
 test_extract_truncated
 
 test_symlink symlink1.lzh
+test_dotdot
 

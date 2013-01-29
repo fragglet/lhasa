@@ -29,3 +29,8 @@ symlink1.lzh        - Symbolic link test. The archive contains a file named
                       and then as an actual file. Extraction should not
                       create bar.txt, or arbitrary files could be overwritten
                       by a maliciously constructed archive file.
+
+dotdot.lzh          - Archive containing paths with '..'. This could be used
+                      to break out of the extract directory and overwrite
+                      arbitrary files on the filesystem.
+

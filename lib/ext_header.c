@@ -123,6 +123,7 @@ static int ext_header_filename_decoder(LHAFileHeader *header,
                                        size_t data_len)
 {
 	char *new_filename;
+	unsigned int i;
 
 	new_filename = malloc(data_len + 1);
 
@@ -132,6 +133,16 @@ static int ext_header_filename_decoder(LHAFileHeader *header,
 
 	memcpy(new_filename, data, data_len);
 	new_filename[data_len] = '\0';
+
+	// Sanitize the filename that was read. It is not allowed to
+	// contain a path separator, which could potentially be used
+	// to do something malicious.
+
+	for (i = 0; new_filename[i] != '\0'; ++i) {
+		if (new_filename[i] == '/') {
+			new_filename[i] = '_';
+		}
+	}
 
 	free(header->filename);
 	header->filename = new_filename;
