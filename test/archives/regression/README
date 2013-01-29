@@ -24,3 +24,8 @@ unixsep.lzh         - Archive containing a level 0 header where the filename
                       ('/') instead of DOS-style ('\'). This file is manually
                       constructed, but archives like this do exist in the wild.
 
+symlink1.lzh        - Symbolic link test. The archive contains a file named
+                      foo.txt twice - firstly as a symbolic link to bar.txt,
+                      and then as an actual file. Extraction should not
+                      create bar.txt, or arbitrary files could be overwritten
+                      by a maliciously constructed archive file.

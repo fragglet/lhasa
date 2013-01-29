@@ -760,6 +760,22 @@ test_extract_truncated() {
 	remove_sandboxes
 }
 
+# Symbolic link test. A file named 'bar.txt' should not be created.
+
+test_symlink() {
+	local archive_file=regression/$1
+
+	make_sandboxes
+
+	lha_check_output output/regression/$1-e.txt \
+	    e $(test_arc_file "$archive_file")
+
+	check_exists     "$archive_file" "foo.txt"
+	check_not_exists "$archive_file" "bar.txt"
+
+	remove_sandboxes
+}
+
 test_overwrite_prompt
 test_overwrite_all a
 test_overwrite_all A
@@ -770,4 +786,6 @@ test_wildcard1
 test_wildcard2
 test_extract_list
 test_extract_truncated
+
+test_symlink symlink1.lzh
 
