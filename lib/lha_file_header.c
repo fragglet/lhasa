@@ -56,26 +56,31 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 char *lha_file_header_full_path(LHAFileHeader *header)
 {
+	char *path;
+	char *filename;
 	char *result;
-	size_t filename_len;
 
 	if (header->path != NULL) {
-		filename_len = strlen(header->filename)
-		             + strlen(header->path)
-		             + 1;
-
-		result = malloc(filename_len);
-
-		if (result == NULL) {
-			return NULL;
-		}
-
-		sprintf(result, "%s%s", header->path, header->filename);
-
-		return result;
+		path = header->path;
 	} else {
-		return strdup(header->filename);
+		path = "";
 	}
+
+	if (header->filename != NULL) {
+		filename = header->filename;
+	} else {
+		filename = "";
+	}
+
+	result = malloc(strlen(path) + strlen(filename) + 1);
+
+	if (result == NULL) {
+		return NULL;
+	}
+
+	sprintf(result, "%s%s", path, filename);
+
+	return result;
 }
 
 /**
@@ -982,7 +987,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 		}
 	} else if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)
 	        && LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)
-		&& header->filename != NULL
+		&& (header->path != NULL || header->filename != NULL)
 		&& (header->unix_perms & 0170000) == 0120000) {
 
 		if (!parse_symlink(header)) {

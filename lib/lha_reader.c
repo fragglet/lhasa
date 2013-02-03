@@ -693,6 +693,13 @@ static int is_dangerous_symlink(LHAFileHeader *header)
 		}
 	}
 
+	// The path might also end with '..' (no terminating /)
+
+	if ((p - path_start) == 2
+	 && path_start[0] == '.' && path_start[1] == '.') {
+		return 1;
+	}
+
 	return 0;
 }
 
