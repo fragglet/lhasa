@@ -877,3 +877,9 @@ int lha_reader_extract(LHAReader *reader,
 	return 0;
 }
 
+int lha_reader_current_is_fake(LHAReader *reader)
+{
+	return reader->curr_file_type == CURR_FILE_FAKE_DIR
+	    || reader->curr_file_type == CURR_FILE_DEFERRED_SYMLINK;
+}
+

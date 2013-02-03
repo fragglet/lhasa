@@ -193,6 +193,22 @@ int lha_reader_extract(LHAReader *reader,
                        LHADecoderProgressCallback callback,
                        void *callback_data);
 
+/**
+ * Check if the current file (last returned by @ref lha_reader_next_file)
+ * was generated internally by the extract process. This occurs when a
+ * directory or symbolic link must be created as a two-stage process, with
+ * some of the extraction process deferred to later in the stream.
+ *
+ * These "fake" duplicates should usually be hidden in the user interface
+ * when a summary of extraction is presented.
+ *
+ * @param reader         The @ref LHAReader structure.
+ * @return               Non-zero if the current file is a "fake", or zero
+ *                       for a normal file.
+ */
+
+int lha_reader_current_is_fake(LHAReader *reader);
+
 #ifdef __cplusplus
 }
 #endif
