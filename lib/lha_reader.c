@@ -44,6 +44,11 @@ typedef enum {
 
 	CURR_FILE_FAKE_DIR,
 
+	// Current file is a deferred symbolic link that has been left
+	// to the end of the input stream to be created.
+
+	CURR_FILE_DEFERRED_SYMLINK,
+
 	// End of input stream has been reached.
 
 	CURR_FILE_EOF,
@@ -81,6 +86,13 @@ struct _LHAReader {
 	// in the case of LHA_READER_DIR_END_OF_FILE it is a list.
 
 	LHAFileHeader *dir_stack;
+
+	// Symbolic links containing absolute paths or '..' are not
+	// created immediately - instead, "placeholder" files are created
+	// in their place, and the symbolic links created at the end
+	// of extraction.
+
+	LHAFileHeader *deferred_symlinks;
 };
 
 /**
@@ -312,9 +324,21 @@ LHAFileHeader *lha_reader_next_file(LHAReader *reader)
 		reader->curr_file_type = CURR_FILE_FAKE_DIR;
 	} else {
 		reader->curr_file = lha_basic_reader_curr_file(reader->reader);
+		reader->curr_file_type = CURR_FILE_NORMAL;
+	}
 
-		if (reader->curr_file != NULL) {
-			reader->curr_file_type = CURR_FILE_NORMAL;
+	// Once we reach the end of the file, there may be deferred
+	// symbolic links still to extract, so process those before
+	// giving up and declaring end of file.
+
+	if (reader->curr_file == NULL) {
+		if (reader->deferred_symlinks != NULL) {
+			reader->curr_file = reader->deferred_symlinks;
+			reader->curr_file_type = CURR_FILE_DEFERRED_SYMLINK;
+
+			reader->deferred_symlinks =
+			    reader->deferred_symlinks->_next;
+			reader->curr_file->_next = NULL;
 		} else {
 			reader->curr_file_type = CURR_FILE_EOF;
 		}
@@ -566,39 +590,6 @@ static int extract_directory(LHAReader *reader, char *path)
 }
 
 /**
- * Get the full path for the given file header.
- *
- * @param header     Pointer to the file header structure.
- * @return           Pointer to an allocated string containing the full
- *                   file or directory path, or NULL for failure. The
- *                   string must be freed by the caller.
- */
-
-static char *full_path_for_header(LHAFileHeader *header)
-{
-	char *result;
-	size_t filename_len;
-
-	if (header->path != NULL) {
-		filename_len = strlen(header->filename)
-		             + strlen(header->path)
-		             + 1;
-
-		result = malloc(filename_len);
-
-		if (result == NULL) {
-			return NULL;
-		}
-
-		sprintf(result, "%s%s", header->path, header->filename);
-
-		return result;
-	} else {
-		return strdup(header->filename);
-	}
-}
-
-/**
  * Extract the current file.
  *
  * @param reader         Pointer to the LHA reader structure.
@@ -621,7 +612,7 @@ static int extract_file(LHAReader *reader, char *filename,
 	// Construct filename?
 
 	if (filename == NULL) {
-		tmp_filename = full_path_for_header(reader->curr_file);
+		tmp_filename = lha_file_header_full_path(reader->curr_file);
 
 		if (tmp_filename == NULL) {
 			return 0;
@@ -658,6 +649,128 @@ static int extract_file(LHAReader *reader, char *filename,
 }
 
 /**
+ * Determine whether a header contains a "dangerous" symbolic link.
+ *
+ * Symbolic links that begin with '/' or contain '..' as a path are
+ * Potentially dangerous and could potentially be used to overwrite
+ * arbitrary files on the filesystem. They therefore need to be
+ * treated specially.
+ *
+ * @param header         Pointer to a header structure defining a symbolic
+ *                       link.
+ * @return               Non-zero if the symbolic link is potentially
+ *                       dangerous.
+ */
+
+static int is_dangerous_symlink(LHAFileHeader *header)
+{
+	char *path_start;
+	char *p;
+
+	if (header->symlink_target == NULL) {
+		return 0;
+	}
+
+	// Absolute path symlinks could be used to point to arbitrary
+	// filesystem locations.
+
+	if (header->symlink_target[0] == '/') {
+		return 1;
+	}
+
+	// Check for paths containing '..'.
+
+	path_start = header->symlink_target;
+
+	for (p = header->symlink_target; *p != '\0'; ++p) {
+		if (*p == '/') {
+			if ((p - path_start) == 2
+			 && path_start[0] == '.' && path_start[1] == '.') {
+				return 1;
+			}
+
+			path_start = p + 1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Get the length of a path defined by a file header.
+ *
+ * @param header         The file header structure.
+ * @return               Length of the header in bytes.
+ */
+
+static size_t file_header_path_len(LHAFileHeader *header)
+{
+	size_t result;
+
+	result = 0;
+
+	if (header->path != NULL) {
+		result += strlen(header->path);
+	}
+	if (header->filename != NULL) {
+		result += strlen(header->filename);
+	}
+
+	return result;
+}
+
+/**
+ * Create a "placeholder" symbolic link.
+ *
+ * When a "dangerous" symbolic link is extracted, instead of creating it
+ * immediately, create a "placeholder" empty file to go in its place, and
+ * place it into the deferred_symlinks list to be created later.
+ *
+ * @param reader         Pointer to the LHA reader structure.
+ * @param filename       Filename into which to extract the symlink.
+ * @return               Non-zero if the symlink was extracted successfully,
+ *                       or zero for failure.
+ */
+
+static int extract_placeholder_symlink(LHAReader *reader, char *filename)
+{
+	LHAFileHeader **rover;
+	FILE *f;
+
+	f = lha_arch_fopen(filename, -1, -1, 0600);
+
+	if (f == NULL) {
+		return 0;
+	}
+
+	fclose(f);
+
+	// Insert this header into the list of deferred symbolic links.
+	// The list must be maintained in order of decreasing path length,
+	// so that one symbolic link cannot depend on another. For example:
+	//
+	//    etc  ->  /etc
+	//    etc/passwd  -> /malicious_path/passwd
+
+	rover = &reader->deferred_symlinks;
+
+	while (*rover != NULL
+	    && file_header_path_len(*rover)
+	     > file_header_path_len(reader->curr_file)) {
+		rover = &(*rover)->_next;
+	}
+
+	reader->curr_file->_next = *rover;
+	*rover = reader->curr_file;
+
+	// Save reference to the header so it won't be freed.
+
+	lha_file_header_add_ref(reader->curr_file);
+
+	return 1;
+}
+
+/**
  * Extract a Unix symbolic link.
  *
  * @param reader         Pointer to the LHA reader structure.
@@ -675,13 +788,18 @@ static int extract_symlink(LHAReader *reader, char *filename)
 	// Construct filename?
 
 	if (filename == NULL) {
-		tmp_filename = full_path_for_header(reader->curr_file);
+		tmp_filename = lha_file_header_full_path(reader->curr_file);
 
 		if (tmp_filename == NULL) {
 			return 0;
 		}
 
 		filename = tmp_filename;
+	}
+
+	if (reader->curr_file_type == CURR_FILE_NORMAL
+	 && is_dangerous_symlink(reader->curr_file)) {
+		return extract_placeholder_symlink(reader, filename);
 	}
 
 	result = lha_arch_symlink(filename, reader->curr_file->symlink_target);
@@ -740,6 +858,9 @@ int lha_reader_extract(LHAReader *reader,
 			}
 			set_directory_metadata(reader->curr_file, filename);
 			return 1;
+
+		case CURR_FILE_DEFERRED_SYMLINK:
+			return extract_symlink(reader, filename);
 
 		case CURR_FILE_START:
 		case CURR_FILE_EOF:
