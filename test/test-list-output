@@ -119,12 +119,16 @@ test_archive lha_unix114i/h1_lh6.lzh
 test_archive lha_unix114i/h1_lh7.lzh
 test_archive lha_unix114i/h1_subdir.lzh
 test_archive lha_unix114i/h1_symlink.lzh
+test_archive lha_unix114i/h1_symlink2.lzh
+test_archive lha_unix114i/h1_symlink3.lzh
 test_archive lha_unix114i/h2_lh0.lzh
 test_archive lha_unix114i/h2_lh5.lzh
 test_archive lha_unix114i/h2_lh6.lzh
 test_archive lha_unix114i/h2_lh7.lzh
 test_archive lha_unix114i/h2_subdir.lzh
 test_archive lha_unix114i/h2_symlink.lzh
+test_archive lha_unix114i/h2_symlink2.lzh
+test_archive lha_unix114i/h2_symlink3.lzh
 test_archive lha_unix114i/lh6_long.lzh
 test_archive lha_unix114i/lh7_long.lzh
 
