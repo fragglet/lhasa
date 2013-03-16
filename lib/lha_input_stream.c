@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "lha_arch.h"
 #include "lha_input_stream.h"
@@ -293,11 +294,51 @@ static int file_source_read(void *handle, void *buf, size_t buf_len)
 	return (int) bytes_read;
 }
 
+// "Fallback" skip for file source that uses fread(), for unseekable
+// streams.
+
+static int file_source_skip_fallback(FILE *handle, size_t bytes)
+{
+	uint8_t data[32];
+	unsigned int len;
+	int result;
+
+	while (bytes > 0) {
+		if (bytes > sizeof(data)) {
+			len = sizeof(data);
+		} else {
+			len = bytes;
+		}
+
+		result = fread(data, 1, len, handle);
+
+		if (result != (int) len) {
+			return 0;
+		}
+
+		bytes -= len;
+	}
+
+	return 1;
+}
+
 // Seek forward in a FILE * input stream.
 
-static int file_source_seek(void *handle, size_t bytes)
+static int file_source_skip(void *handle, size_t bytes)
 {
-	return fseek(handle, (long) bytes, SEEK_CUR);
+	int result;
+
+	result = fseek(handle, (long) bytes, SEEK_CUR);
+
+	if (result < 0) {
+		if (errno == EBADF || errno == ESPIPE) {
+			return file_source_skip_fallback(handle, bytes);
+		} else {
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 // Close a FILE * input stream.
@@ -312,7 +353,7 @@ static void file_source_close(void *handle)
 
 static const LHAInputStreamType file_source_owned = {
 	file_source_read,
-	file_source_seek,
+	file_source_skip,
 	file_source_close
 };
 
@@ -320,7 +361,7 @@ static const LHAInputStreamType file_source_owned = {
 
 static const LHAInputStreamType file_source_unowned = {
 	file_source_read,
-	file_source_seek,
+	file_source_skip,
 	NULL
 };
 

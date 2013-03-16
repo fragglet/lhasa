@@ -49,7 +49,7 @@ typedef struct _LHAReader LHAReader;
  * Policy for extracting directories.
  *
  * When extracting a directory, some of the metadata associated with
- * it need to be set after the contents of the directory have been
+ * it needs to be set after the contents of the directory have been
  * extracted. This includes the modification time (which would
  * otherwise be reset to the current time) and the permissions (which
  * can affect the ability to extract files into the directory).

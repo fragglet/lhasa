@@ -250,8 +250,12 @@ test_stdin_extract() {
 
 	make_sandboxes
 
-	lha_check_output "$expected_file" e - \
-	    < $(test_arc_file "$archive_file")
+	# This is *not* a useless use of cat. If a < pipe was used,
+	# the input would come from a file handle, not a pipe. Using
+	# cat forces the data to come from a pipe.
+
+	cat $(test_arc_file "$archive_file") | \
+	    lha_check_output "$expected_file" e -
 
 	check_extracted_files "$archive_file"
 
