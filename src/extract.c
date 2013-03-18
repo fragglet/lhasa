@@ -489,7 +489,7 @@ static int extract_archived_file(LHAReader *reader,
 	success = lha_reader_extract(reader, filename,
 	                             progress_callback, &progress);
 
-	if (options->quiet < 2) {
+	if (!lha_reader_current_is_fake(reader) && options->quiet < 2) {
 		if (progress.invoked) {
 			if (success) {
 				print_filename(filename, "Melted");

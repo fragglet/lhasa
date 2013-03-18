@@ -53,5 +53,16 @@ void lha_file_header_free(LHAFileHeader *header);
 
 void lha_file_header_add_ref(LHAFileHeader *header);
 
+/**
+ * Get the full path for the given file header.
+ *
+ * @param header     Pointer to the file header structure.
+ * @return           Pointer to an allocated string containing the full
+ *                   file or directory path, or NULL for failure. The
+ *                   string must be freed by the caller.
+ */
+
+char *lha_file_header_full_path(LHAFileHeader *header);
+
 #endif /* #ifndef LHASA_LHA_FILE_HEADER_H */
 

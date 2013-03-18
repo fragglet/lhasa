@@ -32,6 +32,68 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
 #define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)
 
+char *lha_file_header_full_path(LHAFileHeader *header)
+{
+	char *path;
+	char *filename;
+	char *result;
+
+	if (header->path != NULL) {
+		path = header->path;
+	} else {
+		path = "";
+	}
+
+	if (header->filename != NULL) {
+		filename = header->filename;
+	} else {
+		filename = "";
+	}
+
+	result = malloc(strlen(path) + strlen(filename) + 1);
+
+	if (result == NULL) {
+		return NULL;
+	}
+
+	sprintf(result, "%s%s", path, filename);
+
+	return result;
+}
+
+/**
+ * Given a file header with the filename set, split it into separate
+ * path and filename components, if necessary.
+ *
+ * @param header         Point to the file header structure.
+ * @return               Non-zero for success, or zero for failure.
+ */
+
+static int split_header_filename(LHAFileHeader *header)
+{
+	char *sep;
+	char *new_filename;
+
+	// Is there a directory separator in the path?  If so, we need to
+	// split into directory name and filename.
+
+	sep = strrchr(header->filename, '/');
+
+	if (sep != NULL) {
+		new_filename = strdup(sep + 1);
+
+		if (new_filename == NULL) {
+			return 0;
+		}
+
+		*(sep + 1) = '\0';
+		header->path = header->filename;
+		header->filename = new_filename;
+	}
+
+	return 1;
+}
+
 // Perform checksum of header contents.
 
 static int check_l0_checksum(uint8_t *header, size_t header_len, size_t csum)
@@ -144,19 +206,6 @@ static void fix_msdos_allcaps(LHAFileHeader *header)
 	}
 }
 
-// Convert MS-DOS path separators to Unix path separators.
-
-static void msdos_path_to_unix(char *path)
-{
-	unsigned int i;
-
-	for (i = 0; path[i] != '\0'; ++i) {
-		if (path[i] == '\\') {
-			path[i] = '/';
-		}
-	}
-}
-
 // Process the OS-9 permissions field and translate into the equivalent
 // Unix permissions.
 
@@ -183,21 +232,36 @@ static void os9_to_unix_permissions(LHAFileHeader *header)
 }
 
 // Parse a Unix symbolic link. These are stored in the format:
-// header->filename = symlink|target
+// filename = symlink|target
 
 static int parse_symlink(LHAFileHeader *header)
 {
+	char *fullpath;
 	char *p;
 
-	p = strchr(header->filename, '|');
+	// Although the format is always the same, some files have
+	// symlink headers where the path is split between the path
+	// and filename headers. For example:
+	//    path = etc|../../
+	//    filename = etc
+
+	fullpath = lha_file_header_full_path(header);
+
+	if (fullpath == NULL) {
+		return 0;
+	}
+
+	p = strchr(fullpath, '|');
 
 	if (p == NULL) {
+		free(fullpath);
 		return 0;
 	}
 
 	header->symlink_target = strdup(p + 1);
 
 	if (header->symlink_target == NULL) {
+		free(fullpath);
 		return 0;
 	}
 
@@ -206,7 +270,17 @@ static int parse_symlink(LHAFileHeader *header)
 
 	*p = '\0';
 
-	return 1;
+	free(header->path);
+	free(header->filename);
+	header->path = NULL;
+	header->filename = fullpath;
+
+	// Having joined path and filename together during processing,
+	// we now have the opposite problem: header->filename might
+	// contain a full path rather than just a filename. Split back
+	// into two again.
+
+	return split_header_filename(header);
 }
 
 // Decode the path field in the header.
@@ -214,10 +288,7 @@ static int parse_symlink(LHAFileHeader *header)
 static int process_level0_path(LHAFileHeader *header, uint8_t *data,
                                size_t data_len)
 {
-	uint8_t *filename;
-	size_t filename_len;
 	unsigned int i;
-	uint8_t *sep;
 
 	// Zero-length filename probably means that this is a directory
 	// entry. Leave the filename field as NULL - this makes us
@@ -227,49 +298,24 @@ static int process_level0_path(LHAFileHeader *header, uint8_t *data,
 		return 1;
 	}
 
-	// Is there a directory separator in the path?  If so, we need to
-	// split into directory name and filename.
-	// Some archives actually exist that use a Unix-style ('/') path
-	// separator instead of a DOS one, so support these, too.
-
-	sep = NULL;
-
-	for (i = 0; i < data_len; ++i) {
-		if (data[i] == '\\' || data[i] == '/') {
-			sep = data + i;
-		}
-	}
-
-	if (sep != NULL) {
-		header->path = malloc((size_t) (sep - data) + 2);
-
-		if (header->path == NULL) {
-			return 0;
-		}
-
-		memcpy(header->path, data, (size_t) (sep - data) + 1);
-		header->path[sep - data + 1] = '\0';
-		msdos_path_to_unix(header->path);
-
-		filename = sep + 1;
-		filename_len = data_len - 1 - (size_t) (sep - data);
-	} else {
-		filename = data;
-		filename_len = data_len;
-	}
-
-	// Allocate filename buffer:
-
-	header->filename = malloc(filename_len + 1);
+	header->filename = malloc(data_len + 1);
 
 	if (header->filename == NULL) {
 		return 0;
 	}
 
-	memcpy(header->filename, filename, filename_len);
-	header->filename[filename_len] = '\0';
+	memcpy(header->filename, data, data_len);
+	header->filename[data_len] = '\0';
 
-	return 1;
+	// Convert MS-DOS path separators to Unix path separators.
+
+	for (i = 0; i < data_len; ++i) {
+		if (header->filename[i] == '\\') {
+			header->filename[i] = '/';
+		}
+	}
+
+	return split_header_filename(header);
 }
 
 // Read some more data from the input stream, extending the raw_data
@@ -415,6 +461,10 @@ static int read_l1_extended_headers(LHAFileHeader **header,
 		// For backwards compatibility with level 0 headers,
 		// the compressed length field is actually "compressed
 		// length + length of all extended headers":
+
+		if ((*header)->compressed_length < ext_header_len) {
+			return 0;
+		}
 
 		(*header)->compressed_length -= ext_header_len;
 
@@ -763,6 +813,81 @@ static int decode_level3_header(LHAFileHeader **header, LHAInputStream *stream)
 	return 1;
 }
 
+
+// "Collapse" a path down, by removing all instances of "." and ".."
+// paths. This is to protect against malicious archives that might include
+// ".." in a path to break out of the extract directory.
+
+static void collapse_path(char *filename)
+{
+	unsigned int currpath_len;
+	char *currpath;
+	char *r, *w;
+
+	// If the path starts with a /, it is an absolute path; skip over
+	// that first character and don't remove it.
+
+	if (filename[0] == '/') {
+		++filename;
+	}
+
+	// Step through each character, copying it from 'r' to 'w'. It
+	// is always the case that w <= r, and the final string will
+	// be equal in length or shorter than the original.
+
+	currpath = filename;
+	w = filename;
+
+	for (r = filename; *r != '\0'; ++r) {
+		*w++ = *r;
+
+		// Each time a new path separator is found, examine the
+		// path that was just written.
+
+		if (*r == '/') {
+
+			currpath_len = w - currpath - 1;
+
+			// Empty path (//) or current directory (.)?
+
+			if (currpath_len == 0
+			 || (currpath_len == 1 && currpath[0] == '.')) {
+				w = currpath;
+
+			// Parent directory (..)?
+
+			} else if (currpath_len == 2
+			        && currpath[0] == '.' && currpath[1] == '.') {
+
+				// Walk back up by one directory. Don't go
+				// past the start of the string.
+
+				if (currpath == filename) {
+					w = filename;
+				} else {
+					w = currpath - 1;
+
+					while (w > filename) {
+						if (*(w - 1) == '/') {
+							break;
+						}
+						--w;
+					}
+
+					currpath = w;
+				}
+
+			// Save for next time we start a new path.
+
+			} else {
+				currpath = w;
+			}
+		}
+	}
+
+	*w = '\0';
+}
+
 LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 {
 	LHAFileHeader *header;
@@ -839,8 +964,8 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 			goto fail;
 		}
 	} else if (!strcmp(header->compress_method, LHA_COMPRESS_TYPE_DIR)
-	        && (header->extra_flags & LHA_FILE_UNIX_PERMS) != 0
-		&& header->filename != NULL
+	        && LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)
+		&& (header->path != NULL || header->filename != NULL)
 		&& (header->unix_perms & 0170000) == 0120000) {
 
 		if (!parse_symlink(header)) {
@@ -863,25 +988,31 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 		fix_msdos_allcaps(header);
 	}
 
+	// Collapse special directory paths to ensure the path is clean.
+
+	if (header->path != NULL) {
+		collapse_path(header->path);
+	}
+
 	// Is this header generated by OS-9/68k LHA? If so, any Unix
 	// permissions are actually OS-9 permissions.
 
 	if (header->os_type == LHA_OS_TYPE_OS9_68K
-	 && (header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
+	 && LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)) {
 		header->os9_perms = header->unix_perms;
 		header->extra_flags |= LHA_FILE_OS9_PERMS;
 	}
 
 	// If OS-9 permissions were read, translate into Unix permissions.
 
-	if ((header->extra_flags & LHA_FILE_OS9_PERMS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_OS9_PERMS)) {
 		os9_to_unix_permissions(header);
 	}
 
 	// Was the "common" extended header read, which contains a CRC of
 	// the full header? If so, perform a CRC check now.
 
-	if ((header->extra_flags & LHA_FILE_COMMON_CRC) != 0
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_COMMON_CRC)
 	 && !check_common_crc(header)) {
 		goto fail;
 	}

@@ -123,6 +123,7 @@ static int ext_header_filename_decoder(LHAFileHeader *header,
                                        size_t data_len)
 {
 	char *new_filename;
+	unsigned int i;
 
 	new_filename = malloc(data_len + 1);
 
@@ -132,6 +133,16 @@ static int ext_header_filename_decoder(LHAFileHeader *header,
 
 	memcpy(new_filename, data, data_len);
 	new_filename[data_len] = '\0';
+
+	// Sanitize the filename that was read. It is not allowed to
+	// contain a path separator, which could potentially be used
+	// to do something malicious.
+
+	for (i = 0; new_filename[i] != '\0'; ++i) {
+		if (new_filename[i] == '/') {
+			new_filename[i] = '_';
+		}
+	}
 
 	free(header->filename);
 	header->filename = new_filename;
@@ -266,14 +277,19 @@ static int ext_header_unix_username_decoder(LHAFileHeader *header,
                                             uint8_t *data,
                                             size_t data_len)
 {
-	header->unix_username = malloc(data_len + 1);
+	char *username;
 
-	if (header->unix_username == NULL) {
+	username = malloc(data_len + 1);
+
+	if (username == NULL) {
 		return 0;
 	}
 
-	memcpy(header->unix_username, data, data_len);
-	header->unix_username[data_len] = '\0';
+	memcpy(username, data, data_len);
+	username[data_len] = '\0';
+
+	free(header->unix_username);
+	header->unix_username = username;
 
 	return 1;
 }
@@ -294,14 +310,19 @@ static int ext_header_unix_group_decoder(LHAFileHeader *header,
                                          uint8_t *data,
                                          size_t data_len)
 {
-	header->unix_group = malloc(data_len + 1);
+	char *group;
 
-	if (header->unix_group == NULL) {
+	group = malloc(data_len + 1);
+
+	if (group == NULL) {
 		return 0;
 	}
 
-	memcpy(header->unix_group, data, data_len);
-	header->unix_group[data_len] = '\0';
+	memcpy(group, data, data_len);
+	group[data_len] = '\0';
+
+	free(header->unix_group);
+	header->unix_group = group;
 
 	return 1;
 }

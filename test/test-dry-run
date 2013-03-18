@@ -253,6 +253,14 @@ test_dry_run en lha_unix114i/h0_symlink.lzh \
     "EXTRACT symlink|target (directory)"
 test_dry_run en lha_unix114i/h1_symlink.lzh \
     "EXTRACT symlink|target (directory)"
+test_dry_run en lha_unix114i/h1_symlink2.lzh \
+    "EXTRACT symlink|path/to/target (directory)"
+test_dry_run en lha_unix114i/h1_symlink3.lzh \
+    "EXTRACT subdir/symlink|/absolute/path (directory)"
 test_dry_run en lha_unix114i/h2_symlink.lzh \
     "EXTRACT symlink|target (directory)"
+test_dry_run en lha_unix114i/h2_symlink2.lzh \
+    "EXTRACT symlink|path/to/target (directory)"
+test_dry_run en lha_unix114i/h2_symlink3.lzh \
+    "EXTRACT subdir/symlink|/absolute/path (directory)"
 

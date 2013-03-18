@@ -138,3 +138,57 @@ file_perms() {
 	fi
 }
 
+# Swiss Army Knife-function to process the -hdr files containing data on
+# the archives. Can be used in three modes:
+#
+# get_file_data archive.lzh
+#   - Prints filenames of the files stored in the specified archive.
+# get_file_data archive.lzh path/file
+#   - Gets the values for the specified archived file, in the form:
+#        var: value
+# get_file_data archive.lzh path/file var
+#   - Prints the value of the specified value for the specified file.
+
+get_file_data() {
+	local archive_file=$1
+	local target=
+	local var=
+
+	if [ $# -gt 1 ]; then
+		target=$2
+	fi
+	if [ $# -gt 2 ]; then
+		var=$3
+	fi
+
+	awk -v target="$target" -v var="$var" -- '
+		BEGIN {
+			FS = ": "
+		}
+		/^--/ {
+			if (target == "") {
+				print path filename
+			}
+			path = ""
+			filename = ""
+			next
+		}
+		/^path:/ {
+			path = $2
+			next
+		}
+		/^filename:/ {
+			filename = $2
+			next
+		}
+		target == path filename {
+			if (var == "") {
+				print $0
+			} else if ($1 == var) {
+				print $2
+				exit 0
+			}
+		}
+	' < "$test_base/output/$archive_file-hdr.txt"
+}
+
