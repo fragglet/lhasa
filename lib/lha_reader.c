@@ -179,7 +179,7 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 	LHABasicReader *basic_reader;
 	LHAReader *reader;
 
-	reader = malloc(sizeof(LHAReader));
+	reader = calloc(1, sizeof(LHAReader));
 
 	if (reader == NULL) {
 		return NULL;
@@ -199,6 +199,7 @@ LHAReader *lha_reader_new(LHAInputStream *stream)
 	reader->inner_decoder = NULL;
 	reader->dir_stack = NULL;
 	reader->dir_policy = LHA_READER_DIR_END_OF_DIR;
+	reader->deferred_symlinks = NULL;
 
 	return reader;
 }

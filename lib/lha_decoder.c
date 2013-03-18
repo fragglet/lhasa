@@ -73,8 +73,8 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	// then the private data area used by the algorithm,
 	// followed by the output buffer,
 
-	decoder = malloc(sizeof(LHADecoder) + dtype->extra_size
-	                 + dtype->max_read);
+	decoder = calloc(1, sizeof(LHADecoder) + dtype->extra_size
+	                        + dtype->max_read);
 
 	if (decoder == NULL) {
 		return NULL;

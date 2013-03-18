@@ -38,7 +38,7 @@ LHABasicReader *lha_basic_reader_new(LHAInputStream *stream)
 {
 	LHABasicReader *reader;
 
-	reader = malloc(sizeof(LHABasicReader));
+	reader = calloc(1, sizeof(LHABasicReader));
 
 	if (reader == NULL) {
 		return NULL;

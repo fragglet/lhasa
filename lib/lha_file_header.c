@@ -925,7 +925,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 
 	// Allocate result structure.
 
-	header = malloc(sizeof(LHAFileHeader) + COMMON_HEADER_LEN);
+	header = calloc(1, sizeof(LHAFileHeader) + COMMON_HEADER_LEN);
 
 	if (header == NULL) {
 		return NULL;

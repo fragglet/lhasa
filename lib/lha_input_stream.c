@@ -62,7 +62,7 @@ LHAInputStream *lha_input_stream_new(const LHAInputStreamType *type,
 {
 	LHAInputStream *result;
 
-	result = malloc(sizeof(LHAInputStream));
+	result = calloc(1, sizeof(LHAInputStream));
 
 	if (result == NULL) {
 		return NULL;
