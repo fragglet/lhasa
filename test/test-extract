@@ -813,8 +813,13 @@ test_wildcard2
 test_extract_list
 test_extract_truncated
 
-test_symlink_overwrite
-test_symlink_security regression/symlink2.lzh etc
-test_symlink_security regression/symlink3.lzh etc
 test_dotdot
+
+# Symlink tests only make sense on systems that support them:
+
+if [ "$build_arch" = "unix" ]; then
+	test_symlink_overwrite
+	test_symlink_security regression/symlink2.lzh etc
+	test_symlink_security regression/symlink3.lzh etc
+fi
 
