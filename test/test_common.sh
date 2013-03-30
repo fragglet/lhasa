@@ -80,7 +80,7 @@ test_lha() {
 	local test_binary="$test_base/../src/test-lha"
 
 	if [ "$build_arch" = "windows" ]; then
-		test_binary="$test_base/../src/.libs/test-lha.exe"
+		test_binary="$test_base/../src/test-lha.exe"
 	fi
 
 	if $SUCCESS_EXPECTED; then
