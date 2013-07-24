@@ -1,4 +1,7 @@
 
+     * Decompression of archives using the -lhx- file format supported by
+       unlha32.dll is now supported (thanks Multi for the patch).
+
 v0.1.0 (2013-03-16):
 
      * There are now test archives for OS-9 and OS-9/68k (OSK) and a

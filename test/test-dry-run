@@ -227,6 +227,9 @@ test_archive regression/badterm.lzh         "tmp/?]2;malicious??"
 test_archive regression/truncated.lzh       "gpl-2"
 test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
 
+test_archive unlha32/h2_lhx.lzh             "gpl-2"
+test_archive unlha32/lhx_long.lzh           "long.txt"
+
 test_archive generated/lzs/lzs.lzs          "gpl-2"
 test_archive generated/lzs/long.lzs         "long.txt"
 
