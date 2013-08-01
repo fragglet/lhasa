@@ -163,6 +163,14 @@ static void progress_callback(unsigned int block,
 	fflush(stdout);
 }
 
+// Print a line to stdout describing a symlink.
+
+static void print_symlink_line(char *src, char *dest)
+{
+	safe_printf("Symbolic Link %s -> %s", src, dest);
+	printf("\n");
+}
+
 // Perform CRC check of an archived file.
 
 static int test_archived_file_crc(LHAReader *reader,
@@ -499,9 +507,7 @@ static int extract_archived_file(LHAReader *reader,
 				printf("\n");
 			}
 		} else if (is_symlink) {
-			safe_printf("Symbolic Link %s -> %s", filename,
-			            header->symlink_target);
-			printf("\n");
+			print_symlink_line(filename, header->symlink_target);
 		}
 
 		fflush(stdout);
@@ -581,5 +587,80 @@ int extract_archive(LHAFilter *filter, LHAOptions *options)
 	}
 
 	return result;
+}
+
+// Dump contents of the current file from the specified reader to stdout.
+
+static int print_archived_file(LHAReader *reader)
+{
+	char buf[512];
+	size_t bytes;
+
+	for (;;) {
+		bytes = lha_reader_read(reader, buf, sizeof(buf));
+		if (bytes <= 0) {
+			break;
+		}
+
+		if (fwrite(buf, 1, bytes, stdout) < bytes) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+// lha -p
+
+int print_archive(LHAFilter *filter, LHAOptions *options)
+{
+	LHAFileHeader *header;
+	int is_normal_file;
+	char *full_path;
+
+	// As a weird quirk of Unix LHA, lha -pn is equivalent to lha -en:
+
+	if (options->dry_run) {
+		return extract_archive(filter, options);
+	}
+
+	for (;;) {
+		header = lha_filter_next_file(filter);
+
+		if (header == NULL) {
+			break;
+		}
+
+		is_normal_file = strcmp(header->compress_method,
+		                        LHA_COMPRESS_TYPE_DIR) != 0;
+
+		// Print "header" before the file containing the filename.
+		// For normal files this is a three line separator.
+		// Symlinks get shown in the same way as during extract.
+		// Directories are ignored.
+
+		if (options->quiet < 2) {
+			full_path = file_full_path(header, options);
+
+			if (header->symlink_target != NULL) {
+				print_symlink_line(full_path,
+				                   header->symlink_target);
+			} else if (is_normal_file) {
+				printf("::::::::\n");
+				safe_printf("%s", full_path);
+				printf("\n::::::::\n");
+			}
+
+			free(full_path);
+		}
+
+		// If this is a normal file, dump the contents to stdout.
+
+		if (is_normal_file && !print_archived_file(filter->reader)) {
+			return 0;
+		}
+	}
+
+	return 1;
 }
 

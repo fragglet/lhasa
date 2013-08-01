@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 int test_file_crc(LHAFilter *filter, LHAOptions *options);
 int extract_archive(LHAFilter *filter, LHAOptions *options);
+int print_archive(LHAFilter *filter, LHAOptions *options);
 
 #endif /* #ifndef LHASA_EXTRACT_H */
 
