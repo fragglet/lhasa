@@ -268,7 +268,7 @@ test_w_option() {
 	local archive_file=$1
 	shift
 
-	local expected_file="$test_base/output/$archive_file-e.txt"
+	local expected_file="$test_base/output/$archive_file-ew.txt"
 
 	# Extract into a subdirectory of the 'w' sandbox that does not
 	# exist: the path should be created as part of the extract.

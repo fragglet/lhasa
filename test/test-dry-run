@@ -52,6 +52,11 @@ test_archive() {
 	test_dry_run en "$archive_file" "EXTRACT $filename"
 	test_dry_run tn "$archive_file" "VERIFY $filename"
 
+	# Test with an extract directory.
+
+	test_dry_run enw=/x/y/z "$archive_file" "EXTRACT /x/y/z/$filename"
+	test_dry_run tnw=/x/y/z "$archive_file" "VERIFY /x/y/z/$filename"
+
 	# Test the same, reading from stdin.
 
 	test_dry_run en - "EXTRACT $filename" < "archives/$archive_file"
