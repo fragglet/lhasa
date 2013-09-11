@@ -48,6 +48,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define MAX_COPY_BLOCK_LEN 244
 
+// End-of-file value that is written at the end of the stream when
+// the entire file is decompressed.
+
+#define PM1_EOF 0x1a
+
 // Output buffer length. A single call to lha_pm1_read can perform one
 // byte block output followed by a copy command.
 
@@ -650,6 +655,7 @@ static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 static size_t lha_pm1_read(void *data, uint8_t *buf)
 {
 	LHAPM1Decoder *decoder = data;
+	size_t bytes;
 	int command_type;
 
 	// Start of input stream? Read the header.
@@ -663,15 +669,26 @@ static size_t lha_pm1_read(void *data, uint8_t *buf)
 
 	command_type = read_bit(&decoder->bit_stream_reader);
 
-	if (command_type < 0) {
-		return 0;
+	if (command_type == 0) {
+		bytes = read_copy_command(decoder, buf);
+	} else if (command_type == 1) {
+		bytes = read_byte_block(decoder, buf);
+	} else {
+		bytes = 0;
 	}
 
-	if (command_type == 0) {
-		return read_copy_command(decoder, buf);
-	} else {
-		return read_byte_block(decoder, buf);
+	// Unlike other compression formats, once we reach the end
+	// of file we keep generating data. Keep writing end-of-file
+	// bytes to pad out the remaining space. This is a weird
+	// behavior but it's what seems to be expected. LHADecoder
+	// will crop the file to the appropriate length.
+
+	if (bytes == 0) {
+		*buf = PM1_EOF;
+		bytes = 1;
 	}
+
+	return bytes;
 }
 
 LHADecoderType lha_pm1_decoder = {
