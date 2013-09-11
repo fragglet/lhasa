@@ -10,3 +10,13 @@ pm2.pma         - Archive with compressed -pm2- format file.
 comment.pma     - Archive with a file that has a comment memorandum.
 sfx.com         - Self-extracting PMA archive.
 
+mtcd.pma        - Archive with compressed -pm1- format files.
+                  This is one of precious few -pm1- files that can be
+                  found in the wild, there aren't many of them. I
+                  don't know what version of PMarc was used to
+                  generate this. I include this as fair use.
+
+                  This contains two archived files. mtcd.doc needs
+                  deliberate padding with EOF bytes for the CRC to
+                  extract correctly. cd.mtc does not.
+

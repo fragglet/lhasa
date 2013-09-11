@@ -128,6 +128,7 @@ test_archive pmarc2/pm2.pma
 test_archive pmarc2/comment.pma
 test_archive pmarc2/sfx.com
 test_archive pmarc2/long.pma
+test_archive pmarc2/mtcd.pma
 
 test_archive lha_amiga_122/level0.lzh
 test_archive lha_amiga_122/level1.lzh
