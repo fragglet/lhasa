@@ -478,12 +478,16 @@ test_archive lha_os2_208/h3_lh0.lzh         "GPL-2.gz"
 test_archive lha_os2_208/h3_lh5.lzh         "gpl-2"
 test_archive lha_os2_208/h3_subdir.lzh      "subdir/subdir2/HELLO.TXT"
 
+test_archive pmarc124/pm0.pma               "gpl-2.gz"
+test_archive pmarc124/pm1.pma               "copying.txt"
+test_archive pmarc124/pm1_long.pma          "long.txt"
+test_archive pmarc124/mtcd.pma              "mtcd.doc" "cd.mtc"
+
 test_archive pmarc2/pm0.pma                 "gpl-2.gz"
 test_archive pmarc2/pm2.pma                 "gpl-2."
 test_archive pmarc2/comment.pma             "hello.txt"
 test_archive pmarc2/sfx.com                 "gpl-2."
 test_archive pmarc2/long.pma                "long.txt"
-test_archive pmarc2/mtcd.pma                "mtcd.doc" "cd.mtc"
 
 test_archive lha_amiga_122/level0.lzh       "subdir/subdir2/hello.txt"
 test_archive lha_amiga_122/level1.lzh       "subdir/subdir2/hello.txt"

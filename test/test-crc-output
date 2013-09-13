@@ -123,12 +123,16 @@ test_archive lha_os2_208/h3_lh5.lzh
 test_archive lha_os2_208/h3_lfn.lzh
 test_archive lha_os2_208/h3_subdir.lzh
 
+test_archive pmarc124/pm0.pma
+test_archive pmarc124/pm1.pma
+test_archive pmarc124/pm1_long.pma
+test_archive pmarc124/mtcd.pma
+
 test_archive pmarc2/pm0.pma
 test_archive pmarc2/pm2.pma
 test_archive pmarc2/comment.pma
 test_archive pmarc2/sfx.com
 test_archive pmarc2/long.pma
-test_archive pmarc2/mtcd.pma
 
 test_archive lha_amiga_122/level0.lzh
 test_archive lha_amiga_122/level1.lzh

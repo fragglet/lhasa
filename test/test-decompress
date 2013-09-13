@@ -113,6 +113,11 @@ test_archive lha_os2_208/h3_subdir.lzh          $hello_world2
 # the results here are technically incorrect. This is an unfortunate
 # result of the original PMarc tool which adds the extra data.
 
+test_archive pmarc124/pm0.pma                   e3cf61d2  6912
+test_archive pmarc124/pm1.pma                   b7d0e42c  25284
+test_archive pmarc124/pm1_long.pma              b2b419d6  1241659
+test_archive pmarc124/mtcd.pma                  ceec9f76  1403
+
 test_archive pmarc2/pm0.pma                     549d935a  6912
 test_archive pmarc2/pm2.pma                     8e2093a7  18176
 test_archive pmarc2/comment.pma                 906330c5  128
