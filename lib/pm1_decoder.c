@@ -48,11 +48,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define MAX_COPY_BLOCK_LEN 244
 
-// End-of-file value that is written at the end of the stream when
-// the entire file is decompressed.
-
-#define PM1_EOF 0x1a
-
 // Output buffer length. A single call to lha_pm1_read can perform one
 // byte block output followed by a copy command.
 
@@ -78,6 +73,12 @@ typedef struct {
 	// History linked list, for adaptively encoding byte values.
 
 	HistoryLinkedList history_list;
+
+	// Callback to read more compressed data from the input (see
+	// read_callback_wrapper below).
+
+	LHADecoderCallback callback;
+	void *callback_data;
 } LHAPM1Decoder;
 
 // Table used to decode distance into history buffer to copy data.
@@ -171,15 +172,42 @@ static const uint8_t byte_decode_trees[][5] = {
        { 0x00 },                            // -- special entry: 0, no tree
 };
 
+// Wrapper function invoked to read more data from the input. This mostly just
+// calls the real function that does the read. However, when the end of file
+// is reached, instead of returning zero, the buffer is filled with zero bytes
+// instead.  There seem to be archive files that actually depend on this
+// ability to read "beyond" the length of the compressed data.
+
+static size_t read_callback_wrapper(void *buf, size_t buf_len, void *user_data)
+{
+	LHAPM1Decoder *decoder = user_data;
+	size_t result;
+
+	result = decoder->callback(buf, buf_len, decoder->callback_data);
+
+	if (result == 0) {
+		memset(buf, 0, buf_len);
+		result = buf_len;
+	}
+
+	return result;
+}
+
 static int lha_pm1_init(void *data, LHADecoderCallback callback,
-                         void *callback_data)
+                        void *callback_data)
 {
 	LHAPM1Decoder *decoder = data;
 
 	memset(decoder, 0, sizeof(LHAPM1Decoder));
 
+	// Unlike other decoders, the bitstream code must call the wrapper
+	// function above to read data.
+
+	decoder->callback = callback;
+	decoder->callback_data = callback_data;
+
 	bit_stream_reader_init(&decoder->bit_stream_reader,
-	                       callback, callback_data);
+	                       read_callback_wrapper, decoder);
 
 	decoder->output_stream_pos = 0;
 	decoder->byte_decode_tree = NULL;
@@ -655,7 +683,6 @@ static size_t read_byte_block(LHAPM1Decoder *decoder, uint8_t *buf)
 static size_t lha_pm1_read(void *data, uint8_t *buf)
 {
 	LHAPM1Decoder *decoder = data;
-	size_t bytes;
 	int command_type;
 
 	// Start of input stream? Read the header.
@@ -670,25 +697,10 @@ static size_t lha_pm1_read(void *data, uint8_t *buf)
 	command_type = read_bit(&decoder->bit_stream_reader);
 
 	if (command_type == 0) {
-		bytes = read_copy_command(decoder, buf);
-	} else if (command_type == 1) {
-		bytes = read_byte_block(decoder, buf);
+		return read_copy_command(decoder, buf);
 	} else {
-		bytes = 0;
+		return read_byte_block(decoder, buf);
 	}
-
-	// Unlike other compression formats, once we reach the end
-	// of file we keep generating data. Keep writing end-of-file
-	// bytes to pad out the remaining space. This is a weird
-	// behavior but it's what seems to be expected. LHADecoder
-	// will crop the file to the appropriate length.
-
-	if (bytes == 0) {
-		*buf = PM1_EOF;
-		bytes = 1;
-	}
-
-	return bytes;
 }
 
 LHADecoderType lha_pm1_decoder = {
