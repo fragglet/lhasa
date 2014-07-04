@@ -28,19 +28,20 @@ test_archive() {
 	local archive=$1
 	local expected="output/$archive-hdr.txt"
 
-	./dump-headers "archives/$archive" > /tmp/hdr.txt
+	wd=$(mktemp -td test-file-headers.XXXXXX)
+	./dump-headers "archives/$archive" > "$wd/hdr.txt"
 
 	if [ ! -e "$expected" ]; then
 		echo "New file: $expected"
-		cp /tmp/hdr.txt "$expected"
+		cp "$wd/hdr.txt" "$expected"
 		cat "$expected"
 	fi
 
-	if ! diff -u "$expected" /tmp/hdr.txt; then
+	if ! diff -u "$expected" "$wd/hdr.txt"; then
 		fail "Output not as expected for $archive"
 	fi
 
-	rm -f /tmp/hdr.txt
+	rm -f "$wd/hdr.txt"
 }
 
 test_archive larc333/lz4.lzs

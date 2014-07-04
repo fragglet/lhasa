@@ -30,18 +30,20 @@ lha_check_output() {
 	local expected_output="$1"
 	shift
 
-	test_lha "$@" >/tmp/output.txt 2>&1
+        wd=$(mktemp -td test-print.XXXXXX)
+	test_lha "$@" >"$wd/output.txt" 2>&1
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
 		$LHA_TOOL "$@" > $expected_output
 	fi
 
-	if ! diff -u "$expected_output" /tmp/output.txt; then
+	if ! diff -u "$expected_output" "$wd/output.txt"; then
 		fail "Output not as expected for command:" \
 		     "    lha $*" >&2
 	fi
 
-	rm -f /tmp/output.txt
+	rm -f "$wd/output.txt"
+	rmdir "$wd"
 }
 
 test_archive() {

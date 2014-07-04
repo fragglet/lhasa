@@ -38,23 +38,24 @@ test_archive() {
 
 	# CRC test:
 
-	test_lha t archives/$archive > /tmp/t.txt
+	wd=$(mktemp -td test-crc-output.XXXXXX)
+	test_lha t archives/$archive > "$wd/t.txt"
 
-	if ! diff -u output/$archive-t.txt /tmp/t.txt; then
+	if ! diff -u output/$archive-t.txt "$wd/t.txt"; then
 		fail "Output not as expected for lha t $archive"
 	fi
 
-	rm -f /tmp/t.txt
+	rm -f "$wd/t.txt"
 
 	# Perform the same test, reading from stdin.
 
-	test_lha t - < archives/$archive > /tmp/t.txt
+	test_lha t - < archives/$archive > "$wd/t.txt"
 
-	if ! diff -u output/$archive-t.txt /tmp/t.txt; then
+	if ! diff -u output/$archive-t.txt "$wd/t.txt"; then
 		fail "Output not as expected for lha t - < $archive"
 	fi
 
-	rm -f /tmp/t.txt
+	rm -f "$wd/t.txt"
 }
 
 # Length-specific tests:

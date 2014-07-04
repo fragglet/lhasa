@@ -27,15 +27,16 @@
 test_archive() {
 	local archive=$1
 
-	(echo "crc: $2"; echo "length: $3") > /tmp/expected.txt
+	wd=$(mktemp -td test-decompress.XXXXXX)
+	(echo "crc: $2"; echo "length: $3") > "$wd/expected.txt"
 
-	./decompress-crc "archives/$archive" > /tmp/output.txt
+	./decompress-crc "archives/$archive" > "$wd/output.txt"
 
-	if ! diff -u /tmp/expected.txt /tmp/output.txt; then
+	if ! diff -u "$wd/expected.txt" "$wd/output.txt"; then
 		fail "Output not as expected for $archive"
 	fi
 
-	rm -f /tmp/expected.txt /tmp/output.txt
+	rm -f "$wd/expected.txt" "$wd/output.txt"
 }
 
 generate_test_line() {
