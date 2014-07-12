@@ -22,6 +22,7 @@
 
 . test_common.sh
 
+
 test_dry_run() {
 	local option=$1
 	local archive_file=$2
@@ -31,18 +32,20 @@ test_dry_run() {
 		archive_file="archives/$archive_file"
 	fi
 
+	wd=$(mktemp -td test-dry-run.XXXXXX)
 	# Only check the last line of output:
 
-	echo "$expected" > /tmp/expected.txt
-	test_lha $option "$archive_file" > /tmp/output.txt
+	echo "$expected" > "$wd/expected.txt"
+	test_lha $option "$archive_file" > "$wd/output.txt"
 
-	tail -n 1 < /tmp/output.txt > /tmp/output2.txt
+	tail -n 1 < "$wd/output.txt" > "$wd/output2.txt"
 
-	if ! diff /tmp/expected.txt /tmp/output2.txt; then
+	if ! diff "$wd/expected.txt" "$wd/output2.txt"; then
 		fail "Output not as expected for $archive_file"
 	fi
 
-	rm -f /tmp/expected.txt /tmp/output.txt /tmp/output2.txt
+	rm -f "$wd/expected.txt" "$wd/output.txt" "$wd/output2.txt"
+	rmdir "$wd" || find "$wd"
 }
 
 test_archive() {

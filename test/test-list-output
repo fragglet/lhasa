@@ -30,13 +30,14 @@ check_output() {
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	test_lha "$@" > /tmp/tmp.txt
+	wd=$(mktemp -td test-list-output.XXXXXX)
+	test_lha "$@" > "$wd/tmp.txt"
 
-	if ! diff -u output/$expected /tmp/tmp.txt; then
+	if ! diff -u output/$expected "$wd/tmp.txt"; then
 		fail "Output not as expected for lha $*"
 	fi
 
-	rm -f /tmp/tmp.txt
+	rm -f "$wd/tmp.txt"
 }
 
 gather_output() {
