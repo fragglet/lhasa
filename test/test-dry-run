@@ -32,7 +32,6 @@ test_dry_run() {
 		archive_file="archives/$archive_file"
 	fi
 
-	wd=$(mktemp -td test-dry-run.XXXXXX)
 	# Only check the last line of output:
 
 	echo "$expected" > "$wd/expected.txt"
@@ -45,7 +44,6 @@ test_dry_run() {
 	fi
 
 	rm -f "$wd/expected.txt" "$wd/output.txt" "$wd/output2.txt"
-	rmdir "$wd" || find "$wd"
 }
 
 test_archive() {

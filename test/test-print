@@ -30,7 +30,6 @@ lha_check_output() {
 	local expected_output="$1"
 	shift
 
-        wd=$(mktemp -td test-print.XXXXXX)
 	test_lha "$@" >"$wd/output.txt" 2>&1
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
@@ -43,7 +42,6 @@ lha_check_output() {
 	fi
 
 	rm -f "$wd/output.txt"
-	rmdir "$wd"
 }
 
 test_archive() {
