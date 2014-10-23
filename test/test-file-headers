@@ -28,7 +28,6 @@ test_archive() {
 	local archive=$1
 	local expected="output/$archive-hdr.txt"
 
-	wd=$(mktemp -td test-file-headers.XXXXXX)
 	./dump-headers "archives/$archive" > "$wd/hdr.txt"
 
 	if [ ! -e "$expected" ]; then

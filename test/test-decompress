@@ -27,7 +27,6 @@
 test_archive() {
 	local archive=$1
 
-	wd=$(mktemp -td test-decompress.XXXXXX)
 	(echo "crc: $2"; echo "length: $3") > "$wd/expected.txt"
 
 	./decompress-crc "archives/$archive" > "$wd/output.txt"

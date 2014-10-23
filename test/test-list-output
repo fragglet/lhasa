@@ -30,7 +30,6 @@ check_output() {
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	wd=$(mktemp -td test-list-output.XXXXXX)
 	test_lha "$@" > "$wd/tmp.txt"
 
 	if ! diff -u output/$expected "$wd/tmp.txt"; then

@@ -22,8 +22,6 @@
 
 . test_common.sh
 
-wd="$(mktemp -td lhasa-test-extract.XXXXX)"
-trap "rmdir '$wd'" INT EXIT
 run_sandbox="$wd/extract1"
 w_sandbox="$wd/extract2"
 gather_sandbox="$wd/extract3"

@@ -24,6 +24,10 @@
 
 set -eu
 
+# set up a temporary directory within which tests are to be run
+wd=$(mktemp -td lhasa-test.XXXXXX)
+trap "rmdir '$wd'" INT EXIT
+
 # Some of the test output is time zone-dependent, and output (eg.
 # from 'lha l') can be different in different time zones. Use the
 # TZ environment variable to force the behavior to the London
