@@ -48,6 +48,7 @@ test_archive larc333/lz5.lzs
 test_archive larc333/sfx.com
 test_archive larc333/subdir.lzs
 test_archive larc333/long.lzs
+test_archive larc333/initial.lzs
 
 test_archive lharc113/lh0.lzh
 test_archive lharc113/lh1.lzh

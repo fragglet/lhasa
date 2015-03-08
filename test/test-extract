@@ -432,6 +432,7 @@ test_archive larc333/lz5.lzs                "gpl-2"
 test_archive larc333/sfx.com                "gpl-2.gz"
 test_archive larc333/subdir.lzs             "subdir/subdir2/hello.txt"
 test_archive larc333/long.lzs               "long.txt"
+test_archive larc333/initial.lzs            "initial.bin"
 
 test_archive lharc113/lh0.lzh               "gpl-2.gz"
 test_archive lharc113/lh1.lzh               "gpl-2"
