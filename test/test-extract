@@ -213,7 +213,7 @@ lha_check_output() {
 	cd "$run_sandbox"
 	# Invoke test command and save output.
 	# test outputs have their test root as '/tmp'; adjust accordingly
-	test_lha "$@" 2>&1 | sed "s,$wd,/tmp,g" > "$output"
+	test_lha "$@" 2>&1 | sed "s,$wd,/tmp,g; \$a\\" > "$output"
 
 	cd "$test_base"
 
