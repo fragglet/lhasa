@@ -8,20 +8,31 @@
   <style type="text/css">
     body {
       margin-top: 1.0em;
-      background-color: #b6e4fb;
+      background-color: #889ec1;
       font-family: Helvetica, Arial, FreeSans, san-serif;
       color: #000000;
     }
     #container {
       margin: 0 auto;
-      width: 700px;
+      width: 800px;
     }
-    h1 { font-size: 3.8em; color: #491b04; margin-bottom: 3px; }
+    #photo {
+      float: right;
+      margin-left: 3em;
+      margin-top: 30px;
+      width: 320px;
+      font-size: xx-small;
+    }
+    #photo img {
+      margin-bottom: 0.5em;
+      width: 320px;
+    }
+    h1 { font-size: 3.8em; color: #181855; margin-bottom: 3px; }
     h1 .small { font-size: 0.4em; }
     h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #491b04; }
-    h3 { text-align: center; color: #491b04; }
-    a { color: #491b04; }
+    h2 { font-size: 1.5em; color: #181855; }
+    h3 { text-align: center; color: #181855; }
+    a { color: #181855; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
     pre { background: #000; color: #fff; padding: 15px;}
@@ -35,6 +46,15 @@
 
   <div id="container">
 
+    <div id="photo">
+      <img src="lhasa.jpg">
+      Lhasa, Tibet viewed from the Pabonka Monastery, highlighting the
+      Potala Palace. Credit: Wikipedia user Qeqertaq,
+      Copyright:
+      <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.en">
+      Creative Commons Attribution-ShareAlike 3.0 Unported</a>
+    </div>
+
     <h1><a href="http://github.com/fragglet/lhasa">lhasa</a>
       <span class="small">by <a href="http://github.com/fragglet">fragglet</a></span></h1>
 
@@ -46,7 +66,8 @@
        decompressing .lzh (LHA / LHarc) and .lzs (LArc) archives.  The
        backend for the tool is a library, so that it can be reused for
        other purposes.
-
+    </p>
+    <p>
        Lhasa aims to be compatible with as many types of lzh/lzs archives
        as possible.  It also aims to generate the same output as the
        (non-free) Unix LHA tool, so that it will act as a drop-in free
@@ -54,7 +75,9 @@
     </p>
 
     <h2>License</h2>
-    <p>ISC license</p>
+    <p><a href="https://en.wikipedia.org/wiki/ISC_license">ISC license</a>
+       (functionally equivalent to the BSD / MIT licenses).
+    </p>
 
     <h2>Authors</h2>
     <p>Simon Howard (fraggle@removethistoemailme.gmail.com)</p>
