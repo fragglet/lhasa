@@ -81,12 +81,20 @@ FILE *lha_arch_fopen(char *filename, int unix_uid, int unix_gid, int unix_perms)
 	FILE *fstream;
 	int fileno;
 
+	// The O_EXCL flag will cause the open() below to fail if the
+	// file already exists. Remove it first.
+
+	unlink(filename);
+
 	// If we have file permissions, they must be set after the
 	// file is created and UID/GID have been set.  When open()ing
 	// the file, create it with minimal permissions granted only
 	// to the current user.
+	// Use O_EXCL so that symlinks are not followed; this prevents
+	// a malicious symlink from overwriting arbitrary filesystem
+	// locations.
 
-	fileno = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0600);
+	fileno = open(filename, O_CREAT|O_WRONLY|O_EXCL, 0600);
 
 	if (fileno < 0) {
 		return NULL;
@@ -153,11 +161,6 @@ LHAFileType lha_arch_exists(char *filename)
 	} else {
 		return LHA_FILE_FILE;
 	}
-}
-
-int lha_arch_chdir(char *path)
-{
-	return chdir(path) == 0;
 }
 
 int lha_arch_symlink(char *path, char *target)

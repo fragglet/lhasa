@@ -28,19 +28,19 @@ test_archive() {
 	local archive=$1
 	local expected="output/$archive-hdr.txt"
 
-	./dump-headers "archives/$archive" > /tmp/hdr.txt
+	./dump-headers "archives/$archive" > "$wd/hdr.txt"
 
 	if [ ! -e "$expected" ]; then
 		echo "New file: $expected"
-		cp /tmp/hdr.txt "$expected"
+		cp "$wd/hdr.txt" "$expected"
 		cat "$expected"
 	fi
 
-	if ! diff -u "$expected" /tmp/hdr.txt; then
+	if ! diff -u "$expected" "$wd/hdr.txt"; then
 		fail "Output not as expected for $archive"
 	fi
 
-	rm -f /tmp/hdr.txt
+	rm -f "$wd/hdr.txt"
 }
 
 test_archive larc333/lz4.lzs
@@ -48,6 +48,7 @@ test_archive larc333/lz5.lzs
 test_archive larc333/sfx.com
 test_archive larc333/subdir.lzs
 test_archive larc333/long.lzs
+test_archive larc333/initial.lzs
 
 test_archive lharc113/lh0.lzh
 test_archive lharc113/lh1.lzh
@@ -78,11 +79,15 @@ test_archive lha_unix114i/h1_lh6.lzh
 test_archive lha_unix114i/h1_lh7.lzh
 test_archive lha_unix114i/h1_subdir.lzh
 test_archive lha_unix114i/h1_symlink.lzh
+test_archive lha_unix114i/h1_symlink2.lzh
+test_archive lha_unix114i/h1_symlink3.lzh
 test_archive lha_unix114i/h2_lh0.lzh
 test_archive lha_unix114i/h2_lh5.lzh
 test_archive lha_unix114i/h2_lh6.lzh
 test_archive lha_unix114i/h2_lh7.lzh
 test_archive lha_unix114i/h2_subdir.lzh
+test_archive lha_unix114i/h2_symlink2.lzh
+test_archive lha_unix114i/h2_symlink3.lzh
 test_archive lha_unix114i/h2_symlink.lzh
 test_archive lha_unix114i/lh6_long.lzh
 test_archive lha_unix114i/lh7_long.lzh
@@ -96,6 +101,11 @@ test_archive lha_os2_208/h3_lfn.lzh
 test_archive lha_os2_208/h3_lh0.lzh
 test_archive lha_os2_208/h3_lh5.lzh
 test_archive lha_os2_208/h3_subdir.lzh
+
+test_archive pmarc124/pm0.pma
+test_archive pmarc124/pm1.pma
+test_archive pmarc124/pm1_long.pma
+test_archive pmarc124/mtcd.pma
 
 test_archive pmarc2/pm0.pma
 test_archive pmarc2/pm2.pma
@@ -202,6 +212,9 @@ test_archive lha_os9_211c/h1_subdir.lzh
 test_archive lha_os9_211c/h2_lh0.lzh
 test_archive lha_os9_211c/h2_lh1.lzh
 test_archive lha_os9_211c/h2_subdir.lzh
+
+test_archive unlha32/h2_lhx.lzh
+test_archive unlha32/lhx_long.lzh
 
 test_archive regression/abspath.lzh
 test_archive regression/badterm.lzh

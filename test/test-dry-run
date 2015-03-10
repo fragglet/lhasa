@@ -22,6 +22,7 @@
 
 . test_common.sh
 
+
 test_dry_run() {
 	local option=$1
 	local archive_file=$2
@@ -33,16 +34,16 @@ test_dry_run() {
 
 	# Only check the last line of output:
 
-	echo "$expected" > /tmp/expected.txt
-	test_lha $option "$archive_file" > /tmp/output.txt
+	echo "$expected" > "$wd/expected.txt"
+	test_lha $option "$archive_file" > "$wd/output.txt"
 
-	tail -n 1 < /tmp/output.txt > /tmp/output2.txt
+	tail -n 1 < "$wd/output.txt" > "$wd/output2.txt"
 
-	if ! diff /tmp/expected.txt /tmp/output2.txt; then
+	if ! diff "$wd/expected.txt" "$wd/output2.txt"; then
 		fail "Output not as expected for $archive_file"
 	fi
 
-	rm -f /tmp/expected.txt /tmp/output.txt /tmp/output2.txt
+	rm -f "$wd/expected.txt" "$wd/output.txt" "$wd/output2.txt"
 }
 
 test_archive() {
@@ -51,6 +52,11 @@ test_archive() {
 
 	test_dry_run en "$archive_file" "EXTRACT $filename"
 	test_dry_run tn "$archive_file" "VERIFY $filename"
+
+	# Test with an extract directory.
+
+	test_dry_run enw=/x/y/z "$archive_file" "EXTRACT /x/y/z/$filename"
+	test_dry_run tnw=/x/y/z "$archive_file" "VERIFY /x/y/z/$filename"
 
 	# Test the same, reading from stdin.
 
@@ -227,6 +233,9 @@ test_archive regression/badterm.lzh         "tmp/?]2;malicious??"
 test_archive regression/truncated.lzh       "gpl-2"
 test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
 
+test_archive unlha32/h2_lhx.lzh             "gpl-2"
+test_archive unlha32/lhx_long.lzh           "long.txt"
+
 test_archive generated/lzs/lzs.lzs          "gpl-2"
 test_archive generated/lzs/long.lzs         "long.txt"
 
@@ -253,6 +262,14 @@ test_dry_run en lha_unix114i/h0_symlink.lzh \
     "EXTRACT symlink|target (directory)"
 test_dry_run en lha_unix114i/h1_symlink.lzh \
     "EXTRACT symlink|target (directory)"
+test_dry_run en lha_unix114i/h1_symlink2.lzh \
+    "EXTRACT symlink|path/to/target (directory)"
+test_dry_run en lha_unix114i/h1_symlink3.lzh \
+    "EXTRACT subdir/symlink|/absolute/path (directory)"
 test_dry_run en lha_unix114i/h2_symlink.lzh \
     "EXTRACT symlink|target (directory)"
+test_dry_run en lha_unix114i/h2_symlink2.lzh \
+    "EXTRACT symlink|path/to/target (directory)"
+test_dry_run en lha_unix114i/h2_symlink3.lzh \
+    "EXTRACT subdir/symlink|/absolute/path (directory)"
 

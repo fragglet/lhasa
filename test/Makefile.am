@@ -12,6 +12,7 @@ UNCOMPILED_TESTS=                     \
 	test-file-headers             \
 	test-list-output              \
 	test-crc-output               \
+	test-print                    \
 	test-dry-run                  \
 	test-extract
 

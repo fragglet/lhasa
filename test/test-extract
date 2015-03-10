@@ -22,9 +22,9 @@
 
 . test_common.sh
 
-run_sandbox=/tmp/extract1
-w_sandbox=/tmp/extract2
-gather_sandbox=/tmp/extract3
+run_sandbox="$wd/extract1"
+w_sandbox="$wd/extract2"
+gather_sandbox="$wd/extract3"
 
 remove_sandboxes() {
 	if [ -e "$run_sandbox" ]; then
@@ -143,9 +143,12 @@ check_not_overwritten() {
 check_extracted_file() {
 	local archive_file=$1
 	local filename=$2
-	local timestamp=$3
-	local unix_perms=$4
-	local symlink_target=$5
+	local timestamp=$(get_file_data "$archive_file" \
+	                  "$filename" timestamp)
+	local unix_perms=$(get_file_data "$archive_file" \
+	                   "$filename" unix_perms)
+	local symlink_target=$(get_file_data "$archive_file" \
+	                       "$filename" symlink_target)
 
 	#echo "check_extracted_file: $@"
 
@@ -192,34 +195,10 @@ check_extracted_file() {
 
 check_extracted_files() {
 	local archive_file=$1
-	local path=""
-	local filename=""
-	local timestamp=""
-	local unix_perms=""
-	local symlink_target=""
 
-	while read; do
-		if [ "$REPLY" = "--" ]; then
-			check_extracted_file "$archive_file"            \
-			    "$path$filename" "$timestamp" "$unix_perms" \
-			    "$symlink_target"
-			path=""
-			filename=""
-			timestamp=""
-			unix_perms=""
-			symlink_target=""
-			continue
-		fi
-
-		case "$REPLY" in
-		path:*) path=${REPLY/path: /} ;;
-		filename:*) filename=${REPLY/filename: /} ;;
-		timestamp:*) timestamp=${REPLY/timestamp: /} ;;
-		unix_perms:*) unix_perms=${REPLY/unix_perms: /} ;;
-		symlink_target:*) symlink_target=${REPLY/symlink_target: /} ;;
-		*) ;;
-		esac
-	done < "output/$archive_file-hdr.txt"
+	get_file_data "$archive_file" | while read; do
+		check_extracted_file "$archive_file" "$REPLY"
+	done
 }
 
 # Run the program under test, comparing the output to the contents
@@ -229,9 +208,13 @@ lha_check_output() {
 	#echo "lha_check_output: $@"
 	local expected_output="$1"
 	shift
+	local output="$wd/output.txt"
 
 	cd "$run_sandbox"
-	test_lha "$@" >/tmp/output.txt 2>&1
+	# Invoke test command and save output.
+	# test outputs have their test root as '/tmp'; adjust accordingly
+	test_lha "$@" 2>&1 | sed "s,$wd,/tmp,g; \$a\\" > "$output"
+
 	cd "$test_base"
 
 	if $GATHER && [ ! -e "$expected_output" ]; then
@@ -240,12 +223,12 @@ lha_check_output() {
 		cd "$test_base"
 	fi
 
-	if ! diff -u "$expected_output" /tmp/output.txt; then
+	if ! diff -u "$expected_output" "$output"; then
 		fail "Output not as expected for command:" \
 		     "    lha $*" >&2
 	fi
 
-	rm -f /tmp/output.txt
+	rm -f "$output"
 }
 
 # Basic 'lha e' extract.
@@ -271,8 +254,12 @@ test_stdin_extract() {
 
 	make_sandboxes
 
-	lha_check_output "$expected_file" e - \
-	    < $(test_arc_file "$archive_file")
+	# This is *not* a useless use of cat. If a < pipe was used,
+	# the input would come from a file handle, not a pipe. Using
+	# cat forces the data to come from a pipe.
+
+	cat $(test_arc_file "$archive_file") | \
+	    lha_check_output "$expected_file" e -
 
 	check_extracted_files "$archive_file"
 
@@ -285,7 +272,7 @@ test_w_option() {
 	local archive_file=$1
 	shift
 
-	local expected_file="$test_base/output/$archive_file-e.txt"
+	local expected_file="$test_base/output/$archive_file-ew.txt"
 
 	# Extract into a subdirectory of the 'w' sandbox that does not
 	# exist: the path should be created as part of the extract.
@@ -322,21 +309,24 @@ test_q1_option() {
 	shift
 
 	make_sandboxes
+	expected="$wd/expected.txt"
 
 	for filename in "$@"; do
-		if [ "$filename" = "symlink" ]; then
-			printf "Symbolic Link symlink -> target\n"
+		local symlink=$(get_file_data "$archive_file" \
+		                              "$filename" symlink_target)
+		if [ "$symlink" != "" ]; then
+			printf "Symbolic Link $filename -> $symlink\n"
 		else
 			printf "\r$filename :\r$filename\t- Melted  \n"
 		fi
-	done >/tmp/expected.txt
+	done >"$expected"
 
-	lha_check_output /tmp/expected.txt \
+	lha_check_output "$expected" \
 	                 eq1 $(test_arc_file "$archive_file")
 
 	check_exists "$archive_file" "$@"
 
-	rm -f /tmp/expected.txt
+	rm -f "$expected"
 
 	remove_sandboxes
 }
@@ -371,15 +361,17 @@ test_i_option() {
 
 	make_sandboxes
 
-	# Hackishly transform the file containing the expected output
-	# to remove the parent directory. This gives the expected
-	# output when using the -i option.
+	# Hackishly transform the file containing the expected output to
+	# remove the parent directory. This gives the expected output when
+	# using the -i option.
+	# The transformation turns out to be a bit complicated because for
+	# "Symbolic Link" lines we only want to transform the left side.
+	sed '/^Symbolic/  s/[A-Za-z0-9\/]*\/\([a-z]* ->\)/\1/;
+	     /^Symbolic/! s/[A-Za-z0-9\/]*\///g'                \
+	      < "$test_base/output/$archive_file-e.txt"         \
+	      > "$expected"
 
-	sed 's/[A-Za-z0-9\/]*\///g'                       \
-	      < "$test_base/output/$archive_file-e.txt"   \
-	      > /tmp/expected.txt
-
-	lha_check_output /tmp/expected.txt \
+	lha_check_output "$expected" \
 	                 ei $(test_arc_file "$archive_file")
 
 	for filename in "$@"; do
@@ -387,7 +379,7 @@ test_i_option() {
 		check_exists "$archive_file" "$base_filename"
 	done
 
-	rm -f /tmp/expected.txt
+	rm -f "$expected"
 	remove_sandboxes
 }
 
@@ -420,7 +412,7 @@ test_archive() {
 	# Don't check symlink archives on non-Unix systems that
 	# don't support them.
 
-	if [ "$build_arch" != "unix" ] && [ "$1" = "symlink" ]; then
+	if [ "$build_arch" != "unix" ] && echo "$1" | grep -q symlink; then
 		return
 	fi
 
@@ -440,6 +432,7 @@ test_archive larc333/lz5.lzs                "gpl-2"
 test_archive larc333/sfx.com                "gpl-2.gz"
 test_archive larc333/subdir.lzs             "subdir/subdir2/hello.txt"
 test_archive larc333/long.lzs               "long.txt"
+test_archive larc333/initial.lzs            "initial.bin"
 
 test_archive lharc113/lh0.lzh               "gpl-2.gz"
 test_archive lharc113/lh1.lzh               "gpl-2"
@@ -470,12 +463,16 @@ test_archive lha_unix114i/h1_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h1_lh7.lzh        "gpl-2"
 test_archive lha_unix114i/h1_subdir.lzh     "subdir/subdir2/hello.txt"
 test_archive lha_unix114i/h1_symlink.lzh    "symlink"
+test_archive lha_unix114i/h1_symlink2.lzh   "symlink"
+test_archive lha_unix114i/h1_symlink3.lzh   "subdir/symlink"
 test_archive lha_unix114i/h2_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h2_lh5.lzh        "gpl-2"
 test_archive lha_unix114i/h2_lh6.lzh        "gpl-2"
 test_archive lha_unix114i/h2_lh7.lzh        "gpl-2"
 test_archive lha_unix114i/h2_subdir.lzh     "subdir/subdir2/hello.txt"
 test_archive lha_unix114i/h2_symlink.lzh    "symlink"
+test_archive lha_unix114i/h2_symlink2.lzh   "symlink"
+test_archive lha_unix114i/h2_symlink3.lzh   "subdir/symlink"
 test_archive lha_unix114i/lh6_long.lzh      "long.txt"
 test_archive lha_unix114i/lh7_long.lzh      "long.txt"
 
@@ -488,6 +485,11 @@ test_archive lha_os2_208/h3_lfn.lzh         "Long Filename.txt"
 test_archive lha_os2_208/h3_lh0.lzh         "GPL-2.gz"
 test_archive lha_os2_208/h3_lh5.lzh         "gpl-2"
 test_archive lha_os2_208/h3_subdir.lzh      "subdir/subdir2/HELLO.TXT"
+
+test_archive pmarc124/pm0.pma               "gpl-2.gz"
+test_archive pmarc124/pm1.pma               "copying.txt"
+test_archive pmarc124/pm1_long.pma          "long.txt"
+test_archive pmarc124/mtcd.pma              "mtcd.doc" "cd.mtc"
 
 test_archive pmarc2/pm0.pma                 "gpl-2.gz"
 test_archive pmarc2/pm2.pma                 "gpl-2."
@@ -634,7 +636,7 @@ test_overwrite_prompt() {
 	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	(echo y; echo n; echo Y; echo N; echo "") |               \
-	lha_check_output output/regression/multiple.lzh-ow1.txt   \
+	lha_check_output "$test_base/output/regression/multiple.lzh-ow1.txt" \
 	    e $(test_arc_file "$archive_file")
 
 	check_overwritten     "$archive_file" "file1.txt"
@@ -658,7 +660,7 @@ test_overwrite_all() {
 	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	echo $cmd |                                               \
-	lha_check_output output/regression/multiple.lzh-ow2.txt   \
+	lha_check_output "$test_base/output/regression/multiple.lzh-ow2.txt" \
 	    e $(test_arc_file "$archive_file")
 
 	check_overwritten "$archive_file" \
@@ -679,7 +681,7 @@ test_overwrite_skip() {
 	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
 
 	echo $cmd |                                               \
-	lha_check_output output/regression/multiple.lzh-ow3.txt   \
+	lha_check_output "$test_base/output/regression/multiple.lzh-ow3.txt" \
 	    e $(test_arc_file "$archive_file")
 
 	check_not_overwritten "$archive_file" \
@@ -695,7 +697,7 @@ test_wildcard1() {
 
 	make_sandboxes
 
-	lha_check_output output/regression/multiple.lzh-e1.txt    \
+	lha_check_output "$test_base/output/regression/multiple.lzh-e1.txt" \
 	    e $(test_arc_file "$archive_file") "file2*.txt"
 
 	check_not_exists "$archive_file" "file1.txt"
@@ -714,7 +716,7 @@ test_wildcard2() {
 
 	make_sandboxes
 
-	lha_check_output output/regression/multiple.lzh-e2.txt    \
+	lha_check_output "$test_base/output/regression/multiple.lzh-e2.txt" \
 	    e $(test_arc_file "$archive_file") "file?.txt"
 
 	check_exists     "$archive_file" "file1.txt"
@@ -733,7 +735,7 @@ test_extract_list() {
 
 	make_sandboxes
 
-	lha_check_output output/regression/multiple.lzh-e3.txt    \
+	lha_check_output "$test_base/output/regression/multiple.lzh-e3.txt" \
 	    e $(test_arc_file "$archive_file")                    \
 	    file1.txt file2-2.txt file4.txt
 
@@ -754,8 +756,61 @@ test_extract_truncated() {
 	make_sandboxes
 
 	SUCCESS_EXPECTED=false \
-	  lha_check_output output/regression/truncated.lzh-e.txt \
+	  lha_check_output "$test_base/output/regression/truncated.lzh-e.txt" \
 	      e $(test_arc_file "$archive_file")
+
+	remove_sandboxes
+}
+
+# Symbolic link test. When extracting symlink1.lzh, the symlink should be
+# overwritten by the second file, not dereferenced. A file named 'bar.txt'
+# should not be created.
+
+test_symlink_overwrite() {
+	local archive_file=regression/symlink1.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/$archive_file-e.txt" \
+	    e $(test_arc_file "$archive_file")
+
+	check_exists     "$archive_file" "foo.txt"
+	check_not_exists "$archive_file" "bar.txt"
+
+	remove_sandboxes
+}
+
+# Symbolic link security test. When extracting symlink[23].lzh, the symlink
+# should be created but the extract of the file should fail.
+
+test_symlink_security() {
+	local archive_file=$1
+	local symlink_file=$2
+
+	make_sandboxes
+
+	SUCCESS_EXPECTED=false \
+	  lha_check_output "$test_base/output/$archive_file-e.txt" \
+	      e $(test_arc_file "$archive_file")
+
+	check_exists "$archive_file" "$2"
+
+	remove_sandboxes
+}
+
+# '..' path check. It should not be possible to escape the extract
+# directory.
+
+test_dotdot() {
+	local archive_file=regression/dotdot.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/regression/dotdot.lzh-e.txt" \
+	    ef $(test_arc_file "$archive_file")
+
+	check_not_exists "$archive_file" "../evil1.txt"
+	check_not_exists "$archive_file" "../evil2.txt"
 
 	remove_sandboxes
 }
@@ -770,4 +825,14 @@ test_wildcard1
 test_wildcard2
 test_extract_list
 test_extract_truncated
+
+test_dotdot
+
+# Symlink tests only make sense on systems that support them:
+
+if [ "$build_arch" = "unix" ]; then
+	test_symlink_overwrite
+	test_symlink_security regression/symlink2.lzh etc
+	test_symlink_security regression/symlink3.lzh etc
+fi
 

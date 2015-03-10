@@ -39,6 +39,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "lib/lha_arch.h"
 #include "lha_decoder.h"
@@ -355,7 +356,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	assert(lha_arch_chdir(argv[2]) != 0);
+	assert(chdir(argv[2]) != 0);
 	srand(time(NULL));
 
 	for (;;) {

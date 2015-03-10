@@ -1,7 +1,7 @@
-AC_INIT(Lhasa, 0.0.7, fraggle@gmail.com, lhasa)
+AC_INIT(Lhasa, 0.2.0, fraggle@gmail.com, lhasa)
 AC_CONFIG_AUX_DIR(autotools)
 
-AM_INIT_AUTOMAKE($PACKAGE_TARNAME, $PACKAGE_VERSION, no-define)
+AM_INIT_AUTOMAKE([no-define])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_PROG_CC_C_O
 
@@ -71,7 +71,7 @@ AC_SUBST(MAIN_CFLAGS)
 AC_SUBST(TEST_CFLAGS)
 AC_SUBST(ac_aux_dir)
 
-AM_CONFIG_HEADER(config.h:config.hin)
+AC_CONFIG_HEADERS([config.h:config.hin])
 
 AC_OUTPUT([
     liblhasa.pc

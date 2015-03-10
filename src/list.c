@@ -145,9 +145,9 @@ static void permission_column_print(LHAFileHeader *header)
 	// Print permissions. If we do not have any permissions to
 	// print, fall back to printing the OS type.
 
-	if ((header->extra_flags & LHA_FILE_OS9_PERMS) != 0) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_OS9_PERMS)) {
 		os9_permissions_print(header);
-	} else if ((header->extra_flags & LHA_FILE_UNIX_PERMS) != 0) {
+	} else if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_PERMS)) {
 		unix_permissions_print(header);
 	} else {
 		printf("%-10s", os_type_to_string(header->os_type));
@@ -169,7 +169,7 @@ static ListColumn permission_column = {
 
 static void unix_uid_gid_column_print(LHAFileHeader *header)
 {
-	if (header->extra_flags & LHA_FILE_UNIX_UID_GID) {
+	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_UID_GID)) {
 		printf("%5i/%-5i", header->unix_uid, header->unix_gid);
 	} else {
 		printf("           ");

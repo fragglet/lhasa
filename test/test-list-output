@@ -30,13 +30,13 @@ check_output() {
 	# Check the output for a particular option matches the expected
 	# output file.
 
-	test_lha "$@" > /tmp/tmp.txt
+	test_lha "$@" > "$wd/tmp.txt"
 
-	if ! diff -u output/$expected /tmp/tmp.txt; then
+	if ! diff -u output/$expected "$wd/tmp.txt"; then
 		fail "Output not as expected for lha $*"
 	fi
 
-	rm -f /tmp/tmp.txt
+	rm -f "$wd/tmp.txt"
 }
 
 gather_output() {
@@ -119,12 +119,16 @@ test_archive lha_unix114i/h1_lh6.lzh
 test_archive lha_unix114i/h1_lh7.lzh
 test_archive lha_unix114i/h1_subdir.lzh
 test_archive lha_unix114i/h1_symlink.lzh
+test_archive lha_unix114i/h1_symlink2.lzh
+test_archive lha_unix114i/h1_symlink3.lzh
 test_archive lha_unix114i/h2_lh0.lzh
 test_archive lha_unix114i/h2_lh5.lzh
 test_archive lha_unix114i/h2_lh6.lzh
 test_archive lha_unix114i/h2_lh7.lzh
 test_archive lha_unix114i/h2_subdir.lzh
 test_archive lha_unix114i/h2_symlink.lzh
+test_archive lha_unix114i/h2_symlink2.lzh
+test_archive lha_unix114i/h2_symlink3.lzh
 test_archive lha_unix114i/lh6_long.lzh
 test_archive lha_unix114i/lh7_long.lzh
 
@@ -137,6 +141,11 @@ test_archive lha_os2_208/h3_lfn.lzh
 test_archive lha_os2_208/h3_lh0.lzh
 test_archive lha_os2_208/h3_lh5.lzh
 test_archive lha_os2_208/h3_subdir.lzh
+
+test_archive pmarc124/pm0.pma
+test_archive pmarc124/pm1.pma
+test_archive pmarc124/pm1_long.pma
+test_archive pmarc124/mtcd.pma
 
 test_archive pmarc2/pm0.pma
 test_archive pmarc2/pm2.pma
@@ -243,6 +252,9 @@ test_archive lha_os9_211c/h1_subdir.lzh
 test_archive lha_os9_211c/h2_lh0.lzh
 test_archive lha_os9_211c/h2_lh1.lzh
 test_archive lha_os9_211c/h2_subdir.lzh
+
+test_archive unlha32/h2_lhx.lzh
+test_archive unlha32/lhx_long.lzh
 
 test_archive regression/abspath.lzh
 test_archive regression/badterm.lzh

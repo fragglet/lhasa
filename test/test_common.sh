@@ -24,6 +24,10 @@
 
 set -eu
 
+# set up a temporary directory within which tests are to be run
+wd=$(mktemp -dt lhasa-test.XXXXXX)
+trap "rmdir '$wd'" INT EXIT
+
 # Some of the test output is time zone-dependent, and output (eg.
 # from 'lha l') can be different in different time zones. Use the
 # TZ environment variable to force the behavior to the London
@@ -80,7 +84,7 @@ test_lha() {
 	local test_binary="$test_base/../src/test-lha"
 
 	if [ "$build_arch" = "windows" ]; then
-		test_binary="$test_base/../src/.libs/test-lha.exe"
+		test_binary="$test_base/../src/test-lha.exe"
 	fi
 
 	if $SUCCESS_EXPECTED; then
@@ -136,5 +140,59 @@ file_perms() {
 	else
 		stat -f "%p" "$@"
 	fi
+}
+
+# Swiss Army Knife-function to process the -hdr files containing data on
+# the archives. Can be used in three modes:
+#
+# get_file_data archive.lzh
+#   - Prints filenames of the files stored in the specified archive.
+# get_file_data archive.lzh path/file
+#   - Gets the values for the specified archived file, in the form:
+#        var: value
+# get_file_data archive.lzh path/file var
+#   - Prints the value of the specified value for the specified file.
+
+get_file_data() {
+	local archive_file=$1
+	local target=
+	local var=
+
+	if [ $# -gt 1 ]; then
+		target=$2
+	fi
+	if [ $# -gt 2 ]; then
+		var=$3
+	fi
+
+	awk -v target="$target" -v var="$var" -- '
+		BEGIN {
+			FS = ": "
+		}
+		/^--/ {
+			if (target == "") {
+				print path filename
+			}
+			path = ""
+			filename = ""
+			next
+		}
+		/^path:/ {
+			path = $2
+			next
+		}
+		/^filename:/ {
+			filename = $2
+			next
+		}
+		target == path filename {
+			if (var == "") {
+				print $0
+			} else if ($1 == var) {
+				print $2
+				exit 0
+			}
+		}
+	' < "$test_base/output/$archive_file-hdr.txt"
 }
 

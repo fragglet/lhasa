@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "lha_arch.h"
 #include "lha_input_stream.h"
@@ -61,7 +62,7 @@ LHAInputStream *lha_input_stream_new(const LHAInputStreamType *type,
 {
 	LHAInputStream *result;
 
-	result = malloc(sizeof(LHAInputStream));
+	result = calloc(1, sizeof(LHAInputStream));
 
 	if (result == NULL) {
 		return NULL;
@@ -96,13 +97,13 @@ static int file_header_match(uint8_t *buf)
 
 	// LHA algorithm?
 
-	if (!strncmp((char *) buf + 3, "lh", 2)) {
+	if (buf[3] == 'l' && buf[4] == 'h') {
 		return 1;
 	}
 
 	// LArc algorithm (lz4, lz5, lzs)?
 
-	if (!strncmp((char *) buf + 3, "lz", 2)
+	if (buf[3] == 'l' && buf[4] == 'z'
 	 && (buf[5] == '4' || buf[5] == '5' || buf[5] == 's')) {
 		return 1;
 	}
@@ -111,7 +112,7 @@ static int file_header_match(uint8_t *buf)
 	// Note: PMarc SFX archives have a -pms- string in them that must
 	// be ignored.
 
-	if (!strncmp((char *) buf + 3, "pm", 2) && buf[5] != 's') {
+	if (buf[3] == 'p' && buf[4] == 'm' && buf[5] != 's') {
 		return 1;
 	}
 
@@ -293,11 +294,61 @@ static int file_source_read(void *handle, void *buf, size_t buf_len)
 	return (int) bytes_read;
 }
 
+// "Fallback" skip for file source that uses fread(), for unseekable
+// streams.
+
+static int file_source_skip_fallback(FILE *handle, size_t bytes)
+{
+	uint8_t data[32];
+	unsigned int len;
+	int result;
+
+	while (bytes > 0) {
+		if (bytes > sizeof(data)) {
+			len = sizeof(data);
+		} else {
+			len = bytes;
+		}
+
+		result = fread(data, 1, len, handle);
+
+		if (result != (int) len) {
+			return 0;
+		}
+
+		bytes -= len;
+	}
+
+	return 1;
+}
+
 // Seek forward in a FILE * input stream.
 
-static int file_source_seek(void *handle, size_t bytes)
+static int file_source_skip(void *handle, size_t bytes)
 {
-	return fseek(handle, (long) bytes, SEEK_CUR);
+	int result;
+
+	// If this is an unseekable stream of some kind, always use the
+	// fallback behavior, as at least this is guaranteed to work.
+	// This is to work around problems on Windows, where fseek() can
+	// seek half-way on a stream and *then* fail, leaving us in an
+	// unworkable situation.
+
+	if (ftell(handle) < 0) {
+		return file_source_skip_fallback(handle, bytes);
+	}
+
+	result = fseek(handle, (long) bytes, SEEK_CUR);
+
+	if (result < 0) {
+		if (errno == EBADF || errno == ESPIPE) {
+			return file_source_skip_fallback(handle, bytes);
+		} else {
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 // Close a FILE * input stream.
@@ -312,7 +363,7 @@ static void file_source_close(void *handle)
 
 static const LHAInputStreamType file_source_owned = {
 	file_source_read,
-	file_source_seek,
+	file_source_skip,
 	file_source_close
 };
 
@@ -320,7 +371,7 @@ static const LHAInputStreamType file_source_owned = {
 
 static const LHAInputStreamType file_source_unowned = {
 	file_source_read,
-	file_source_seek,
+	file_source_skip,
 	NULL
 };
 

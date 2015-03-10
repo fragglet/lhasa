@@ -1,3 +1,33 @@
+v0.2.0 (2013-08-04):
+
+     * Decompression of archives using the -lhx- file format supported by
+       unlha32.dll is now supported (thanks Multi for the patch).
+     * The -p (print to stdout) command line option is now supported.
+     * The test suite should now run correctly on Windows.
+
+    Bugs fixed:
+     * Bug where archives read from pipes (eg. stdin) were not extracted
+       beyond the first file in the archive.
+     * Output when using the -w (extract directory) option now correctly
+       matches the output of Unix lha.
+
+v0.1.0 (2013-03-16):
+
+     * There are now test archives for OS-9 and OS-9/68k (OSK) and a
+       workaround for a bug in the OSK lha tool on this platform. OSK level
+       0 extended areas are also supported.
+     * Extracted files are now written using O_EXCL, which prevents
+       malicious symbolic links being used to redirect output.
+     * Directory paths containing '..' as a directory name are now
+       sanitized, to prevent malicious archives being able to overwrite
+       arbitrary files on the filesystem.
+     * Symbolic links are now extracted in a safer way, being created as
+       dummy files that are overwritten with proper symbolic links at the
+       end of extraction. This is the same behavior used by GNU tar to
+       prevent malicious use of symbolic links.
+     * Automake 1.13 is now properly supported (thanks Jan Engelhardt).
+       Processing of archives read from IPC pipes (including stdin) has
+       been fixed.
 
 v0.0.7 (2012-06-02):
 
@@ -106,3 +136,4 @@ v0.0.1 (2012-04-06):
     These are features that I aim to add in future releases. Other future
     features can be found in the TODO file.
 
+# vim: tw=75

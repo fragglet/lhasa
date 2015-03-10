@@ -38,7 +38,7 @@ LHABasicReader *lha_basic_reader_new(LHAInputStream *stream)
 {
 	LHABasicReader *reader;
 
-	reader = malloc(sizeof(LHABasicReader));
+	reader = calloc(1, sizeof(LHABasicReader));
 
 	if (reader == NULL) {
 		return NULL;
@@ -75,8 +75,10 @@ LHAFileHeader *lha_basic_reader_next_file(LHABasicReader *reader)
 		lha_file_header_free(reader->curr_file);
 		reader->curr_file = NULL;
 
-		lha_input_stream_skip(reader->stream,
-		                      reader->curr_file_remaining);
+		if (!lha_input_stream_skip(reader->stream,
+		                           reader->curr_file_remaining)) {
+			reader->eof = 1;
+		}
 	}
 
 	if (reader->eof) {
