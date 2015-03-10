@@ -4,5 +4,5 @@ compiler:
  - clang
  - gcc
 
-script: ./autogen.sh && ./configure && make && make check
+script: ./autogen.sh && make && make check
 
