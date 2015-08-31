@@ -28,6 +28,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "header_defs.h"
 #include "lha_arch.h"
 #include "lha_endian.h"
+#include "lha_input_stream.h"
+#include "lha_output_stream.h"
 
 /*
 
@@ -367,7 +369,7 @@ static const SubHeaderWriter subheaders[] = {
  */
 
 static size_t calculate_subheader_lengths(LHAFileHeader *header,
-                                           size_t *subheader_lengths)
+                                          size_t *subheader_lengths)
 {
 	unsigned int i;
 	size_t total;
@@ -395,7 +397,7 @@ static size_t calculate_subheader_lengths(LHAFileHeader *header,
  */
 
 static size_t next_subheader_length(size_t *subheader_lengths,
-                                     unsigned int index)
+                                    unsigned int index)
 {
 	unsigned int i;
 
@@ -434,6 +436,8 @@ static int generate_header_data(LHAFileHeader *header,
 		return 0;
 	}
 
+	offset = 0;
+
 	for (i = 0; i < NUM_SUBHEADERS; ++i) {
 
 		// If the length is zero, it indicates that this
@@ -443,10 +447,10 @@ static int generate_header_data(LHAFileHeader *header,
 			continue;
 		}
 
-		subheaders[i].write(header, header->raw_data + offset,
-		                    subheader_lengths[i],
-		                    next_subheader_length(
-		                        subheader_lengths, i));
+		subheaders[i].write(
+			header, header->raw_data + offset,
+			subheader_lengths[i],
+			next_subheader_length(subheader_lengths, i));
 
 		offset += subheader_lengths[i];
 	}
@@ -454,10 +458,45 @@ static int generate_header_data(LHAFileHeader *header,
 	return 1;
 }
 
-// TODO:
-// size_t subheader_lengths[NUM_SUBHEADERS];
-// header->raw_data_len = calculate_subheader_lengths(subheader_lengths);
-// ... write file ...
-// generate_header_data(header, subheader_lengths);
-// ... write header ...
+int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
+                        LHAInputStream *file_input)
+{
+	size_t subheader_lengths[NUM_SUBHEADERS];
+	off_t header_loc, eof_loc;
+
+	// We need to save the location of the header in the output file so
+	// that we can come back later to write it.
+	header_loc = lha_output_stream_tell(out);
+
+	// Some of the header contents may change or not be known until after
+	// we have written the compressed file contents, but the header length
+	// will not change.
+	header->raw_data_len =
+		calculate_subheader_lengths(header, subheader_lengths);
+
+	if (!lha_output_stream_seek(out, header_loc + header->raw_data_len)) {
+		return 0;
+	}
+
+	// Write compressed data ...
+
+	// Generate the header data.
+	if (!generate_header_data(header, subheader_lengths)) {
+		return 0;
+	}
+
+	// Go back and write the header.
+	eof_loc = lha_output_stream_tell(out);
+	if (!lha_output_stream_seek(out, header_loc)) {
+		return 0;
+	}
+
+	if (!lha_output_stream_write(out, header->raw_data,
+	                             header->raw_data_len)) {
+		return 0;
+	}
+
+	// Done.
+	return lha_output_stream_seek(out, eof_loc);
+}
 
