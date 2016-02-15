@@ -42,7 +42,23 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 int lha_arch_vasprintf(char **result, char *fmt, va_list args)
 {
+#ifdef _AMIGA
+#include <stdlib.h>
+	int len;
+
+	len = vsnprintf(NULL, 0, fmt, args);
+	if (len >= 0) {
+		*result = malloc(len + 1);
+		if (*result != NULL) {
+			return vsprintf(*result, fmt, args);
+		}
+	}
+
+	*result = NULL;
+	return -1;
+#else
 	return vasprintf(result, fmt, args);
+#endif
 }
 
 void lha_arch_set_binary(FILE *handle)
