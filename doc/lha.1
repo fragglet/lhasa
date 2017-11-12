@@ -36,6 +36,11 @@ check the CRC.
 \fB-e\fR or \fB-x\fR
 Extract archive. Files are extracted to the current working directory
 unless the 'w' option is specified.
+.TP
+\fB-p\fR
+Extract archive, sending decompressed files to stdout rather than
+writing them to the filesystem as actual files. This is useful when used
+as part of a shell pipeline.
 .PP
 .SH OPTIONS
 The remainder of the command parameter is used to specify additional
