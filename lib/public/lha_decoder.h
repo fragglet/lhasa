@@ -84,7 +84,7 @@ typedef size_t (*LHADecoderCallback)(void *buf, size_t buf_len,
  *
  * @param num_blocks      Number of blocks processed so far.
  * @param total_blocks    Total number of blocks to process.
- * @paaram callback_data  Extra user-specified data passed to the callback.
+ * @param callback_data  Extra user-specified data passed to the callback.
  */
 
 typedef void (*LHADecoderProgressCallback)(unsigned int num_blocks,
