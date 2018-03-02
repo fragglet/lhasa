@@ -232,12 +232,14 @@ static ListColumn size_column = {
 
 // Compression ratio
 
-static float compression_percent(size_t compressed, size_t uncompressed)
+static size_t compression_permilles(size_t compressed, size_t uncompressed)
 {
+	// Calculated permilles instead of float percents
+	// On Amiga there's no FPU, avoiding soft floats makes code more optimizable
 	if (uncompressed > 0) {
-		return ((float) compressed * 100.0f) / (float) uncompressed;
+		return (compressed * 1000) / uncompressed;
 	} else {
-		return 100.0f;
+		return 1000;
 	}
 }
 
@@ -246,8 +248,9 @@ static void ratio_column_print(LHAFileHeader *header)
 	if (!strcmp(header->compress_method, "-lhd-")) {
 		printf("******");
 	} else {
-		printf("%5.1f%%", compression_percent(header->compressed_length,
-		                                      header->length));
+		size_t permilles = compression_permilles(header->compressed_length,
+		                                         header->length);
+		printf("%d.%d%%", permilles/10, permilles % 10);
 	}
 }
 
@@ -256,8 +259,9 @@ static void ratio_column_footer(FileStatistics *stats)
 	if (stats->length == 0) {
 		printf("******");
 	} else {
-		printf("%5.1f%%", compression_percent(stats->compressed_length,
-		                                      stats->length));
+		size_t permilles = compression_permilles(stats->compressed_length,
+		                                         stats->length);
+		printf("%d.%d%%", permilles/10, permilles % 10);
 	}
 }
 
