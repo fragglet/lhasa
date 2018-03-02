@@ -27,9 +27,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define LHA_ARCH_UNIX     1
 #define LHA_ARCH_WINDOWS  2
+#define LHA_ARCH_AMIGA    3
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define LHA_ARCH LHA_ARCH_WINDOWS
+#elif defined(__amigaos__)
+#define LHA_ARCH LHA_ARCH_AMIGA
 #else
 #define LHA_ARCH LHA_ARCH_UNIX
 #endif
