@@ -237,7 +237,7 @@ static size_t compression_permilles(size_t compressed, size_t uncompressed)
 	// Calculated permilles instead of float percents
 	// On Amiga there's no FPU, avoiding soft floats makes code more optimizable
 	if (uncompressed > 0) {
-		return (compressed * 1000) / uncompressed;
+		return (compressed * 1000 + uncompressed/2) / uncompressed;
 	} else {
 		return 1000;
 	}
@@ -250,7 +250,7 @@ static void ratio_column_print(LHAFileHeader *header)
 	} else {
 		size_t permilles = compression_permilles(header->compressed_length,
 		                                         header->length);
-		printf("%d.%d%%", permilles/10, permilles % 10);
+		printf("%3u.%u%%", permilles/10, permilles % 10);
 	}
 }
 
@@ -261,7 +261,7 @@ static void ratio_column_footer(FileStatistics *stats)
 	} else {
 		size_t permilles = compression_permilles(stats->compressed_length,
 		                                         stats->length);
-		printf("%d.%d%%", permilles/10, permilles % 10);
+		printf("%3u.%u%%", permilles/10, permilles % 10);
 	}
 }
 
