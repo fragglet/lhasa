@@ -25,6 +25,7 @@ SRC =                                                   \
 	lha_writer.c                                    \
 	macbinary.c             macbinary.h             \
 	null_decoder.c                                  \
+	lh1_common.c            lh1_common.h            \
 	lh1_decoder.c                                   \
 	lh5_decoder.c                                   \
 	lh6_decoder.c                                   \
