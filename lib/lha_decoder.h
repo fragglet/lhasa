@@ -23,65 +23,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "public/lha_decoder.h"
 
-struct _LHADecoderType {
-
-	/**
-	 * Callback function to initialize the decoder.
-	 *
-	 * @param extra_data     Pointer to the extra data area allocated for
-	 *                       the decoder.
-	 * @param callback       Callback function to invoke to read more
-	 *                       compressed data.
-	 * @param callback_data  Extra pointer to pass to the callback.
-	 * @return               Non-zero for success.
-	 */
-
-	int (*init)(void *extra_data,
-	            LHADecoderCallback callback,
-	            void *callback_data);
-
-	/**
-	 * Callback function to free the decoder.
-	 *
-	 * @param extra_data     Pointer to the extra data area allocated for
-	 *                       the decoder.
-	 */
-
-	void (*free)(void *extra_data);
-
-	/**
-	 * Callback function to read (ie. decompress) data from the
-	 * decoder.
-	 *
-	 * @param extra_data     Pointer to the decoder's custom data.
-	 * @param buf            Pointer to the buffer in which to store
-	 *                       the decompressed data.  The buffer is
-	 *                       at least 'max_read' bytes in size.
-	 * @return               Number of bytes decompressed.
-	 */
-
-	size_t (*read)(void *extra_data, uint8_t *buf);
-
-	/** Number of bytes of extra data to allocate for the decoder. */
-
-	size_t extra_size;
-
-	/** Maximum number of bytes that might be put into the buffer by
-	    a single call to read() */
-
-	size_t max_read;
-
-	/** Block size. Used for calculating number of blocks for
-	    progress bar. */
-
-	size_t block_size;
-};
-
 struct _LHADecoder {
 
 	/** Type of decoder (algorithm) */
 
-	LHADecoderType *dtype;
+	LHACodec *codec;
 
 	/** Callback function to monitor decoder progress. */
 

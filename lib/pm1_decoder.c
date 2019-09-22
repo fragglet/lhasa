@@ -32,7 +32,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lha_decoder.h"
+#include "lha_codec.h"
 #include "bit_stream_reader.c"
 #include "pma_common.c"
 
@@ -77,7 +77,7 @@ typedef struct {
 	// Callback to read more compressed data from the input (see
 	// read_callback_wrapper below).
 
-	LHADecoderCallback callback;
+	LHACodecCallback callback;
 	void *callback_data;
 } LHAPM1Decoder;
 
@@ -193,7 +193,7 @@ static size_t read_callback_wrapper(void *buf, size_t buf_len, void *user_data)
 	return result;
 }
 
-static int lha_pm1_init(void *data, LHADecoderCallback callback,
+static int lha_pm1_init(void *data, LHACodecCallback callback,
                         void *callback_data)
 {
 	LHAPM1Decoder *decoder = data;
@@ -703,7 +703,7 @@ static size_t lha_pm1_read(void *data, uint8_t *buf)
 	}
 }
 
-LHADecoderType lha_pm1_decoder = {
+LHACodec lha_pm1_decoder = {
 	lha_pm1_init,
 	NULL,
 	lha_pm1_read,

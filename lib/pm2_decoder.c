@@ -28,7 +28,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lha_decoder.h"
+#include "lha_codec.h"
 
 #include "bit_stream_reader.c"
 #include "pma_common.c"
@@ -133,7 +133,7 @@ static const VariableLengthTable copy_decode[] = {
 
 // Initialize PMA decoder.
 
-static int lha_pm2_decoder_init(void *data, LHADecoderCallback callback,
+static int lha_pm2_decoder_init(void *data, LHACodecCallback callback,
                                 void *callback_data)
 {
 	LHAPM2Decoder *decoder = data;
@@ -538,7 +538,7 @@ static size_t lha_pm2_decoder_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType lha_pm2_decoder = {
+LHACodec lha_pm2_decoder = {
 	lha_pm2_decoder_init,
 	NULL,
 	lha_pm2_decoder_read,

@@ -30,7 +30,7 @@ typedef struct {
 	// Callback function to invoke to read more data from the
 	// input stream.
 
-	LHADecoderCallback callback;
+	LHACodecCallback callback;
 	void *callback_data;
 
 	// Bits from the input stream that are waiting to be read.
@@ -43,7 +43,7 @@ typedef struct {
 // Initialize bit stream reader structure.
 
 static void bit_stream_reader_init(BitStreamReader *reader,
-                                   LHADecoderCallback callback,
+                                   LHACodecCallback callback,
                                    void *callback_data)
 {
 	reader->callback = callback;

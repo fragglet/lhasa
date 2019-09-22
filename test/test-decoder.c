@@ -118,7 +118,7 @@ static LHADecoder *create_decoder(DecompressState *state,
                                   uint8_t *data, size_t data_len,
                                   char *algorithm, size_t uncompressed_len)
 {
-	LHADecoderType *dtype;
+	LHACodec *codec;
 	LHADecoder *decoder;
 
 	// Data structure for reading compressed data from buffer.
@@ -129,10 +129,10 @@ static LHADecoder *create_decoder(DecompressState *state,
 
 	// Create decoder.
 
-	dtype = lha_decoder_for_name(algorithm);
-	assert(dtype != NULL);
+	codec = lha_decoder_for_name(algorithm);
+	assert(codec != NULL);
 
-	decoder = lha_decoder_new(dtype, read_compressed_data, state,
+	decoder = lha_decoder_new(codec, read_compressed_data, state,
 	                          uncompressed_len);
 	assert(decoder != NULL);
 

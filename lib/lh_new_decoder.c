@@ -29,7 +29,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lha_decoder.h"
+#include "lha_codec.h"
 
 #include "bit_stream_reader.c"
 
@@ -95,7 +95,7 @@ static void init_ring_buffer(LHANewDecoder *decoder)
 	decoder->ringbuf_pos = 0;
 }
 
-static int lha_lh_new_init(void *data, LHADecoderCallback callback,
+static int lha_lh_new_init(void *data, LHACodecCallback callback,
                            void *callback_data)
 {
 	LHANewDecoder *decoder = data;
@@ -545,7 +545,7 @@ static size_t lha_lh_new_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType DECODER_NAME = {
+LHACodec DECODER_NAME = {
 	lha_lh_new_init,
 	NULL,
 	lha_lh_new_read,
@@ -557,7 +557,7 @@ LHADecoderType DECODER_NAME = {
 // This is a hack for -lh4-:
 
 #ifdef DECODER2_NAME
-LHADecoderType DECODER2_NAME = {
+LHACodec DECODER2_NAME = {
 	lha_lh_new_init,
 	NULL,
 	lha_lh_new_read,

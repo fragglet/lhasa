@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lha_decoder.h"
+#include "lha_codec.h"
 
 // Parameters for ring buffer, used for storing history.  This acts
 // as the dictionary for copy operations.
@@ -50,7 +50,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 typedef struct {
 	uint8_t ringbuf[RING_BUFFER_SIZE];
 	unsigned int ringbuf_pos;
-	LHADecoderCallback callback;
+	LHACodecCallback callback;
 	void *callback_data;
 } LHALZ5Decoder;
 
@@ -94,7 +94,7 @@ static void fill_initial(LHALZ5Decoder *decoder)
 	}
 }
 
-static int lha_lz5_init(void *data, LHADecoderCallback callback,
+static int lha_lz5_init(void *data, LHACodecCallback callback,
                         void *callback_data)
 {
 	LHALZ5Decoder *decoder = data;
@@ -187,7 +187,7 @@ static size_t lha_lz5_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType lha_lz5_decoder = {
+LHACodec lha_lz5_decoder = {
 	lha_lz5_init,
 	NULL,
 	lha_lz5_read,

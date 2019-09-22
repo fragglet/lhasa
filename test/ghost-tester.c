@@ -147,13 +147,13 @@ static void generate_data(char *type, uint8_t *buf, size_t buf_len,
                           size_t uncompressed_len,
                           uint16_t *crc16, uint32_t *crc32)
 {
-	LHADecoderType *dtype;
+	LHACodec *codec;
 	ReadDataCallback callback_data;
 	LHADecoder *decoder;
 	size_t decoded_stream_len;
 
-	dtype = lha_decoder_for_name(type);
-	assert(dtype != NULL);
+	codec = lha_decoder_for_name(type);
+	assert(codec != NULL);
 
 	// Fill the buffer with random data:
 
@@ -169,7 +169,7 @@ static void generate_data(char *type, uint8_t *buf, size_t buf_len,
 		callback_data.buf_len = buf_len;
 		callback_data.buf_pos = 0;
 
-		decoder = lha_decoder_new(dtype, read_data, &callback_data,
+		decoder = lha_decoder_new(codec, read_data, &callback_data,
 					  uncompressed_len);
 
 		decoded_stream_len = 0;

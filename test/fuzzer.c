@@ -176,8 +176,7 @@ static size_t read_more_data(void *buf, size_t buf_len, void *user_data)
 // Decode data from the specified signature block, using a decoder
 // of the specified type.
 
-static unsigned int run_fuzz_test(LHADecoderType *dtype,
-                                  uint8_t *data,
+static unsigned int run_fuzz_test(LHACodec *codec, uint8_t *data,
                                   size_t data_len)
 {
 	uint8_t *read_buf;
@@ -194,17 +193,17 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
 	input_data_len = data_len;
 	input_pos = 0;
 
-	handle = canary_malloc(dtype->extra_size);
-	assert(dtype->init(handle, read_more_data, NULL));
+	handle = canary_malloc(codec->extra_size);
+	assert(codec->init(handle, read_more_data, NULL));
 
 	// Create a buffer into which to decompress data.
 
-	read_buf = canary_malloc(dtype->max_read);
+	read_buf = canary_malloc(codec->max_read);
 	assert(read_buf != NULL);
 
 	for (;;) {
-		memset(read_buf, 0, dtype->max_read);
-		result = dtype->read(handle, read_buf);
+		memset(read_buf, 0, codec->max_read);
+		result = codec->read(handle, read_buf);
 		canary_check(read_buf);
 
 		//printf("read: %i\n", result);
@@ -215,8 +214,8 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
 
 	// Destroy the decoder and free buffers.
 
-	if (dtype->free != NULL) {
-		dtype->free(handle);
+	if (codec->free != NULL) {
+		codec->free(handle);
 	}
 
 	canary_check(handle);
@@ -232,7 +231,7 @@ static unsigned int run_fuzz_test(LHADecoderType *dtype,
 	return input_pos;
 }
 
-static void fuzz_test(LHADecoderType *dtype, size_t data_len)
+static void fuzz_test(LHACodec *codec, size_t data_len)
 {
 	unsigned int count;
 	void *data;
@@ -245,7 +244,7 @@ static void fuzz_test(LHADecoderType *dtype, size_t data_len)
 
 	// Run the decoder with the data as input.
 
-	count = run_fuzz_test(dtype, data, data_len);
+	count = run_fuzz_test(codec, data, data_len);
 
 	if (count >= data_len) {
 		printf("\tTest complete (end of file)\n");
@@ -256,7 +255,7 @@ static void fuzz_test(LHADecoderType *dtype, size_t data_len)
 	free(data);
 }
 
-static void run_from_file(LHADecoderType *dtype, char *filename)
+static void run_from_file(LHACodec *codec, char *filename)
 {
 	FILE *fstream;
 	uint8_t *data;
@@ -280,7 +279,7 @@ static void run_from_file(LHADecoderType *dtype, char *filename)
 
 	printf("Running input from %s:\n", filename);
 
-	count = run_fuzz_test(dtype, data, data_len);
+	count = run_fuzz_test(codec, data, data_len);
 
 	if (count >= data_len) {
 		printf("\tTest complete (end of file)\n");
@@ -293,7 +292,7 @@ static void run_from_file(LHADecoderType *dtype, char *filename)
 
 int main(int argc, char *argv[])
 {
-	LHADecoderType *dtype;
+	LHACodec *codec;
 	unsigned int i;
 	time_t now;
 	char timestr[32];
@@ -305,15 +304,15 @@ int main(int argc, char *argv[])
 
 	algorithm = argv[1];
 
-	dtype = lha_decoder_for_name(algorithm);
+	codec = lha_decoder_for_name(algorithm);
 
-	if (dtype == NULL) {
+	if (codec == NULL) {
 		fprintf(stderr, "Unknown decoder type '%s'\n", algorithm);
 		exit(-1);
 	}
 
 	if (argc >= 3) {
-		run_from_file(dtype, argv[2]);
+		run_from_file(codec, argv[2]);
 	} else {
 		signal(SIGALRM, alarm_signal);
 		signal(SIGSEGV, crash_signal);
@@ -325,7 +324,7 @@ int main(int argc, char *argv[])
 			strftime(timestr, sizeof(timestr),
 			         "%Y-%m-%dT%H:%M:%S", localtime(&now));
 			printf("%s - Iteration %i:\n", timestr, i);
-			fuzz_test(dtype, MAX_FUZZ_LEN);
+			fuzz_test(codec, MAX_FUZZ_LEN);
 		}
 	}
 

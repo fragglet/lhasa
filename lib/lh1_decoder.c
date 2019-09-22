@@ -24,7 +24,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <inttypes.h>
 
 #include "lh1_common.h"
-#include "lha_decoder.h"
+#include "lha_codec.h"
 
 #include "bit_stream_reader.c"
 
@@ -41,7 +41,7 @@ typedef struct {
 
 // Initialize the history ring buffer.
 
-static int lha_lh1_init(void *data, LHADecoderCallback callback,
+static int lha_lh1_init(void *data, LHACodecCallback callback,
                         void *callback_data)
 {
 	LHALH1Decoder *decoder = data;
@@ -191,7 +191,7 @@ static size_t lha_lh1_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType lha_lh1_decoder = {
+LHACodec lha_lh1_decoder = {
 	lha_lh1_init,
 	NULL,
 	lha_lh1_read,

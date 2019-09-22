@@ -137,7 +137,7 @@ static size_t decoder_callback(void *buf, size_t buf_len, void *user_data)
 
 LHADecoder *lha_basic_reader_decode(LHABasicReader *reader)
 {
-	LHADecoderType *dtype;
+	LHACodec *codec;
 
 	if (reader->curr_file == NULL) {
 		return NULL;
@@ -145,15 +145,15 @@ LHADecoder *lha_basic_reader_decode(LHABasicReader *reader)
 
 	// Look up the decoder to use for this compression method.
 
-	dtype = lha_decoder_for_name(reader->curr_file->compress_method);
+	codec = lha_decoder_for_name(reader->curr_file->compress_method);
 
-	if (dtype == NULL) {
+	if (codec == NULL) {
 		return NULL;
 	}
 
 	// Create decoder.
 
-	return lha_decoder_new(dtype, decoder_callback, reader,
+	return lha_decoder_new(codec, decoder_callback, reader,
 	                       reader->curr_file->length);
 }
 

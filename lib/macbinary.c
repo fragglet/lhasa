@@ -115,6 +115,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#include "lha_codec.h"
 #include "lha_decoder.h"
 #include "lha_endian.h"
 #include "lha_file_header.h"
@@ -355,7 +356,7 @@ static int read_macbinary_header(MacBinaryDecoder *decoder,
 }
 
 static int macbinary_decoder_init(void *_decoder,
-                                  LHADecoderCallback callback,
+                                  LHACodecCallback callback,
                                   void *_closure)
 {
 	MacBinaryDecoder *decoder = _decoder;
@@ -425,7 +426,7 @@ static size_t macbinary_decoder_read(void *_decoder, uint8_t *buf)
 	return result;
 }
 
-static LHADecoderType macbinary_decoder_type = {
+static LHACodec macbinary_decoder_type = {
 	macbinary_decoder_init,
 	NULL,
 	macbinary_decoder_read,

@@ -22,7 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <inttypes.h>
 
-#include "lha_decoder.h"
+#include "lha_codec.h"
 
 #include "bit_stream_reader.c"
 
@@ -55,7 +55,7 @@ typedef struct {
 	unsigned int ringbuf_pos;
 } LHALZSDecoder;
 
-static int lha_lzs_init(void *data, LHADecoderCallback callback,
+static int lha_lzs_init(void *data, LHACodecCallback callback,
                         void *callback_data)
 {
 	LHALZSDecoder *decoder = data;
@@ -145,7 +145,7 @@ static size_t lha_lzs_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHADecoderType lha_lzs_decoder = {
+LHACodec lha_lzs_decoder = {
 	lha_lzs_init,
 	NULL,
 	lha_lzs_read,

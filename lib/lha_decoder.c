@@ -23,30 +23,31 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <limits.h>
 
 #include "crc16.h"
+#include "lha_codec.h"
 #include "lha_decoder.h"
 
 // Null decoder, used for -lz4-, -lh0-, -pm0-:
-extern LHADecoderType lha_null_decoder;
+extern LHACodec lha_null_decoder;
 
 // LArc compression algorithms:
-extern LHADecoderType lha_lz5_decoder;
-extern LHADecoderType lha_lzs_decoder;
+extern LHACodec lha_lz5_decoder;
+extern LHACodec lha_lzs_decoder;
 
 // LHarc compression algorithms:
-extern LHADecoderType lha_lh1_decoder;
-extern LHADecoderType lha_lh4_decoder;
-extern LHADecoderType lha_lh5_decoder;
-extern LHADecoderType lha_lh6_decoder;
-extern LHADecoderType lha_lh7_decoder;
-extern LHADecoderType lha_lhx_decoder;
+extern LHACodec lha_lh1_decoder;
+extern LHACodec lha_lh4_decoder;
+extern LHACodec lha_lh5_decoder;
+extern LHACodec lha_lh6_decoder;
+extern LHACodec lha_lh7_decoder;
+extern LHACodec lha_lhx_decoder;
 
 // PMarc compression algorithms:
-extern LHADecoderType lha_pm1_decoder;
-extern LHADecoderType lha_pm2_decoder;
+extern LHACodec lha_pm1_decoder;
+extern LHACodec lha_pm2_decoder;
 
 static struct {
 	char *name;
-	LHADecoderType *dtype;
+	LHACodec *codec;
 } decoders[] = {
 	{ "-lz4-", &lha_null_decoder },
 	{ "-lz5-", &lha_lz5_decoder },
@@ -63,26 +64,26 @@ static struct {
 	{ "-pm2-", &lha_pm2_decoder },
 };
 
-LHADecoder *lha_decoder_new(LHADecoderType *dtype,
-                            LHADecoderCallback callback,
+LHADecoder *lha_decoder_new(LHACodec *codec,
+                            LHACodecCallback callback,
                             void *callback_data,
                             size_t stream_length)
 {
 	LHADecoder *decoder;
-	void *extra_data;
+	void *state;
 
 	// Space is allocated together: the LHADecoder structure,
 	// then the private data area used by the algorithm,
 	// followed by the output buffer,
 
-	decoder = calloc(1, sizeof(LHADecoder) + dtype->extra_size
-	                        + dtype->max_read);
+	decoder = calloc(1, sizeof(LHADecoder) + codec->state_size
+	                        + codec->max_read);
 
 	if (decoder == NULL) {
 		return NULL;
 	}
 
-	decoder->dtype = dtype;
+	decoder->codec = codec;
 	decoder->progress_callback = NULL;
 	decoder->last_block = UINT_MAX;
 	decoder->outbuf_pos = 0;
@@ -94,11 +95,11 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 
 	// Private data area follows the structure.
 
-	extra_data = decoder + 1;
-	decoder->outbuf = ((uint8_t *) extra_data) + dtype->extra_size;
+	state = decoder + 1;
+	decoder->outbuf = ((uint8_t *) state) + codec->state_size;
 
-	if (dtype->init != NULL
-	 && !dtype->init(extra_data, callback, callback_data)) {
+	if (codec->init != NULL
+	 && !codec->init(state, callback, callback_data)) {
 		free(decoder);
 		return NULL;
 	}
@@ -106,13 +107,13 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	return decoder;
 }
 
-LHADecoderType *lha_decoder_for_name(char *name)
+LHACodec *lha_decoder_for_name(char *name)
 {
 	unsigned int i;
 
 	for (i = 0; i < sizeof(decoders) / sizeof(*decoders); ++i) {
 		if (!strcmp(name, decoders[i].name)) {
-			return decoders[i].dtype;
+			return decoders[i].codec;
 		}
 	}
 
@@ -123,8 +124,8 @@ LHADecoderType *lha_decoder_for_name(char *name)
 
 void lha_decoder_free(LHADecoder *decoder)
 {
-	if (decoder->dtype->free != NULL) {
-		decoder->dtype->free(decoder + 1);
+	if (decoder->codec->free != NULL) {
+		decoder->codec->free(decoder + 1);
 	}
 
 	free(decoder);
@@ -137,8 +138,8 @@ static void check_progress_callback(LHADecoder *decoder)
 {
 	unsigned int block;
 
-	block = (decoder->stream_pos + decoder->dtype->block_size - 1)
-	      / decoder->dtype->block_size;
+	block = (decoder->stream_pos + decoder->codec->block_size - 1)
+	      / decoder->codec->block_size;
 
 	// If the stream has advanced by another block, invoke the callback
 	// function. Invoke it multiple times if it has advanced by
@@ -160,8 +161,8 @@ void lha_decoder_monitor(LHADecoder *decoder,
 	decoder->progress_callback_data = callback_data;
 
 	decoder->total_blocks
-	  = (decoder->stream_length + decoder->dtype->block_size - 1)
-	  / decoder->dtype->block_size;
+	  = (decoder->stream_length + decoder->codec->block_size - 1)
+	  / decoder->codec->block_size;
 
 	check_progress_callback(decoder);
 }
@@ -214,7 +215,7 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len)
 
 		if (decoder->outbuf_pos >= decoder->outbuf_len) {
 			decoder->outbuf_len
-			    = decoder->dtype->read(decoder + 1,
+			    = decoder->codec->read(decoder + 1,
 			                           decoder->outbuf);
 			decoder->outbuf_pos = 0;
 		}

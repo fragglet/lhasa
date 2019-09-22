@@ -23,6 +23,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdlib.h>
 #include <inttypes.h>
+#include "lha_codec.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,22 +38,11 @@ extern "C" {
  * be used to decompress the raw compressed data from an LZH file.
  *
  * Implementations of the various compression algorithms used in LZH
- * archives are provided - these are represented by the
- * @ref LHADecoderType structure, and can be retrieved using the
- * @ref lha_decoder_for_name function. One of these can then be passed to
- * the @ref lha_decoder_new function to create a @ref LHADecoder structure
- * and decompress the data.
+ * archives are provided - these are represented by the @ref LHACodec
+ * structure, and can be retrieved using the @ref lha_decoder_for_name
+ * function. One of these can then be passed to the @ref lha_decoder_new
+ * function to create a @ref LHADecoder structure and decompress the data.
  */
-
-/**
- * Opaque type representing a type of decoder.
- *
- * This is an implementation of the decompression code for one of the
- * algorithms used in LZH archive files. Pointers to these structures are
- * retrieved by using the @ref lha_decoder_for_name function.
- */
-
-typedef struct _LHADecoderType LHADecoderType;
 
 /**
  * Opaque type representing an instance of a decoder.
@@ -63,19 +53,6 @@ typedef struct _LHADecoderType LHADecoderType;
  */
 
 typedef struct _LHADecoder LHADecoder;
-
-/**
- * Callback function invoked when a decoder wants to read more compressed
- * data.
- *
- * @param buf        Pointer to the buffer in which to store the data.
- * @param buf_len    Size of the buffer, in bytes.
- * @param user_data  Extra pointer to pass to the decoder.
- * @return           Number of bytes read.
- */
-
-typedef size_t (*LHADecoderCallback)(void *buf, size_t buf_len,
-                                     void *user_data);
 
 /**
  * Callback function used for monitoring decode progress.
@@ -100,12 +77,13 @@ typedef void (*LHADecoderProgressCallback)(unsigned int num_blocks,
  *                       is no decoder type for the specified name.
  */
 
-LHADecoderType *lha_decoder_for_name(char *name);
+LHACodec *lha_decoder_for_name(char *name);
 
 /**
  * Allocate a new decoder for the specified type.
  *
- * @param dtype          The decoder type.
+ * @param codec          Codec for decompressing data, returned by
+ *                       lha_decoder_for_name.
  * @param callback       Callback function for the decoder to call to read
  *                       more compressed data.
  * @param callback_data  Extra data to pass to the callback function.
@@ -114,8 +92,8 @@ LHADecoderType *lha_decoder_for_name(char *name);
  * @return               Pointer to the new decoder, or NULL for failure.
  */
 
-LHADecoder *lha_decoder_new(LHADecoderType *dtype,
-                            LHADecoderCallback callback,
+LHADecoder *lha_decoder_new(LHACodec *codec,
+                            LHACodecCallback callback,
                             void *callback_data,
                             size_t stream_length);
 
@@ -179,5 +157,5 @@ size_t lha_decoder_get_length(LHADecoder *decoder);
 }
 #endif
 
-#endif /* #ifndef LHASA_LHA_DECODER_H */
+#endif /* #ifndef LHASA_PUBLIC_LHA_DECODER_H */
 
