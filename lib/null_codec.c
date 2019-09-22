@@ -18,7 +18,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-// Null decoder, for uncompressed files.
+// Null codec, for uncompressed files. Works for both compression and
+// decompression, since nothing is done in either case.
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -30,31 +31,31 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 typedef struct {
 	LHACodecCallback callback;
 	void *callback_data;
-} LHANullDecoder;
+} LHANullCodec;
 
 static int lha_null_init(void *data, LHACodecCallback callback,
                          void *callback_data)
 {
-	LHANullDecoder *decoder = data;
+	LHANullCodec *state = data;
 
-	decoder->callback = callback;
-	decoder->callback_data = callback_data;
+	state->callback = callback;
+	state->callback_data = callback_data;
 
 	return 1;
 }
 
 static size_t lha_null_read(void *data, uint8_t *buf)
 {
-	LHANullDecoder *decoder = data;
+	LHANullCodec *state = data;
 
-	return decoder->callback(buf, BLOCK_READ_SIZE, decoder->callback_data);
+	return state->callback(buf, BLOCK_READ_SIZE, state->callback_data);
 }
 
-LHACodec lha_null_decoder = {
+LHACodec lha_null_codec = {
 	lha_null_init,
 	NULL,
 	lha_null_read,
-	sizeof(LHANullDecoder),
+	sizeof(LHANullCodec),
 	BLOCK_READ_SIZE,
 	2048
 };

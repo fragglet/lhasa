@@ -27,7 +27,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_decoder.h"
 
 // Null decoder, used for -lz4-, -lh0-, -pm0-:
-extern LHACodec lha_null_decoder;
+extern LHACodec lha_null_codec;
 
 // LArc compression algorithms:
 extern LHACodec lha_lz5_decoder;
@@ -49,17 +49,17 @@ static struct {
 	char *name;
 	LHACodec *codec;
 } decoders[] = {
-	{ "-lz4-", &lha_null_decoder },
+	{ "-lz4-", &lha_null_codec },
 	{ "-lz5-", &lha_lz5_decoder },
 	{ "-lzs-", &lha_lzs_decoder },
-	{ "-lh0-", &lha_null_decoder },
+	{ "-lh0-", &lha_null_codec },
 	{ "-lh1-", &lha_lh1_decoder },
 	{ "-lh4-", &lha_lh4_decoder },
 	{ "-lh5-", &lha_lh5_decoder },
 	{ "-lh6-", &lha_lh6_decoder },
 	{ "-lh7-", &lha_lh7_decoder },
 	{ "-lhx-", &lha_lhx_decoder },
-	{ "-pm0-", &lha_null_decoder },
+	{ "-pm0-", &lha_null_codec },
 	{ "-pm1-", &lha_pm1_decoder },
 	{ "-pm2-", &lha_pm2_decoder },
 };
