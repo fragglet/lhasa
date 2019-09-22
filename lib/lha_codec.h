@@ -21,6 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_LHA_CODEC_H
 #define LHASA_LHA_CODEC_H
 
+#include <inttypes.h>
 #include "public/lha_codec.h"
 
 struct _LHACodec {
