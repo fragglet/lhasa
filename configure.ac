@@ -30,7 +30,7 @@ fi
 # Support for coverage analysis via gcov:
 
 coverage=false
-AC_ARG_ENABLE(coverage, 
+AC_ARG_ENABLE(coverage,
 [  --enable-coverage       Enable coverage testing. ],
 [ coverage=true ])
 
@@ -85,4 +85,3 @@ AC_OUTPUT([
     src/Makefile
     test/Makefile
 ])
-

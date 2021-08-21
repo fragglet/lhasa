@@ -175,7 +175,7 @@ static const uint8_t byte_decode_trees[][5] = {
 // Wrapper function invoked to read more data from the input. This mostly just
 // calls the real function that does the read. However, when the end of file
 // is reached, instead of returning zero, the buffer is filled with zero bytes
-// instead.  There seem to be archive files that actually depend on this
+// instead. There seem to be archive files that actually depend on this
 // ability to read "beyond" the length of the compressed data.
 
 static size_t read_callback_wrapper(void *buf, size_t buf_len, void *user_data)
@@ -711,4 +711,3 @@ LHADecoderType lha_pm1_decoder = {
 	OUTPUT_BUFFER_SIZE,
 	2048
 };
-

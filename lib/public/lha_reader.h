@@ -214,4 +214,3 @@ int lha_reader_current_is_fake(LHAReader *reader);
 #endif
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_READER_H */
-

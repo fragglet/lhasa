@@ -112,4 +112,3 @@ for filename in sorted(sys.argv[1:]):
 			format_output(" -> " + subfile, results[subfile])
 
 print
-

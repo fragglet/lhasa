@@ -1,4 +1,3 @@
-
 AUX_DIST_GEN = $(ac_aux_dir)
 
 EXTRA_DIST = $(AUX_DIST_GEN) gencov rpm.spec
@@ -8,4 +7,3 @@ pkgconfigdir = ${libdir}/pkgconfig
 pkgconfig_DATA = liblhasa.pc
 
 SUBDIRS=doc lib pkg src test
-

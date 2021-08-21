@@ -253,4 +253,3 @@ size_t lha_decoder_get_length(LHADecoder *decoder)
 {
 	return decoder->stream_pos;
 }
-

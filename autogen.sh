@@ -10,4 +10,3 @@ autoconf
 automake -a
 
 ./configure $@
-

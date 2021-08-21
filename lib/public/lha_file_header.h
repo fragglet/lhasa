@@ -245,4 +245,3 @@ struct _LHAFileHeader {
 #endif
 
 #endif /* #ifndef LHASA_PUBLIC_LHA_FILE_HEADER_H */
-

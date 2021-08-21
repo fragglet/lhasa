@@ -42,4 +42,3 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // acts as a template for -lh4-, -lh5-, -lh6-, -lh7- and -lhx-.
 
 #include "lh_new_decoder.c"
-

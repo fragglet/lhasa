@@ -679,4 +679,3 @@ void list_file_verbose(LHAFilter *filter, LHAOptions *options, FILE *fstream)
 
 	list_file_contents(filter, fstream, options, headers);
 }
-
