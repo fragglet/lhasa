@@ -692,7 +692,7 @@ static size_t lha_pm1_read(void *data, uint8_t *buf)
 		return 0;
 	}
 
-	// Read what type of commmand this is.
+	// Read what type of command this is.
 
 	command_type = read_bit(&decoder->bit_stream_reader);
 
