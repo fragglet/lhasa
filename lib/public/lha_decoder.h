@@ -180,4 +180,3 @@ size_t lha_decoder_get_length(LHADecoder *decoder);
 #endif
 
 #endif /* #ifndef LHASA_LHA_DECODER_H */
-

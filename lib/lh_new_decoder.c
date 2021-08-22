@@ -566,4 +566,3 @@ LHADecoderType DECODER2_NAME = {
 	RING_BUFFER_SIZE / 4
 };
 #endif
-

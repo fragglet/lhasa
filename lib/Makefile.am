@@ -40,4 +40,3 @@ liblhasa_la_SOURCES=$(SRC) $(HEADER_FILES)
 
 clean-local:
 	rm -f *.gcno *.gcda *.c.gcov
-

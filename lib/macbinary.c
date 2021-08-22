@@ -448,4 +448,3 @@ LHADecoder *lha_macbinary_passthrough(LHADecoder *decoder,
 
 	return result;
 }
-
