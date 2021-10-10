@@ -1,0 +1,65 @@
+# Usage:
+# "make" - recommended: builds lib and app
+# "make clean" - removes all tmp files
+# "make lib" - builds only lib
+# "make app" - builds only app if lib is present
+
+CC = m68k-amigaos-gcc
+AR = m68k-amigaos-ar
+INCLUDES_APP = -Isrc -Ilib/public -I.
+INCLUDES_LIB = -Ilib
+CC_FLAGS_COMMON = -Wall -Wsign-compare -std=c11 -O3 -fomit-frame-pointer -fbaserel
+CC_FLAGS_APP = $(INCLUDES_APP) $(CC_FLAGS_COMMON)
+CC_FLAGS_LIB = $(INCLUDES_LIB) $(CC_FLAGS_COMMON)
+
+# LTO for Amiga since every optimization counts!
+LDFLAGS = -noixemul -flto
+
+PACKER_SRC_DIR = $(ROOT)/src
+TMP_DIR = tmp
+
+LIB_IGNORE = \
+	lib/lh_new_decoder.c \
+	lib/pma_common.c \
+	lib/bit_stream_reader.c \
+	lib/tree_decode.c \
+	lib/lha_arch_win32.c \
+	lib/lha_arch_unix.c
+
+LIB_SRCS = $(filter-out $(LIB_IGNORE), $(wildcard lib/*.c))
+LIB_OBJS = $(addprefix $(TMP_DIR)/lib_, $(notdir $(LIB_SRCS:.c=.o)))
+
+APP_SRCS = $(wildcard src/*.c)
+APP_OBJS = $(addprefix $(TMP_DIR)/app_, $(notdir $(APP_SRCS:.c=.o)))
+
+#------------------------------------------------------------------------- Goals
+
+lhasa: lib app
+
+lib: lib/public/liblhasa.a
+
+app: bin/lhasa
+
+clean:
+	@echo Removing tmp and lib contents
+	$(RM) tmp/*.o
+	$(RM) lib/public/liblhasa.a
+
+#----------------------------------------------------------------- How it's made
+
+tmp/lib_%.o: lib/%.c
+	@echo Building: $<
+	@$(CC) $(CC_FLAGS_LIB) -c -o $@ $<
+
+tmp/app_%.o: src/%.c
+	@echo Building: $<
+	@$(CC) $(CC_FLAGS_APP) -c -o $@ $<
+
+lib/public/liblhasa.a: $(LIB_OBJS)
+	@echo linking $@
+	@$(AR) rcs $@ $(LIB_OBJS)
+
+bin/lhasa: lib/public/liblhasa.a $(APP_OBJS)
+	@echo linking $@
+	@$(CC) $(CC_FLAGS_LIB) -o $@ $(APP_OBJS) -llhasa -Wall $(LDFLAGS) -Llib/public
+
