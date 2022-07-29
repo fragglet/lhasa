@@ -1,8 +1,9 @@
+build-arch
+decompress-crc
+dump-headers
+fuzzer
+ghost-tester
+string-replace
 test-basic-reader
 test-crc16
 test-decoder
-fuzzer
-ghost-tester
-build-arch
-dump-headers
-decompress-crc
