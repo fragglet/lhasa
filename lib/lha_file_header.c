@@ -1011,6 +1011,7 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 	if (header->os_type == LHA_OS_TYPE_UNKNOWN
 	 || header->os_type == LHA_OS_TYPE_MSDOS
 	 || header->os_type == LHA_OS_TYPE_ATARI
+	 || header->os_type == LHA_OS_TYPE_LHARK
 	 || header->os_type == LHA_OS_TYPE_OS2) {
 		fix_msdos_allcaps(header);
 	}
