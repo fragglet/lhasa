@@ -1044,6 +1044,15 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 		goto fail;
 	}
 
+	// The DOS LHARK tool has its own -lh7- format that is incompatible
+	// with the -lh7- that everyone else uses. As a workaround, we detect
+	// and rename the compression method to -lk7- so as to be able to
+	// distinguish between the two formats.
+	if (header->header_level == 1 && header->os_type == LHA_OS_TYPE_LHARK
+	 && !strncmp(header->compress_method, "-lh7-", 5)) {
+		header->compress_method[2] = 'k';
+	}
+
 	return header;
 fail:
 	lha_file_header_free(header);

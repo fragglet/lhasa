@@ -75,6 +75,9 @@ extern "C" {
 #define LHA_OS_TYPE_OS386              '3'
 /** OS type for Sharp X68000 Human68K OS. */
 #define LHA_OS_TYPE_HUMAN68K           'H'
+/** "OS type" that is used by the LHARK tool and does not indicate an
+    OS as such, except that LHARK only runs under DOS. */
+#define LHA_OS_TYPE_LHARK              ' '
 
 /**
  * Compression type for a stored directory. The same value is also
