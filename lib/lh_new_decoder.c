@@ -52,11 +52,6 @@ typedef uint16_t TreeElement;
 
 #define OUTPUT_BUFFER_SIZE   RING_BUFFER_SIZE
 
-// Number of different command codes. 0-255 range are literal byte
-// values, while higher values indicate copy from history.
-
-#define NUM_CODES            510
-
 // Number of possible codes in the "temporary table" used to encode the
 // codes table.
 

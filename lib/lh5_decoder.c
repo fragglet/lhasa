@@ -37,6 +37,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define DECODER_NAME lha_lh5_decoder
 
+// Number of different command codes. 0-255 range are literal byte
+// values, while higher values indicate copy from history.
+
+#define NUM_CODES            510
+
 // Generate a second decoder for lh4 that just has a different
 // block size.
 
