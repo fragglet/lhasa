@@ -53,10 +53,16 @@ typedef uint16_t TreeElement;
 #define OUTPUT_BUFFER_SIZE   RING_BUFFER_SIZE
 
 // Number of possible codes in the "temporary table" used to encode the
-// codes table.
+// codes table. This is a function of the number of bits used to encode
+// the field that contains the number of temp codes.
 
 #define TEMP_CODE_BITS       5
 #define MAX_TEMP_CODES       ((1 << TEMP_CODE_BITS) - 1)
+
+// Similarly, the maximum # of offset codes is a function of the number
+// of offset bits.
+
+#define MAX_OFFSET_CODES     ((1 << OFFSET_BITS) - 1)
 
 typedef struct {
 	// Input bit stream.
@@ -72,15 +78,19 @@ typedef struct {
 
 	unsigned int block_remaining;
 
+	// This table is used to encode the temp-tree, which
+	// is itself used to encode the code tree.
+
+	TreeElement temp_tree[MAX_TEMP_CODES * 2];
+
 	// Table used for the code tree.
 
 	TreeElement code_tree[NUM_CODES * 2];
 
 	// Table used to encode the offset tree, used to read offsets
-	// into the history buffer. This same table is also used to
-	// encode the temp-table, which is bigger; hence the size.
+	// into the history buffer.
 
-	TreeElement offset_tree[MAX_TEMP_CODES * 2];
+	TreeElement offset_tree[MAX_OFFSET_CODES * 2];
 } LHANewDecoder;
 
 // Initialize the history ring buffer.
@@ -112,7 +122,8 @@ static int lha_lh_new_init(void *data, LHADecoderCallback callback,
 	// Initialize tree tables to a known state.
 
 	init_tree(decoder->code_tree, NUM_CODES * 2);
-	init_tree(decoder->offset_tree, MAX_TEMP_CODES * 2);
+	init_tree(decoder->offset_tree, MAX_OFFSET_CODES * 2);
+	init_tree(decoder->temp_tree, MAX_TEMP_CODES * 2);
 
 	return 1;
 }
@@ -175,7 +186,7 @@ static int read_temp_table(LHANewDecoder *decoder)
 			return 0;
 		}
 
-		set_tree_single(decoder->offset_tree, code);
+		set_tree_single(decoder->temp_tree, code);
 		return 1;
 	}
 
@@ -214,7 +225,7 @@ static int read_temp_table(LHANewDecoder *decoder)
 		}
 	}
 
-	build_tree(decoder->offset_tree, MAX_TEMP_CODES * 2, code_lengths, n);
+	build_tree(decoder->temp_tree, MAX_TEMP_CODES * 2, code_lengths, n);
 
 	return 1;
 }
@@ -293,14 +304,13 @@ static int read_code_table(LHANewDecoder *decoder)
 	}
 
 	// Read the length of each code.
-	// The lengths are encoded using the temp-table previously read;
-	// offset_tree is reused temporarily to hold it.
+	// The lengths are encoded using the temp-table previously read.
 
 	i = 0;
 
 	while (i < n) {
 		code = read_from_tree(&decoder->bit_stream_reader,
-		                      decoder->offset_tree);
+		                      decoder->temp_tree);
 
 		if (code < 0) {
 			return 0;
@@ -336,7 +346,7 @@ static int read_code_table(LHANewDecoder *decoder)
 static int read_offset_table(LHANewDecoder *decoder)
 {
 	int i, n, len, code;
-	uint8_t code_lengths[HISTORY_BITS];
+	uint8_t code_lengths[MAX_OFFSET_CODES];
 
 	// How many codes?
 
@@ -362,8 +372,8 @@ static int read_offset_table(LHANewDecoder *decoder)
 
 	// Enforce a hard limit on the number of codes.
 
-	if (n > HISTORY_BITS) {
-		n = HISTORY_BITS;
+	if (n > MAX_OFFSET_CODES) {
+		n = MAX_OFFSET_CODES;
 	}
 
 	// Read the length of each code.
@@ -378,7 +388,7 @@ static int read_offset_table(LHANewDecoder *decoder)
 		code_lengths[i] = len;
 	}
 
-	build_tree(decoder->offset_tree, MAX_TEMP_CODES * 2, code_lengths, n);
+	build_tree(decoder->offset_tree, MAX_OFFSET_CODES * 2, code_lengths, n);
 
 	return 1;
 }
@@ -400,7 +410,6 @@ static int start_new_block(LHANewDecoder *decoder)
 	decoder->block_remaining = (size_t) len;
 
 	// Read the temporary decode table, used to encode the codes table.
-	// The position table data structure is reused for this.
 
 	if (!read_temp_table(decoder)) {
 		return 0;
