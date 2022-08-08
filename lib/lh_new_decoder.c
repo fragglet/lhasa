@@ -60,7 +60,8 @@ typedef uint16_t TreeElement;
 // Number of possible codes in the "temporary table" used to encode the
 // codes table.
 
-#define MAX_TEMP_CODES       20
+#define TEMP_CODE_BITS       5
+#define MAX_TEMP_CODES       ((1 << TEMP_CODE_BITS) - 1)
 
 typedef struct {
 	// Input bit stream.
@@ -163,7 +164,7 @@ static int read_temp_table(LHANewDecoder *decoder)
 
 	// How many codes?
 
-	n = read_bits(&decoder->bit_stream_reader, 5);
+	n = read_bits(&decoder->bit_stream_reader, TEMP_CODE_BITS);
 
 	if (n < 0) {
 		return 0;
