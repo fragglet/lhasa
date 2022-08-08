@@ -453,7 +453,7 @@ test_archive lha255e/subdir.lzh             "subdir/subdir2/hello.txt"
 
 test_archive lhark04d/lh0.lzh               "gpl-2.gz"
 test_archive lhark04d/lh5.lzh               "gpl-2"
-#test_archive lhark04d/lh7.lzh               "gpl-2"
+test_archive lhark04d/lh7.lzh               "gpl-2"
 
 test_archive lha_unix114i/h0_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h0_lh5.lzh        "gpl-2"
