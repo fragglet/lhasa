@@ -438,12 +438,32 @@ static int read_code(LHANewDecoder *decoder)
 	return read_from_tree(&decoder->bit_stream_reader, decoder->code_tree);
 }
 
+#ifdef LHARK
+static int lhark_read_offset_code(LHANewDecoder *decoder, int code)
+{
+	unsigned int num_low_bits;
+	int low_bits;
+
+	if (code < 4) {
+		return code;
+	}
+
+	num_low_bits = (code - 2) / 2;
+	low_bits = read_bits(&decoder->bit_stream_reader, num_low_bits);
+	if (low_bits < 0) {
+		return -1;
+	}
+	return ((2 + (code % 2)) << num_low_bits)
+	     + low_bits;
+}
+#endif
+
 // Read an offset distance from the input stream.
 // Returns the code, or -1 if an error occurred.
 
 static int read_offset_code(LHANewDecoder *decoder)
 {
-	int bits, result;
+	int bits;
 
 	bits = read_from_tree(&decoder->bit_stream_reader,
 	                      decoder->offset_tree);
@@ -466,7 +486,13 @@ static int read_offset_code(LHANewDecoder *decoder)
 		return 0;
 	} else if (bits == 1) {
 		return 1;
+#ifdef LHARK
 	} else {
+		return lhark_read_offset_code(decoder, bits);
+	}
+#else
+	} else {
+		int result;
 		result = read_bits(&decoder->bit_stream_reader, bits - 1);
 
 		if (result < 0) {
@@ -475,6 +501,7 @@ static int read_offset_code(LHANewDecoder *decoder)
 
 		return result + (1 << (bits - 1));
 	}
+#endif
 }
 
 // Add a byte value to the output stream.
@@ -512,11 +539,31 @@ static void copy_from_history(LHANewDecoder *decoder, uint8_t *buf,
 	}
 }
 
+#ifdef LHARK
+static int lhark_decode_copy_count(LHANewDecoder *decoder, int code)
+{
+	if (code < 264) {
+		return code - 256 + COPY_THRESHOLD;
+	} else if (code < 288) {
+		int low_bits, num_low_bits;
+		num_low_bits = (code - 260) / 4;
+		low_bits = read_bits(&decoder->bit_stream_reader,
+				     num_low_bits);
+		if (low_bits < 0) {
+			return -1;
+		}
+		return ((4 + (code % 4)) << num_low_bits) + low_bits + 3;
+	} else {
+		return 514;
+	}
+}
+#endif
+
 static size_t lha_lh_new_read(void *data, uint8_t *buf)
 {
 	LHANewDecoder *decoder = data;
 	size_t result;
-	int code;
+	int code, copy_count;
 
 	// Start of new block?
 
@@ -543,8 +590,16 @@ static size_t lha_lh_new_read(void *data, uint8_t *buf)
 	if (code < 256) {
 		output_byte(decoder, buf, &result, (uint8_t) code);
 	} else {
-		copy_from_history(decoder, buf, &result,
-		                  code - 256 + COPY_THRESHOLD);
+#ifdef LHARK
+		copy_count = lhark_decode_copy_count(decoder, code);
+		if (copy_count < 0) {
+			return 0;
+		}
+#else
+		copy_count = code - 256 + COPY_THRESHOLD;
+#endif
+
+		copy_from_history(decoder, buf, &result, copy_count);
 	}
 
 	return result;
