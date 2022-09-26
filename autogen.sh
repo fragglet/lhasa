@@ -2,8 +2,8 @@
 
 mkdir -p autotools
 
-aclocal
 libtoolize || glibtoolize
+aclocal
 autoheader
 automake -a 
 autoconf
