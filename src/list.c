@@ -308,7 +308,7 @@ static time_t get_now_time(void)
 
 static void output_timestamp(unsigned int timestamp)
 {
-	const char *months[] = {
+	const char * const months[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
@@ -339,9 +339,35 @@ static void output_timestamp(unsigned int timestamp)
 	}
 }
 
+static void output_full_timestamp(unsigned int timestamp)
+{
+	struct tm *ts;
+	time_t tmp;
+
+	if (timestamp == 0) {
+		printf("                   ");
+		return;
+	}
+
+	tmp = (time_t) timestamp;
+	ts = localtime(&tmp);
+
+	// Print date:
+
+	printf("%04i-%02i-%02i %02i:%02i:%02i",
+            ts->tm_year + 1900, ts->tm_mon, ts->tm_mday,
+            ts->tm_hour, ts->tm_min, ts->tm_sec);
+}
+
+
 static void timestamp_column_print(LHAFileHeader *header)
 {
 	output_timestamp(header->timestamp);
+};
+
+static void full_timestamp_column_print(LHAFileHeader *header)
+{
+	output_full_timestamp(header->timestamp);
 };
 
 static void timestamp_column_footer(FileStatistics *stats)
@@ -349,10 +375,21 @@ static void timestamp_column_footer(FileStatistics *stats)
 	output_timestamp(stats->timestamp);
 };
 
+static void full_timestamp_column_footer(FileStatistics *stats)
+{
+	output_full_timestamp(stats->timestamp);
+};
+
 static ListColumn timestamp_column = {
 	"    STAMP", 12,
 	timestamp_column_print,
 	timestamp_column_footer
+};
+
+static ListColumn full_timestamp_column = {
+	"    STAMP", 19,
+	full_timestamp_column_print,
+	full_timestamp_column_footer
 };
 
 // Filename
@@ -413,11 +450,11 @@ static ListColumn whole_line_name_column = {
 
 static void header_level_column_print(LHAFileHeader *header)
 {
-	printf(" [%i]", header->header_level);
+	printf("[%i]", header->header_level);
 }
 
 static ListColumn header_level_column = {
-	"", 0,
+	" LV", 3,
 	header_level_column_print
 };
 
@@ -662,7 +699,7 @@ static ListColumn *verbose_column_headers_verbose[] = {
 	&size_column,
 	&ratio_column,
 	&method_crc_column,
-	&timestamp_column,
+	&full_timestamp_column,
 	&header_level_column,
 	NULL
 };
