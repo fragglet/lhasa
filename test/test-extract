@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (c) 2011, 2012, Simon Howard
 #
@@ -213,7 +213,7 @@ lha_check_output() {
 	cd "$run_sandbox"
 	# Invoke test command and save output.
 	# test outputs have their test root as '/tmp'; adjust accordingly
-	test_lha "$@" 2>&1 | sed "s,$wd,/tmp,g; \$a\\" > "$output"
+	test_lha "$@" 2>&1 | $test_base/string-replace "$wd" /tmp > "$output"
 
 	cd "$test_base"
 
@@ -450,6 +450,11 @@ test_archive lha255e/lh0.lzh                "gpl-2.gz"
 test_archive lha255e/lh5.lzh                "gpl-2"
 test_archive lha255e/sfx.exe                "gpl-2"
 test_archive lha255e/subdir.lzh             "subdir/subdir2/hello.txt"
+
+test_archive lhark04d/lh0.lzh               "gpl-2.gz"
+test_archive lhark04d/lh5.lzh               "gpl-2"
+test_archive lhark04d/lh7.lzh               "gpl-2"
+test_archive lhark04d/lh7_long.lzh          "long.txt"
 
 test_archive lha_unix114i/h0_lh0.lzh        "gpl-2.gz"
 test_archive lha_unix114i/h0_lh5.lzh        "gpl-2"

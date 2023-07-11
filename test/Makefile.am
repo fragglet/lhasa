@@ -26,7 +26,8 @@ EXTRA_DIST=                           \
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 
 EXTRA_PROGRAMS=fuzzer ghost-tester
-check_PROGRAMS=$(COMPILED_TESTS) dump-headers decompress-crc build-arch
+check_PROGRAMS=$(COMPILED_TESTS) \
+	dump-headers decompress-crc build-arch string-replace
 check_LIBRARIES=libtestframework.a
 
 libtestframework_a_SOURCES=     \
@@ -60,4 +61,5 @@ build_arch_SOURCES = build-arch.c
 dump_headers_SOURCES = dump-headers.c
 decompress_crc_SOURCES = decompress-crc.c
 ghost_tester_SOURCES = ghost-tester.c
+string_replace_SOURCES = string-replace.c
 

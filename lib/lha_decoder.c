@@ -40,6 +40,7 @@ extern LHACodec lha_lh5_decoder;
 extern LHACodec lha_lh6_decoder;
 extern LHACodec lha_lh7_decoder;
 extern LHACodec lha_lhx_decoder;
+extern LHACodec lha_lk7_decoder;
 
 // PMarc compression algorithms:
 extern LHACodec lha_pm1_decoder;
@@ -59,6 +60,7 @@ static struct {
 	{ "-lh6-", &lha_lh6_decoder },
 	{ "-lh7-", &lha_lh7_decoder },
 	{ "-lhx-", &lha_lhx_decoder },
+	{ "-lk7-", &lha_lk7_decoder },
 	{ "-pm0-", &lha_null_codec },
 	{ "-pm1-", &lha_pm1_decoder },
 	{ "-pm2-", &lha_pm2_decoder },
@@ -254,4 +256,3 @@ size_t lha_decoder_get_length(LHADecoder *decoder)
 {
 	return decoder->stream_pos;
 }
-

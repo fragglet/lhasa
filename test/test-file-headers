@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (c) 2011, 2012, Simon Howard
 #
@@ -212,6 +212,11 @@ test_archive lha_os9_211c/h1_subdir.lzh
 test_archive lha_os9_211c/h2_lh0.lzh
 test_archive lha_os9_211c/h2_lh1.lzh
 test_archive lha_os9_211c/h2_subdir.lzh
+
+test_archive lhark04d/lh0.lzh
+test_archive lhark04d/lh5.lzh
+test_archive lhark04d/lh7.lzh
+test_archive lhark04d/lh7_long.lzh
 
 test_archive unlha32/h2_lhx.lzh
 test_archive unlha32/lhx_long.lzh

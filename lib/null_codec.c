@@ -59,4 +59,3 @@ LHACodec lha_null_codec = {
 	BLOCK_READ_SIZE,
 	2048
 };
-

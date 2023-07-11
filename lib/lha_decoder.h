@@ -57,4 +57,3 @@ struct _LHADecoder {
 };
 
 #endif /* #ifndef LHASA_LHA_DECODER_H */
-

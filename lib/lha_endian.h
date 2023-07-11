@@ -97,4 +97,3 @@ void lha_encode_uint32(uint8_t *buf, uint32_t value);
 void lha_encode_uint64(uint8_t *buf, uint64_t value);
 
 #endif /* #ifndef LHASA_LHA_ENDIAN_H */
-

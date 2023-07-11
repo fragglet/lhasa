@@ -156,4 +156,3 @@ LHADecoder *lha_basic_reader_decode(LHABasicReader *reader)
 	return lha_decoder_new(codec, decoder_callback, reader,
 	                       reader->curr_file->length);
 }
-

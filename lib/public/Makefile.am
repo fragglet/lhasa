@@ -1,4 +1,3 @@
-
 headerfilesdir=$(includedir)/liblhasa-1.0
 headerfiles_HEADERS=      \
    lhasa.h                \
@@ -8,4 +7,3 @@ headerfiles_HEADERS=      \
    lha_input_stream.h     \
    lha_output_stream.h    \
    lha_reader.h
-
