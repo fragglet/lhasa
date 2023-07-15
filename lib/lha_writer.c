@@ -188,7 +188,7 @@ static void begin_extended_header(uint8_t *buf, size_t buf_len,
 	// Every extended header includes 3 bytes of header and footer,
 	// so add 3 to the header length when encoding it.
 
-	lha_encode_uint16(buf + buf_len - 2, header_len + 3);
+	lha_encode_uint16(buf + buf_len - 2, next_header_len);
 }
 
 // Path header. This is included when we have a directory name.
