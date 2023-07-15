@@ -1,5 +1,5 @@
 bin_PROGRAMS=lha
-check_PROGRAMS=test-lha
+check_PROGRAMS=test-lha write_test
 
 SOURCE_FILES=                             \
 	main.c                            \
@@ -16,6 +16,10 @@ lha_LDADD=$(top_builddir)/lib/liblhasa.la
 test_lha_SOURCES=$(SOURCE_FILES)
 test_lha_CFLAGS=$(TEST_CFLAGS) -I$(top_builddir)/lib/public -I$(top_builddir)
 test_lha_LDADD=$(top_builddir)/lib/liblhasatest.a
+
+write_test_SOURCES=write_test.c
+write_test_CFLAGS=$(TEST_CFLAGS) -I$(top_builddir)/lib/public -I$(top_builddir)
+write_test_LDADD=$(top_builddir)/lib/liblhasatest.a
 
 clean-local:
 	rm -f *.gcno *.gcda *.c.gcov
