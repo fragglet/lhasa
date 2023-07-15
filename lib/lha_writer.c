@@ -31,6 +31,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_input_stream.h"
 #include "lha_output_stream.h"
 
+#define MAX_FILE_LENGTH 0xffffffffUL
+
 /*
 
 Routines for writing an LHA file. There are many different versions of
@@ -458,8 +460,44 @@ static int generate_header_data(LHAFileHeader *header,
 	return 1;
 }
 
-int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
-                        LHAInputStream *file_input)
+static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
+                               FILE *instream)
+{
+	uint8_t buf[64];
+	size_t total_len = 0, cnt;
+	uint16_t crc = 0;
+
+	// TODO: For now, we don't do any kind of encoding, we only write
+	// the -lh0- uncompressed encoding type.
+	// TODO: This should be using a codec of reading directly from the file.
+
+	while (!feof(instream)) {
+		cnt = fread(buf, 1, sizeof(buf), instream);
+		if (ferror(instream)
+		 || !lha_output_stream_write(out, buf, cnt)) {
+			return 0;
+		}
+		lha_crc16_buf(&crc, buf, cnt);
+
+		// The header format uses 32-bit integers to represent the file
+		// uncompressed and compressed sizes, so there is an inherent
+		// limit on file size. We must therefore ensure that the
+		// counter does not overflow.
+		if (total_len > MAX_FILE_LENGTH - cnt) {
+			return 0;
+		}
+		total_len += cnt;
+	}
+
+	memcpy(header->compress_method, "-lh0-", 6);
+	header->length = total_len;
+	header->compressed_length = total_len;
+	header->crc = crc;
+
+	return 1;
+}
+
+int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 {
 	size_t subheader_lengths[NUM_SUBHEADERS];
 	off_t header_loc, eof_loc;
@@ -478,7 +516,11 @@ int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 		return 0;
 	}
 
-	// Write compressed data ...
+	// Write compressed data. The compress_method, length and
+	// compressed_length fields will be populated.
+	if (!lha_write_file_data(out, header, instream)) {
+		return 0;
+	}
 
 	// Generate the header data.
 	if (!generate_header_data(header, subheader_lengths)) {
