@@ -136,14 +136,14 @@ static size_t level1_header_get_size(LHAFileHeader *header)
 		filename_len = 0;
 	}
 
-	return LEVEL_1_MIN_HEADER_LEN + filename_len;
+	return LEVEL_1_MIN_HEADER_LEN + filename_len + 2;
 }
 
 static void level1_header_write(LHAFileHeader *header,
                                 uint8_t *buf, size_t buf_len,
                                 size_t next_header_len)
 {
-	size_t filename_len = buf_len - LEVEL_1_MIN_HEADER_LEN;
+	size_t filename_len = buf_len - LEVEL_1_MIN_HEADER_LEN - 2;
 
 	// Fill in main fields.
 
