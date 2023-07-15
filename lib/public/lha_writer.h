@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2011, 2012, Simon Howard
+Copyright (c) 2023, Simon Howard
 
 Permission to use, copy, modify, and/or distribute this software
 for any purpose with or without fee is hereby granted, provided
@@ -18,14 +18,29 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#ifndef LHASA_PUBLIC_LHASA_H
-#define LHASA_PUBLIC_LHASA_H
 
-#include "lha_decoder.h"
-#include "lha_file_header.h"
-#include "lha_input_stream.h"
+#ifndef LHASA_PUBLIC_LHA_WRITER_H
+#define LHASA_PUBLIC_LHA_WRITER_H
+
+#include <stdio.h>
 #include "lha_output_stream.h"
-#include "lha_reader.h"
-#include "lha_writer.h"
 
-#endif /* #ifndef LHASA_PUBLIC_LHASA_H */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @file lha_writer.h
+ *
+ * @brief TODO
+ */
+
+/* TODO: Document this function. */
+int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* #ifndef LHASA_PUBLIC_LHA_WRITER_H */
+

@@ -6,4 +6,5 @@ headerfiles_HEADERS=      \
    lha_file_header.h      \
    lha_input_stream.h     \
    lha_output_stream.h    \
-   lha_reader.h
+   lha_reader.h           \
+   lha_writer.h
