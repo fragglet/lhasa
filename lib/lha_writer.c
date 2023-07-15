@@ -160,7 +160,7 @@ static void level1_header_write(LHAFileHeader *header,
 	buf[20] = 1;
 
 	buf[21] = filename_len;
-	memcpy(buf + 21, header->filename, filename_len);
+	memcpy(buf + 22, header->filename, filename_len);
 
 	lha_encode_uint16(buf + 22 + filename_len, header->crc);
 
