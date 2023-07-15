@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 	LHAOutputStream *out;
 	LHAFileHeader header;
 	FILE *fs;
+	int i;
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s file.lzh filename\n", argv[0]);
@@ -21,13 +22,17 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	memset(&header, 0, sizeof(header));
-	header.filename = argv[2];
-	header.os_type = LHA_OS_TYPE_UNIX;
+	for (i = 2; i < argc; i++) {
+		memset(&header, 0, sizeof(header));
+		header.filename = argv[i];
+		header.os_type = LHA_OS_TYPE_UNIX;
 
-	fs = fopen(argv[2], "rb");
-	lha_write_file(out, &header, fs);
-	fclose(fs);
+		fs = fopen(argv[i], "rb");
+		lha_write_file(out, &header, fs);
+		fclose(fs);
+
+		free(header.raw_data);
+	}
 
 	lha_output_stream_free(out);
 
