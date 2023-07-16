@@ -31,6 +31,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_input_stream.h"
 #include "lha_output_stream.h"
 
+#define L1_HEADER_MAX_LEN 0x101  /* 0xff + 2 to include mini-header */
 #define MAX_FILE_LENGTH 0xffffffffUL
 
 /*
@@ -338,6 +339,8 @@ static void common_header_write(LHAFileHeader *header,
 	// There's a catch-22 when calculating the CRC, in that the CRC
 	// field is part of the header itself. So we calculate with the
 	// CRC field set to zero and then rewrite it.
+	// Note that this only works because it's the last header that
+	// we generate, so the raw_data array has been fully populated.
 
 	lha_encode_uint16(buf + 1, 0);
 
@@ -501,6 +504,11 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 {
 	size_t subheader_lengths[NUM_SUBHEADERS];
 	off_t header_loc, eof_loc;
+
+	if (level1_header_get_size(header) > L1_HEADER_MAX_LEN
+	 || (header->filename == NULL && header->path == NULL)) {
+		return 0;
+	}
 
 	// We need to save the location of the header in the output file so
 	// that we can come back later to write it.
