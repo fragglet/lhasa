@@ -503,7 +503,7 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 {
 	size_t subheader_lengths[NUM_SUBHEADERS];
-	off_t header_loc, eof_loc;
+	off_t header_loc, eof_loc, data_loc;
 
 	if (level1_header_get_size(header) > L1_HEADER_MAX_LEN
 	 || (header->filename == NULL && header->path == NULL)) {
@@ -520,15 +520,24 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 	header->raw_data_len =
 		calculate_subheader_lengths(header, subheader_lengths);
 
-	if (!lha_output_stream_seek(out, header_loc + header->raw_data_len)) {
+	data_loc = header_loc + header->raw_data_len;
+	if (!lha_output_stream_seek(out, data_loc)) {
 		return 0;
 	}
 
-	// Write compressed data. The compress_method, length and
-	// compressed_length fields will be populated.
-	if (!lha_write_file_data(out, header, instream)) {
-		return 0;
+	if (header->filename != NULL) {
+		// Write compressed data. The compress_method, length and
+		// compressed_length fields will be populated.
+		if (!lha_write_file_data(out, header, instream)) {
+			return 0;
+		}
+	} else {
+		memcpy(header->compress_method, LHA_COMPRESS_TYPE_DIR, 6);
+		header->length = 0;
+		header->compressed_length = 0;
+		header->crc = 0;
 	}
+	// TODO: Symlinks
 
 	// Generate the header data.
 	if (!generate_header_data(header, subheader_lengths)) {
@@ -537,11 +546,8 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 
 	// Go back and write the header.
 	eof_loc = lha_output_stream_tell(out);
-	if (!lha_output_stream_seek(out, header_loc)) {
-		return 0;
-	}
-
-	if (!lha_output_stream_write(out, header->raw_data,
+	if (!lha_output_stream_seek(out, header_loc)
+	 || !lha_output_stream_write(out, header->raw_data,
 	                             header->raw_data_len)) {
 		return 0;
 	}

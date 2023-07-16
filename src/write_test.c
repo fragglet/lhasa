@@ -22,6 +22,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	memset(&header, 0, sizeof(header));
+	header.path = "my_directory";
+	header.os_type = LHA_OS_TYPE_UNIX;
+	lha_write_file(out, &header, NULL);
+
 	for (i = 2; i < argc; i++) {
 		memset(&header, 0, sizeof(header));
 		header.filename = argv[i];
