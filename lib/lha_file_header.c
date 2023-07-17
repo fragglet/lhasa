@@ -981,6 +981,17 @@ LHAFileHeader *lha_file_header_read(LHAInputStream *stream)
 		goto fail;
 	}
 
+	// Some Amiga archives have directory entries mistakenly encoded
+	// as -lh0- rather than -lhd-. These look like regular files
+	// without a filename, which is obviously incorrect. So we catch
+	// this case and fix the compress_method field.
+
+	if (header->os_type == LHA_OS_TYPE_AMIGA
+	 && strcmp(header->compress_method, "-lh0-") == 0
+	 && header->length == 0 && header->filename == NULL) {
+		memcpy(header->compress_method, LHA_COMPRESS_TYPE_DIR, 5);
+	}
+
 	// Sanity check that we got some headers, at least.
 	// Directory entries must have a path, and files must have a
 	// filename. Symlinks are stored using the same compression method

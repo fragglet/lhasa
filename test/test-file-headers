@@ -141,6 +141,7 @@ test_archive lha_amiga_122/lh4.lzh
 test_archive lha_amiga_122/lh5.lzh
 test_archive lha_amiga_122/subdir.lzh
 test_archive lha_amiga_122/sfx.run
+test_archive lha_amiga_122/lh0_dirs_bug.lzh
 
 test_archive lha_amiga_212/level0.lzh
 test_archive lha_amiga_212/level1.lzh
