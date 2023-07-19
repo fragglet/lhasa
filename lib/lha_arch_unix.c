@@ -28,6 +28,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #if LHA_ARCH == LHA_ARCH_UNIX
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -167,6 +168,61 @@ int lha_arch_symlink(char *path, char *target)
 {
 	unlink(path);
 	return symlink(target, path) == 0;
+}
+
+// Wrapper around readlink() that returns an allocated buffer.
+static char *do_readlink(const char *path)
+{
+	char *buf = NULL, *newbuf;
+	size_t next_bufsize = 128;
+
+	for (;;) {
+		ssize_t nbytes;
+
+		newbuf = realloc(buf, next_bufsize);
+		if (newbuf == NULL) {
+			free(buf);
+			return NULL;
+		}
+
+		buf = newbuf;
+		nbytes = readlink(path, buf, next_bufsize);
+		if (nbytes < 0) {
+			// TODO: Error reporting?
+			return NULL;
+		} else if ((size_t) nbytes + 1 < next_bufsize) {
+			buf[nbytes] = '\0';
+			return buf;
+		}
+
+		// String truncated, try again with a bigger string.
+		next_bufsize *= 2;
+	}
+}
+
+int lha_arch_stat(const char *path, LHAFileHeader *header)
+{
+	struct stat buf;
+
+	if (lstat(path, &buf) != 0) {
+		return 0;
+	}
+
+	// TODO: Populate the filename and path fields, as appropriate.
+
+	header->timestamp = buf.st_mtime;
+	header->extra_flags = LHA_FILE_UNIX_PERMS | LHA_FILE_UNIX_UID_GID;
+	header->unix_perms = buf.st_mode;
+	header->unix_uid = buf.st_uid;
+	header->unix_gid = buf.st_gid;
+
+	if (S_ISLNK(buf.st_mode)) {
+		header->symlink_target = do_readlink(path);
+	} else {
+		header->symlink_target = NULL;
+	}
+
+	return 1;
 }
 
 #endif /* LHA_ARCH_UNIX */

@@ -25,6 +25,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdarg.h>
 #include <stdint.h>
 
+#include "public/lha_file_header.h"
+
 #define LHA_ARCH_UNIX     1
 #define LHA_ARCH_WINDOWS  2
 
@@ -155,5 +157,15 @@ LHAFileType lha_arch_exists(char *filename);
  */
 
 int lha_arch_symlink(char *path, char *target);
+
+/**
+ * Read attributes of the given file; populate header.
+ *
+ * @param path       Path to file.
+ * @param header     Header to populate.
+ * @return           Non-zero for success.
+ */
+
+int lha_arch_stat(const char *path, LHAFileHeader *header);
 
 #endif /* ifndef LHASA_LHA_ARCH_H */
