@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "lhasa.h"
+#include "../lha_arch.h"
 
 int main(int argc, char *argv[])
 {
@@ -29,13 +30,20 @@ int main(int argc, char *argv[])
 
 	for (i = 2; i < argc; i++) {
 		memset(&header, 0, sizeof(header));
+		if (!lha_arch_stat(argv[i], &header)) {
+			// TODO
+		}
 		header.filename = argv[i];
 		header.os_type = LHA_OS_TYPE_UNIX;
 
 		fs = fopen(argv[i], "rb");
+		if (fs == NULL) {
+			// TODO
+		}
 		lha_write_file(out, &header, fs);
 		fclose(fs);
 
+		free(header.symlink_target);
 		free(header.raw_data);
 	}
 
