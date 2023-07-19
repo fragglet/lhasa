@@ -139,6 +139,10 @@ static size_t level1_header_get_size(LHAFileHeader *header)
 		filename_len = 0;
 	}
 
+	if (header->symlink_target != NULL) {
+		filename_len += 1 + strlen(header->symlink_target);
+	}
+
 	return LEVEL_1_MIN_HEADER_LEN + filename_len + 2;
 }
 
@@ -147,6 +151,7 @@ static void level1_header_write(LHAFileHeader *header,
                                 size_t next_header_len)
 {
 	size_t filename_len = buf_len - LEVEL_1_MIN_HEADER_LEN - 2;
+	uint8_t *filename_buf;
 
 	// Fill in main fields.
 
@@ -163,7 +168,22 @@ static void level1_header_write(LHAFileHeader *header,
 	buf[20] = 1;
 
 	buf[21] = filename_len;
-	memcpy(buf + 22, header->filename, filename_len);
+
+	filename_buf = &buf[22];
+
+	if (header->filename != NULL) {
+		memcpy(filename_buf, header->filename,
+		       strlen(header->filename));
+		filename_buf += strlen(header->filename);
+	}
+
+	if (header->symlink_target != NULL) {
+		*filename_buf = '|';
+		++filename_buf;
+
+		memcpy(filename_buf, header->symlink_target,
+		       strlen(header->symlink_target));
+	}
 
 	lha_encode_uint16(buf + 22 + filename_len, header->crc);
 
@@ -525,7 +545,7 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 		return 0;
 	}
 
-	if (header->filename != NULL) {
+	if (header->filename != NULL && header->symlink_target == NULL) {
 		// Write compressed data. The compress_method, length and
 		// compressed_length fields will be populated.
 		if (!lha_write_file_data(out, header, instream)) {
@@ -537,7 +557,6 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 		header->compressed_length = 0;
 		header->crc = 0;
 	}
-	// TODO: Symlinks
 
 	// Generate the header data.
 	if (!generate_header_data(header, subheader_lengths)) {

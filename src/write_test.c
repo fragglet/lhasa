@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	}
 
 	memset(&header, 0, sizeof(header));
-	header.path = "my_directory";
+	header.path = "my_directory/";
 	header.os_type = LHA_OS_TYPE_UNIX;
 	lha_write_file(out, &header, NULL);
 
@@ -41,7 +41,9 @@ int main(int argc, char *argv[])
 			// TODO
 		}
 		lha_write_file(out, &header, fs);
-		fclose(fs);
+		if (fs != NULL) {
+			fclose(fs);
+		}
 
 		free(header.symlink_target);
 		free(header.raw_data);
