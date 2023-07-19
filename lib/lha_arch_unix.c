@@ -190,6 +190,7 @@ static char *do_readlink(const char *path)
 		nbytes = readlink(path, buf, next_bufsize);
 		if (nbytes < 0) {
 			// TODO: Error reporting?
+			free(buf);
 			return NULL;
 		} else if ((size_t) nbytes + 1 < next_bufsize) {
 			buf[nbytes] = '\0';
