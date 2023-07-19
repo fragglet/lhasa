@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: sudo apt -q install valgrind
     - name: autogen
       run: ./autogen.sh
     - name: configure
