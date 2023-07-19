@@ -29,6 +29,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -203,6 +204,8 @@ static char *do_readlink(const char *path)
 int lha_arch_stat(const char *path, LHAFileHeader *header)
 {
 	struct stat buf;
+	size_t len;
+	const char *p;
 
 	if (lstat(path, &buf) != 0) {
 		return 0;
@@ -222,7 +225,56 @@ int lha_arch_stat(const char *path, LHAFileHeader *header)
 		header->symlink_target = NULL;
 	}
 
+	// Directory?
+	if (S_ISDIR(buf.st_mode)) {
+		len = strlen(path);
+		header->filename = NULL;
+		header->path = malloc(len + 2);
+		if (header->path == NULL) {
+			goto fail;
+		}
+		memcpy(header->path, path, len + 1);
+		// Path must end in a /
+		if (len > 0 && header->path[len - 1] != '/') {
+			header->path[len] = '/';
+			header->path[len + 1] = '\0';
+		}
+		return 1;
+	}
+
+	// Normal file, or symlink.
+	p = strrchr(path, '/');
+	if (p == NULL) {
+		header->filename = strdup(path);
+		header->path = NULL;
+
+		if (header->filename == NULL) {
+			goto fail;
+		}
+	} else {
+		// File is in a subdirectory.
+		len = p - path;
+		header->filename = strdup(p + 1);
+		header->path = malloc(len + 2);
+
+		if (header->filename == NULL || header->path == NULL) {
+			goto fail;
+		}
+
+		memcpy(header->path, path, len + 1);
+		header->path[len + 1] = '\0';
+	}
+
 	return 1;
+
+fail:
+	free(header->filename);
+	free(header->path);
+	free(header->symlink_target);
+	header->filename = NULL;
+	header->path = NULL;
+	header->symlink_target = NULL;
+	return 0;
 }
 
 #endif /* LHA_ARCH_UNIX */

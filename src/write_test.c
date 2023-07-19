@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
 		if (!lha_arch_stat(argv[i], &header)) {
 			// TODO
 		}
-		header.filename = argv[i];
 		header.os_type = LHA_OS_TYPE_UNIX;
 
 		fs = fopen(argv[i], "rb");
@@ -45,6 +44,8 @@ int main(int argc, char *argv[])
 			fclose(fs);
 		}
 
+		free(header.filename);
+		free(header.path);
 		free(header.symlink_target);
 		free(header.raw_data);
 	}
