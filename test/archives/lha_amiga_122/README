@@ -18,3 +18,12 @@ Self extracting archive generated with LhASfx v1.2:
 
 sfx.run       - Self extracting archive containing lh4.lzh
 
+Bug test archive:
+
+lh0_dirs_bug.lzh - File where a directory entry is mistakenly encoded as a
+                   zero-length file with -lh0- compression method (Lhasa
+                   bug #31). Thanks to Github user @alfredone for supplying
+                   this. I don't actually know what version of the LhA tool
+                   generated this file and has this bug, this directory was
+                   just a convenient place to put it.
+

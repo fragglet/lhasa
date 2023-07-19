@@ -72,6 +72,24 @@ test_archive lengths/lz5-1m.lzs
 
 # All other archives:
 
+test_archive explzh_723/h0_lh0.lzh
+test_archive explzh_723/h0_lh5.lzh
+test_archive explzh_723/h0_lh6.lzh
+test_archive explzh_723/h0_lh7.lzh
+test_archive explzh_723/h0_subdir.lzh
+test_archive explzh_723/h1_lh0.lzh
+test_archive explzh_723/h1_lh5.lzh
+test_archive explzh_723/h1_lh6.lzh
+test_archive explzh_723/h1_lh7.lzh
+test_archive explzh_723/h1_subdir.lzh
+test_archive explzh_723/h2_lh0.lzh
+test_archive explzh_723/h2_lh5.lzh
+test_archive explzh_723/h2_lh6.lzh
+test_archive explzh_723/h2_lh7.lzh
+test_archive explzh_723/h2_subdir.lzh
+test_archive explzh_723/declha_sfx_ansi.exe
+test_archive explzh_723/declha_sfx_unicode.exe
+
 test_archive larc333/lz4.lzs
 test_archive larc333/lz5.lzs
 test_archive larc333/sfx.com
@@ -148,6 +166,7 @@ test_archive lha_amiga_122/lh4.lzh
 test_archive lha_amiga_122/lh5.lzh
 test_archive lha_amiga_122/subdir.lzh
 test_archive lha_amiga_122/sfx.run
+test_archive lha_amiga_122/lh0_dirs_bug.lzh
 
 test_archive lha_amiga_212/level0.lzh
 test_archive lha_amiga_212/level1.lzh
