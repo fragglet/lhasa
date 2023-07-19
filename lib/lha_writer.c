@@ -139,10 +139,6 @@ static size_t level1_header_get_size(LHAFileHeader *header)
 		filename_len = 0;
 	}
 
-	if (header->symlink_target != NULL) {
-		filename_len += 1 + strlen(header->symlink_target);
-	}
-
 	return LEVEL_1_MIN_HEADER_LEN + filename_len + 2;
 }
 
@@ -151,7 +147,6 @@ static void level1_header_write(LHAFileHeader *header,
                                 size_t next_header_len)
 {
 	size_t filename_len = buf_len - LEVEL_1_MIN_HEADER_LEN - 2;
-	uint8_t *filename_buf;
 
 	// Fill in main fields.
 
@@ -169,22 +164,7 @@ static void level1_header_write(LHAFileHeader *header,
 
 	buf[21] = filename_len;
 
-	filename_buf = &buf[22];
-
-	if (header->filename != NULL) {
-		memcpy(filename_buf, header->filename,
-		       strlen(header->filename));
-		filename_buf += strlen(header->filename);
-	}
-
-	if (header->symlink_target != NULL) {
-		*filename_buf = '|';
-		++filename_buf;
-
-		memcpy(filename_buf, header->symlink_target,
-		       strlen(header->symlink_target));
-	}
-
+	memcpy(&buf[22], header->filename, filename_len);
 	lha_encode_uint16(buf + 22 + filename_len, header->crc);
 
 	buf[24 + filename_len] = header->os_type;
@@ -520,13 +500,96 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	return 1;
 }
 
+// Unix LHa generates symlinks in a weird way, but we don't want to invent
+// yet another variant on headers, so we preserve that format. Here's what
+// it looks like:
+//
+//   1.  b -> d      -  no path      filename=b|d
+//   2.  b -> c/d    -  path=b|c/    filename=d
+//   3.  a/b -> d    -  path=a/      filename=b|d
+//   4.  a/b -> c/d  -  path=a/b|c/  filename=d
+//
+// To avoid adding lots of complication to the header writing code above, we
+// do a "patch-up" transform of the path and filename fields to get them
+// into the format we want. But before lha_write_file() returns, we change
+// the fields back again back to their previous values.
+
+static int symlink_filename_transform(LHAFileHeader *header, char **orig_path,
+                                      char **orig_filename)
+{
+	char *buf, *p;
+	size_t len;
+
+	*orig_path = header->path;
+	*orig_filename = header->filename;
+
+	if (header->symlink_target == NULL) {
+		return 1;
+	}
+
+	len = (header->path != NULL ? strlen(header->path) : 0)
+	    + strlen(header->filename) + 1 + strlen(header->symlink_target);
+
+	buf = malloc(len + 1);
+	if (buf == NULL) {
+		return 0;
+	}
+
+	snprintf(buf, len + 1, "%s%s|%s",
+	         header->path != NULL ? header->path : "",
+	         header->filename, header->symlink_target);
+
+	p = strrchr(buf, '/');
+	if (p == NULL) {
+		// case 1 above.
+		header->filename = buf;
+		header->path = NULL;
+		return 1;
+	}
+
+	header->filename = strdup(p + 1);
+	len = p - buf + 1;
+	header->path = malloc(len + 1);
+
+	if (header->filename == NULL || header->path == NULL) {
+		free(header->filename);
+		free(header->path);
+		free(buf);
+		header->filename = *orig_filename;
+		header->path = *orig_path;
+
+		return 0;
+	}
+
+	memcpy(header->path, buf, len);
+	header->path[len] = '\0';
+	free(buf);
+	return 1;
+}
+
+static void symlink_filename_restore(LHAFileHeader *header, char **orig_path,
+                                     char **orig_filename)
+{
+	if (*orig_path != header->path || *orig_filename != header->filename) {
+		free(header->path);
+		free(header->filename);
+		header->path = *orig_path;
+		header->filename = *orig_filename;
+	}
+}
+
 int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 {
 	size_t subheader_lengths[NUM_SUBHEADERS];
 	off_t header_loc, eof_loc, data_loc;
+	char *orig_path, *orig_filename;
 
 	if (level1_header_get_size(header) > L1_HEADER_MAX_LEN
 	 || (header->filename == NULL && header->path == NULL)) {
+		return 0;
+	}
+
+	if (!symlink_filename_transform(header, &orig_path, &orig_filename)) {
 		return 0;
 	}
 
@@ -542,14 +605,14 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 
 	data_loc = header_loc + header->raw_data_len;
 	if (!lha_output_stream_seek(out, data_loc)) {
-		return 0;
+		goto restore_and_fail;
 	}
 
 	if (header->filename != NULL && header->symlink_target == NULL) {
 		// Write compressed data. The compress_method, length and
 		// compressed_length fields will be populated.
 		if (!lha_write_file_data(out, header, instream)) {
-			return 0;
+			goto restore_and_fail;
 		}
 	} else {
 		memcpy(header->compress_method, LHA_COMPRESS_TYPE_DIR, 6);
@@ -560,8 +623,10 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 
 	// Generate the header data.
 	if (!generate_header_data(header, subheader_lengths)) {
-		return 0;
+		goto restore_and_fail;
 	}
+
+	symlink_filename_restore(header, &orig_path, &orig_filename);
 
 	// Go back and write the header.
 	eof_loc = lha_output_stream_tell(out);
@@ -573,5 +638,9 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 
 	// Done.
 	return lha_output_stream_seek(out, eof_loc);
+
+restore_and_fail:
+	symlink_filename_restore(header, &orig_path, &orig_filename);
+	return 0;
 }
 
