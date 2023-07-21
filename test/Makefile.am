@@ -26,9 +26,12 @@ EXTRA_DIST=                           \
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
 
 EXTRA_PROGRAMS=fuzzer ghost-tester
-check_PROGRAMS=$(COMPILED_TESTS) \
+SUPPORT_COMMANDS = \
 	dump-headers decompress-crc build-arch string-replace
+check_PROGRAMS=$(COMPILED_TESTS) $(SUPPORT_COMMANDS)
 check_LIBRARIES=libtestframework.a
+
+$(TEST_LOGS): $(TESTS) $(SUPPORT_COMMANDS) ../src/test-lha
 
 libtestframework_a_SOURCES=     \
 	crc32.c crc32.h
@@ -49,9 +52,9 @@ check-prerun:
 
 # Display coverage summary after running tests.
 
-check: check-postrun
+check: report-coverage
 
-check-postrun:
+report-coverage: check-am
 	@cd $(top_builddir); ./gencov lib/*.c src/*.c
 
 endif
