@@ -250,9 +250,7 @@ static uint32_t generate_archive(char *out_filename, char *type,
 	size_t buf_len;
 	uint16_t crc16;
 	uint32_t crc32;
-	unsigned int skip_len;
 
-	skip_len = COMPRESSED_DATA_LEN;
 	buf_len = COMPRESSED_DATA_LEN + MIN_HEADER_LEN + strlen(filename);
 
 	buf = malloc(buf_len);
