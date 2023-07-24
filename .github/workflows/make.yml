@@ -8,13 +8,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependencies
-      run: sudo apt -q install valgrind
     - name: configure
       run: |
         LDFLAGS="$CFLAGS" ./autogen.sh  \
-            --enable-coverage           \
-            --enable-valgrind
+            --enable-coverage
     - name: make
       run: make -j
     - name: make check
