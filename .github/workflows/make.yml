@@ -4,17 +4,24 @@ on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    env:
+      CC: clang
+      # TODO: Add -fsanitize=address and memory too.
+      CFLAGS: "-fsanitize=undefined
+               -fno-omit-frame-pointer
+               -fno-sanitize-recover=all
+               -fno-sanitize=shift-base"
 
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
       run: sudo apt -q install valgrind
-    - name: autogen
-      run: ./autogen.sh
     - name: configure
-      run: ./configure --enable-coverage --enable-valgrind
+      run: |
+        LDFLAGS="$CFLAGS" ./autogen.sh  \
+            --enable-coverage           \
+            --enable-valgrind
     - name: make
       run: make -j
     - name: make check
