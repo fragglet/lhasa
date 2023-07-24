@@ -61,7 +61,7 @@ static int peek_bits(BitStreamReader *reader,
 {
 	uint8_t buf[4];
 	unsigned int fill_bytes;
-	size_t bytes;
+	size_t bytes, i;
 
 	if (n == 0) {
 		return 0;
@@ -88,12 +88,11 @@ static int peek_bits(BitStreamReader *reader,
 			return -1;
 		}
 
-		reader->bit_buffer |= (uint32_t) buf[0] << (24 - reader->bits);
-		reader->bit_buffer |= (uint32_t) buf[1] << (16 - reader->bits);
-		reader->bit_buffer |= (uint32_t) buf[2] << (8 - reader->bits);
-		reader->bit_buffer |= (uint32_t) buf[3];
-
-		reader->bits += bytes * 8;
+		for (i = 0; i < bytes; i++) {
+			reader->bit_buffer |=
+				(uint32_t) buf[i] << (24 - reader->bits);
+			reader->bits += 8;
+		}
 	}
 
 	return (signed int) (reader->bit_buffer >> (32 - n));
