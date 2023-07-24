@@ -55,8 +55,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: configure
+      shell: bash
       run: |
+        uname -a
         ./autogen.sh
     - name: make check
+      shell: bash
       run: |
         make -j check || (cat test/test-suite.log; false)
