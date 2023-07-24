@@ -452,6 +452,7 @@ static int extract_archived_file(LHAReader *reader,
 	// No need to extract directories if use_path is disabled.
 
 	if (!options->use_path && is_dir) {
+		free(filename);
 		return 1;
 	}
 

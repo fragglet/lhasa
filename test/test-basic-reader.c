@@ -208,6 +208,7 @@ static void check_decode_for(char *filename)
 	decoder = lha_basic_reader_decode(reader);
 	assert(decoder != NULL);
 	lha_decoder_free(decoder);
+	lha_basic_reader_free(reader);
 	lha_input_stream_free(stream);
 }
 

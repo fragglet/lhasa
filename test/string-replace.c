@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
 			i++;
 		}
 	}
+
+	free(buf);
 	return 0;
 }
 
