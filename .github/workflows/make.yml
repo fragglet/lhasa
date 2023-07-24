@@ -54,10 +54,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      shell: bash
+      run: pacman install autoconf automake libtool
     - name: configure
       shell: bash
       run: |
-        uname -a
         ./autogen.sh
     - name: make check
       shell: bash
