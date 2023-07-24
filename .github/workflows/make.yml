@@ -3,15 +3,8 @@ name: Continuous Integration
 on: [push, pull_request]
 
 jobs:
-  build:
+  build_and_coverage:
     runs-on: ubuntu-latest
-    env:
-      CC: clang
-      # TODO: Add -fsanitize=address and memory too.
-      CFLAGS: "-fsanitize=undefined
-               -fno-omit-frame-pointer
-               -fno-sanitize-recover=all
-               -fno-sanitize=shift-base"
 
     steps:
     - uses: actions/checkout@v3
@@ -37,3 +30,24 @@ jobs:
       with:
         path: "artifacts"
         name: coverage_reports
+
+  ubsan_build:
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      # TODO: Add -fsanitize=address and memory too.
+      CFLAGS: "-fsanitize=undefined
+               -fno-omit-frame-pointer
+               -fno-sanitize-recover=all
+               -fno-sanitize=shift-base"
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: sudo apt -q install valgrind
+    - name: configure
+      run: |
+        LDFLAGS="$CFLAGS" ./autogen.sh
+    - name: make check
+      run: |
+        make -j check || (cat test/test-suite.log; false)
