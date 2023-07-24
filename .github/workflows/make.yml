@@ -48,3 +48,15 @@ jobs:
     - name: make check
       run: |
         make -j check || (cat test/test-suite.log; false)
+
+  windows_build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: configure
+      run: |
+        ./autogen.sh
+    - name: make check
+      run: |
+        make -j check || (cat test/test-suite.log; false)
