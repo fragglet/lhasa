@@ -61,7 +61,7 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         update: true
-        install: autoconf automake libtool gcc make unix2dos groff zip
+        install: autoconf automake libtool gcc make groff zip
     - name: Find Git version
       id: version
       run: |
