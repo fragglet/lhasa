@@ -61,7 +61,7 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         update: true
-        install: autoconf automake libtool
+        install: autoconf automake libtool gcc make
     - name: configure
       run: ./autogen.sh
     - name: make check
