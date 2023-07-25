@@ -54,13 +54,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependencies
-      shell: bash
-      run: pacman install autoconf automake libtool
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: autoconf automake libtool
     - name: configure
       shell: bash
-      run: |
-        ./autogen.sh
+      run: ./autogen.sh
     - name: make check
       shell: bash
       run: |
