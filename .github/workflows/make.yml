@@ -63,9 +63,7 @@ jobs:
         update: true
         install: autoconf automake libtool
     - name: configure
-      shell: bash
       run: ./autogen.sh
     - name: make check
-      shell: bash
       run: |
         make -j check || (cat test/test-suite.log; false)
