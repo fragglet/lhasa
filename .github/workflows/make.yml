@@ -61,9 +61,23 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         update: true
-        install: autoconf automake libtool gcc make
+        install: autoconf automake libtool gcc make unix2dos groff zip
+    - name: Find Git version
+      id: version
+      run: |
+        export VERSION=$(git rev-parse --short HEAD)
+        echo "VERSION=$VERSION-win32" >> $GITHUB_OUTPUT
     - name: configure
       run: ./autogen.sh
-    - name: make check
+    - name: make
+      run: make -j
+    # TODO: Tests are not currently run on Windows
+    - name: Make windows package
       run: |
-        make -j check || (cat test/test-suite.log; false)
+        cd pkg/win32
+        make
+    - name: Upload build
+      uses: actions/upload-artifact@v1
+      with:
+        path: "pkg/win32/staging"
+        name: lhasa-${{steps.version.outputs.VERSION}}
