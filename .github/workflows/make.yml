@@ -68,7 +68,7 @@ jobs:
         export VERSION=$(git rev-parse --short HEAD)
         echo "VERSION=$VERSION-win32" >> $GITHUB_OUTPUT
     - name: configure
-      run: ./autogen.sh
+      run: ./autogen.sh --disable-shared
     - name: make
       run: make -j
     # TODO: Tests are not currently run on Windows
