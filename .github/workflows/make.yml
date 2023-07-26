@@ -49,7 +49,7 @@ jobs:
       run: |
         make -j check || (cat test/test-suite.log; false)
 
-  windows_build:
+  windows_x86_build:
     runs-on: windows-latest
 
     defaults:
@@ -57,18 +57,22 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: msys2/setup-msys2@v2
+    - name: Setup msys2
+      uses: msys2/setup-msys2@v2
       with:
+        msystem: MINGW32
         update: true
-        install: autoconf automake libtool gcc make groff zip dos2unix
+        install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-i686-gcc
+    - uses: actions/checkout@v3
     - name: Find Git version
       id: version
       run: |
         export VERSION=$(git rev-parse --short HEAD)
         echo "VERSION=$VERSION-win32" >> $GITHUB_OUTPUT
+
+    # TODO: --disable-shared is here because pkg/win32 doesn't package the dll..
     - name: configure
-      run: ./autogen.sh --disable-shared
+      run: ./autogen.sh --disable-shared --host=i686-w64-mingw32
     - name: make
       run: make -j
     # TODO: Tests are not currently run on Windows
@@ -81,3 +85,41 @@ jobs:
       with:
         path: "pkg/win32/staging"
         name: lhasa-${{steps.version.outputs.VERSION}}
+
+  windows_x64_build:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - name: Setup msys2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-x86_64-gcc
+    - uses: actions/checkout@v3
+    - name: Find Git version
+      id: version
+      run: |
+        export VERSION=$(git rev-parse --short HEAD)
+        echo "VERSION=$VERSION-win64" >> $GITHUB_OUTPUT
+
+    # TODO: --disable-shared is here because pkg/win64 doesn't package the dll..
+    - name: configure
+      run: ./autogen.sh --disable-shared --host=x86_64-w64-mingw32
+    - name: make
+      run: make -j
+    # TODO: Tests are not currently run on Windows
+    # TODO: win64 packaging requires updated pkg directory
+    #- name: Make windows package
+    #  run: |
+    #    cd pkg/win64
+    #    make
+    #- name: Upload build
+    #  uses: actions/upload-artifact@v1
+    #  with:
+    #    path: "pkg/win64/staging"
+    #    name: lhasa-${{steps.version.outputs.VERSION}}
