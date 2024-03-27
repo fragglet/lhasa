@@ -200,7 +200,7 @@ int lha_arch_symlink(char *path, char *target)
 	return 1;
 }
 
-int lha_arch_stat(const char *path, LHAFileHeader *header);
+int lha_arch_stat(const char *path, LHAFileHeader *header)
 {
 	// TODO
 	return 1;
