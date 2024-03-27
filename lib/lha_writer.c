@@ -27,6 +27,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "crc16.h"
 #include "header_defs.h"
 #include "lha_arch.h"
+#include "lha_codec.h"
+#include "lha_encoder.h"
 #include "lha_endian.h"
 #include "lha_input_stream.h"
 #include "lha_output_stream.h"
@@ -463,41 +465,57 @@ static int generate_header_data(LHAFileHeader *header,
 	return 1;
 }
 
+static size_t file_read_callback(void *buf, size_t buf_len, void *user_data)
+{
+	return fread(buf, 1, buf_len, user_data);
+}
+
 static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
                                FILE *instream)
 {
+	LHACodec *codec;
+	LHAEncoder *encoder;
 	uint8_t buf[64];
-	size_t total_len = 0, cnt;
-	uint16_t crc = 0;
+	size_t compressed_len = 0, cnt;
 
 	// TODO: For now, we don't do any kind of encoding, we only write
 	// the -lh0- uncompressed encoding type.
-	// TODO: This should be using a codec of reading directly from the file.
+	codec = lha_encoder_for_name("-lh0-");
+	if (codec == NULL) {
+		return 0;
+	}
 
-	while (!feof(instream)) {
-		cnt = fread(buf, 1, sizeof(buf), instream);
+	encoder = lha_encoder_new(codec, file_read_callback, instream);
+
+	for (;;) {
+		cnt = lha_encoder_read(encoder, buf, sizeof(buf));
+		if (cnt == 0) {
+			break;
+		}
 		if (ferror(instream)
 		 || !lha_output_stream_write(out, buf, cnt)) {
 			return 0;
 		}
-		lha_crc16_buf(&crc, buf, cnt);
 
 		// The header format uses 32-bit integers to represent the file
 		// uncompressed and compressed sizes, so there is an inherent
 		// limit on file size. We must therefore ensure that the
 		// counter does not overflow.
-		if (total_len > MAX_FILE_LENGTH - cnt) {
+		if (compressed_len > MAX_FILE_LENGTH - cnt) {
+			lha_encoder_free(encoder);
 			return 0;
 		}
-		total_len += cnt;
+		// TODO: Check for uncompressed length overflow.
+		compressed_len += cnt;
 	}
 
 	memcpy(header->compress_method, "-lh0-", 6);
-	header->length = total_len;
-	header->compressed_length = total_len;
-	header->crc = crc;
+	header->length = lha_encoder_get_length(encoder);
+	header->compressed_length = compressed_len;
+	header->crc = lha_encoder_get_crc(encoder);
+	lha_encoder_free(encoder);
 
-	return 1;
+	return header->crc;
 }
 
 // Unix LHa generates symlinks in a weird way, but we don't want to invent
