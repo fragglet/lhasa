@@ -282,6 +282,9 @@ static void test_progress_for_file(DecoderTestData *file)
 
 	assert(progress.last_pos == progress.total);
 	assert(progress.calls == 1 + progress.total);
+
+	lha_decoder_free(decoder);
+	free(data);
 }
 
 static void test_progress_feedback(void)
