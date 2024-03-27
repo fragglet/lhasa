@@ -18,6 +18,7 @@ SRC =                                                   \
 	lha_basic_reader.c      lha_basic_reader.h      \
 	                        lha_codec.h             \
 	lha_decoder.c           lha_decoder.h           \
+	lha_encoder.c           lha_encoder.h           \
 	lha_endian.c            lha_endian.h            \
 	lha_file_header.c       lha_file_header.h       \
 	lha_input_stream.c      lha_input_stream.h      \
