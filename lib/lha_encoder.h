@@ -31,7 +31,7 @@ struct _LHAEncoder {
 	uint8_t *outbuf;
 
 	/** Length of input stream */
-	size_t instream_length;
+	uint64_t instream_length;
 
 	/** If true, the read() function returned zero. */
 	unsigned int encoder_failed;
@@ -111,6 +111,6 @@ uint16_t lha_encoder_get_crc(LHAEncoder *encoder);
  * @param encoder       The encoder.
  * @return              The number of bytes read for compression so far.
  */
-size_t lha_encoder_get_length(LHAEncoder *encoder);
+uint64_t lha_encoder_get_length(LHAEncoder *encoder);
 
 #endif /* #ifndef LHASA_LHA_ENCODER_H */

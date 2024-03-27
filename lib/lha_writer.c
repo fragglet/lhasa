@@ -476,6 +476,7 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	LHACodec *codec;
 	LHAEncoder *encoder;
 	uint8_t buf[64];
+	uint64_t uncompressed_len;
 	size_t compressed_len = 0, cnt;
 
 	// TODO: For now, we don't do any kind of encoding, we only write
@@ -505,12 +506,18 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 			lha_encoder_free(encoder);
 			return 0;
 		}
-		// TODO: Check for uncompressed length overflow.
 		compressed_len += cnt;
 	}
 
+	// Overflow check for uncompressed size.
+	uncompressed_len = lha_encoder_get_length(encoder);
+	if (uncompressed_len > UINT32_MAX) {
+		lha_encoder_free(encoder);
+		return 0;
+	}
+
 	memcpy(header->compress_method, "-lh0-", 6);
-	header->length = lha_encoder_get_length(encoder);
+	header->length = (uint32_t) uncompressed_len;
 	header->compressed_length = compressed_len;
 	header->crc = lha_encoder_get_crc(encoder);
 	lha_encoder_free(encoder);

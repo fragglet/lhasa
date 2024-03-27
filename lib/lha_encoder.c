@@ -174,7 +174,7 @@ uint16_t lha_encoder_get_crc(LHAEncoder *encoder)
 	return encoder->crc;
 }
 
-size_t lha_encoder_get_length(LHAEncoder *encoder)
+uint64_t lha_encoder_get_length(LHAEncoder *encoder)
 {
 	return encoder->instream_length;
 }
