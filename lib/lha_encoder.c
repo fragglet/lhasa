@@ -29,12 +29,15 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 // Null encoder, used for -lz4-, -lh0-, -pm0-:
 extern LHACodec lha_null_codec;
 
+extern LHACodec lha_lh1_encoder;
+
 static struct {
 	char *name;
 	LHACodec *codec;
 } encoders[] = {
 	{ "-lz4-", &lha_null_codec },
 	{ "-lh0-", &lha_null_codec },
+	{ "-lh1-", &lha_lh1_encoder },
 	{ "-pm0-", &lha_null_codec },
 };
 
