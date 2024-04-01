@@ -254,20 +254,22 @@ static int check_parent_directory(char *path)
 			// Create the missing directory:
 
 			if (!lha_arch_mkdir(path, 0755)) {
-				fprintf(stderr,
-				        "Failed to create parent directory %s\n",
-				        path);
+				safe_fprintf(stderr, "Failed to create parent "
+				             "directory %s", path);
+				fprintf(stderr, "\n");
 				return 0;
 			}
 			break;
 
 		case LHA_FILE_FILE:
-			fprintf(stderr, "Parent path %s is not a directory!\n",
-			        path);
+			safe_fprintf(stderr, "Parent path %s is not a "
+			             "directory!", path);
+			fprintf(stderr, "\n");
 			return 0;
 
 		case LHA_FILE_ERROR:
-			fprintf(stderr, "Failed to stat %s\n", path);
+			safe_fprintf(stderr, "Failed to stat %s", path);
+			fprintf(stderr, "\n");
 			return 0;
 	}
 
@@ -414,7 +416,9 @@ static int file_exists(char *filename)
 	file_type = lha_arch_exists(filename);
 
 	if (file_type == LHA_FILE_ERROR) {
-		fprintf(stderr, "Failed to read file type of '%s'\n", filename);
+		safe_fprintf(stderr, "Failed to read file type of '%s'",
+		             filename);
+		fprintf(stderr, "\n");
 		exit(-1);
 	}
 
