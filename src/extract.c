@@ -36,8 +36,8 @@ typedef struct {
 	int invoked;
 	LHAFileHeader *header;
 	LHAOptions *options;
-	char *filename;
-	char *operation;
+	const char *filename;
+	const char *operation;
 } ProgressCallbackData;
 
 // Given a file header structure, get the path to extract to.
@@ -109,14 +109,14 @@ static char *file_full_path(LHAFileHeader *header, LHAOptions *options)
 	return result;
 }
 
-static void print_filename(char *filename, char *status)
+static void print_filename(const char *filename, const char *status)
 {
 	printf("\r");
 	safe_printf("%s", filename);
 	printf("\t- %s  ", status);
 }
 
-static void print_filename_brief(char *filename)
+static void print_filename_brief(const char *filename)
 {
 	printf("\r");
 	safe_printf("%s :", filename);
@@ -337,7 +337,7 @@ static int make_parent_directories(char *orig_path)
 // Prompt the user with a message, and return the first character of
 // the typed response.
 
-static char prompt_user(char *message)
+static char prompt_user(const char *message)
 {
 	char result;
 	int c;
