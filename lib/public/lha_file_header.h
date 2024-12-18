@@ -117,8 +117,6 @@ extern "C" {
  */
 #define LHA_FILE_OS9_PERMS             0x10
 
-typedef struct _LHAFileHeader LHAFileHeader;
-
 #define LHA_FILE_HAVE_EXTRA(header, flag) \
 	(((header)->extra_flags & (flag)) != 0)
 /**
@@ -130,13 +128,12 @@ typedef struct _LHAFileHeader LHAFileHeader;
  * can depend on the header format, the tool used to create the
  * archive, and the operating system on which it was created.
  */
-
-struct _LHAFileHeader {
+typedef struct _LHAFileHeader {
 
 	// Internal fields, do not touch!
 
 	unsigned int _refcount;
-	LHAFileHeader *_next;
+	struct _LHAFileHeader *_next;
 
 	/**
 	 * Stored path, with Unix-style ('/') path separators.
@@ -241,7 +238,7 @@ struct _LHAFileHeader {
 	 * @ref LHA_FILE_WINDOWS_TIMESTAMPS is set.
 	 */
 	uint64_t win_access_time;
-};
+} LHAFileHeader;
 
 #ifdef __cplusplus
 }
