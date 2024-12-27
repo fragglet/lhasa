@@ -56,8 +56,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 char *lha_file_header_full_path(LHAFileHeader *header)
 {
-	char *path;
-	char *filename;
+	const char *path;
+	const char *filename;
 	char *result;
 
 	if (header->path != NULL) {

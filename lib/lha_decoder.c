@@ -26,28 +26,28 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_decoder.h"
 
 // Null decoder, used for -lz4-, -lh0-, -pm0-:
-extern LHADecoderType lha_null_decoder;
+extern const LHADecoderType lha_null_decoder;
 
 // LArc compression algorithms:
-extern LHADecoderType lha_lz5_decoder;
-extern LHADecoderType lha_lzs_decoder;
+extern const LHADecoderType lha_lz5_decoder;
+extern const LHADecoderType lha_lzs_decoder;
 
 // LHarc compression algorithms:
-extern LHADecoderType lha_lh1_decoder;
-extern LHADecoderType lha_lh4_decoder;
-extern LHADecoderType lha_lh5_decoder;
-extern LHADecoderType lha_lh6_decoder;
-extern LHADecoderType lha_lh7_decoder;
-extern LHADecoderType lha_lhx_decoder;
-extern LHADecoderType lha_lk7_decoder;
+extern const LHADecoderType lha_lh1_decoder;
+extern const LHADecoderType lha_lh4_decoder;
+extern const LHADecoderType lha_lh5_decoder;
+extern const LHADecoderType lha_lh6_decoder;
+extern const LHADecoderType lha_lh7_decoder;
+extern const LHADecoderType lha_lhx_decoder;
+extern const LHADecoderType lha_lk7_decoder;
 
 // PMarc compression algorithms:
-extern LHADecoderType lha_pm1_decoder;
-extern LHADecoderType lha_pm2_decoder;
+extern const LHADecoderType lha_pm1_decoder;
+extern const LHADecoderType lha_pm2_decoder;
 
-static struct {
-	char *name;
-	LHADecoderType *dtype;
+static const struct {
+	const char *name;
+	const LHADecoderType *dtype;
 } decoders[] = {
 	{ "-lz4-", &lha_null_decoder },
 	{ "-lz5-", &lha_lz5_decoder },
@@ -65,7 +65,7 @@ static struct {
 	{ "-pm2-", &lha_pm2_decoder },
 };
 
-LHADecoder *lha_decoder_new(LHADecoderType *dtype,
+LHADecoder *lha_decoder_new(const LHADecoderType *dtype,
                             LHADecoderCallback callback,
                             void *callback_data,
                             size_t stream_length)
@@ -108,7 +108,7 @@ LHADecoder *lha_decoder_new(LHADecoderType *dtype,
 	return decoder;
 }
 
-LHADecoderType *lha_decoder_for_name(char *name)
+const LHADecoderType *lha_decoder_for_name(const char *name)
 {
 	unsigned int i;
 
