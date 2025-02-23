@@ -1,7 +1,6 @@
 include ../config.make
 
 TOPLEVEL=../..
-PANDOC_FLAGS = -s --template=default.html5 -H ../style.html
 
 EXE_FILES=$(TOPLEVEL)/src/lha.exe
 
@@ -19,8 +18,7 @@ staging: $(EXE_FILES) $(patsubst %,$(TOPLEVEL)/%,$(DOC_FILES))
 	    cp $(TOPLEVEL)/$$f staging/$$f.txt;        \
 	    unix2dos staging/$$f.txt;                  \
 	done
-	pandoc $(PANDOC_FLAGS) -f man $(TOPLEVEL)/doc/lha.1 \
-	       -o staging/lha.html
+	groff -Thtml -mandoc $(TOPLEVEL)/doc/lha.1 > staging/lha.html
 
 clean:
 	rm -rf $(ZIP)
