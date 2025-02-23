@@ -64,7 +64,7 @@ jobs:
       with:
         msystem: MINGW32
         update: true
-        install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-i686-gcc pandoc
+        install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-i686-gcc
     - uses: actions/checkout@v4
     - name: Find Git version
       id: version
@@ -101,7 +101,7 @@ jobs:
       with:
         msystem: MINGW64
         update: true
-        install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-x86_64-gcc pandoc
+        install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-x86_64-gcc
     - uses: actions/checkout@v4
     - name: Find Git version
       id: version
