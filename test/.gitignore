@@ -7,3 +7,5 @@ string-replace
 test-basic-reader
 test-crc16
 test-decoder
+test-*.log
+test-*.trs
