@@ -81,7 +81,7 @@ struct _LHADecoder {
 
 	/** Type of decoder (algorithm) */
 
-	LHADecoderType *dtype;
+	const LHADecoderType *dtype;
 
 	/** Callback function to monitor decoder progress. */
 
