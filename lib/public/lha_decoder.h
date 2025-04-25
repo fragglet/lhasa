@@ -100,7 +100,7 @@ typedef void (*LHADecoderProgressCallback)(unsigned int num_blocks,
  *                       is no decoder type for the specified name.
  */
 
-LHADecoderType *lha_decoder_for_name(char *name);
+const LHADecoderType *lha_decoder_for_name(const char *name);
 
 /**
  * Allocate a new decoder for the specified type.
@@ -114,7 +114,7 @@ LHADecoderType *lha_decoder_for_name(char *name);
  * @return               Pointer to the new decoder, or NULL for failure.
  */
 
-LHADecoder *lha_decoder_new(LHADecoderType *dtype,
+LHADecoder *lha_decoder_new(const LHADecoderType *dtype,
                             LHADecoderCallback callback,
                             void *callback_data,
                             size_t stream_length);
