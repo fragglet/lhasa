@@ -145,7 +145,7 @@ static size_t lha_lzs_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHACodec lha_lzs_decoder = {
+const LHACodec lha_lzs_decoder = {
 	lha_lzs_init,
 	NULL,
 	lha_lzs_read,

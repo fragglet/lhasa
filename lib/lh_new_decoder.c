@@ -605,7 +605,7 @@ static size_t lha_lh_new_read(void *data, uint8_t *buf)
 	return result;
 }
 
-LHACodec DECODER_NAME = {
+const LHACodec DECODER_NAME = {
 	lha_lh_new_init,
 	NULL,
 	lha_lh_new_read,
@@ -617,7 +617,7 @@ LHACodec DECODER_NAME = {
 // This is a hack for -lh4-:
 
 #ifdef DECODER2_NAME
-LHACodec DECODER2_NAME = {
+const LHACodec DECODER2_NAME = {
 	lha_lh_new_init,
 	NULL,
 	lha_lh_new_read,

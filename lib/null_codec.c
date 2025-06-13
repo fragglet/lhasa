@@ -51,7 +51,7 @@ static size_t lha_null_read(void *data, uint8_t *buf)
 	return state->callback(buf, BLOCK_READ_SIZE, state->callback_data);
 }
 
-LHACodec lha_null_codec = {
+const LHACodec lha_null_codec = {
 	lha_null_init,
 	NULL,
 	lha_null_read,

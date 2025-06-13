@@ -1,6 +1,6 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build_and_coverage:
@@ -23,7 +23,7 @@ jobs:
         mkdir artifacts
         tar cf - lib/*.gcov src/*.gcov | tar -C artifacts -xf -
     - name: Upload coverage-annotated source files
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         path: "artifacts"
         name: coverage_reports
@@ -83,7 +83,7 @@ jobs:
         cd pkg/win32
         make
     - name: Upload build
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         path: "pkg/win32/staging"
         name: lhasa-${{steps.version.outputs.VERSION}}
@@ -121,7 +121,7 @@ jobs:
     #    cd pkg/win64
     #    make
     #- name: Upload build
-    #  uses: actions/upload-artifact@v1
+    #  uses: actions/upload-artifact@v4
     #  with:
     #    path: "pkg/win64/staging"
     #    name: lhasa-${{steps.version.outputs.VERSION}}

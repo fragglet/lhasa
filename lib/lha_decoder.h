@@ -27,7 +27,7 @@ struct _LHADecoder {
 
 	/** Type of decoder (algorithm) */
 
-	LHACodec *codec;
+	const LHACodec *codec;
 
 	/** Callback function to monitor decoder progress. */
 

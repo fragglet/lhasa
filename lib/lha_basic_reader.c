@@ -137,7 +137,7 @@ static size_t decoder_callback(void *buf, size_t buf_len, void *user_data)
 
 LHADecoder *lha_basic_reader_decode(LHABasicReader *reader)
 {
-	LHACodec *codec;
+	const LHACodec *codec;
 
 	if (reader->curr_file == NULL) {
 		return NULL;

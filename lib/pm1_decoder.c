@@ -703,7 +703,7 @@ static size_t lha_pm1_read(void *data, uint8_t *buf)
 	}
 }
 
-LHACodec lha_pm1_decoder = {
+const LHACodec lha_pm1_decoder = {
 	lha_pm1_init,
 	NULL,
 	lha_pm1_read,

@@ -27,28 +27,28 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_decoder.h"
 
 // Null decoder, used for -lz4-, -lh0-, -pm0-:
-extern LHACodec lha_null_codec;
+extern const LHACodec lha_null_codec;
 
 // LArc compression algorithms:
-extern LHACodec lha_lz5_decoder;
-extern LHACodec lha_lzs_decoder;
+extern const LHACodec lha_lz5_decoder;
+extern const LHACodec lha_lzs_decoder;
 
 // LHarc compression algorithms:
-extern LHACodec lha_lh1_decoder;
-extern LHACodec lha_lh4_decoder;
-extern LHACodec lha_lh5_decoder;
-extern LHACodec lha_lh6_decoder;
-extern LHACodec lha_lh7_decoder;
-extern LHACodec lha_lhx_decoder;
-extern LHACodec lha_lk7_decoder;
+extern const LHACodec lha_lh1_decoder;
+extern const LHACodec lha_lh4_decoder;
+extern const LHACodec lha_lh5_decoder;
+extern const LHACodec lha_lh6_decoder;
+extern const LHACodec lha_lh7_decoder;
+extern const LHACodec lha_lhx_decoder;
+extern const LHACodec lha_lk7_decoder;
 
 // PMarc compression algorithms:
-extern LHACodec lha_pm1_decoder;
-extern LHACodec lha_pm2_decoder;
+extern const LHACodec lha_pm1_decoder;
+extern const LHACodec lha_pm2_decoder;
 
-static struct {
-	char *name;
-	LHACodec *codec;
+static const struct {
+	const char *name;
+	const LHACodec *codec;
 } decoders[] = {
 	{ "-lz4-", &lha_null_codec },
 	{ "-lz5-", &lha_lz5_decoder },
@@ -66,7 +66,7 @@ static struct {
 	{ "-pm2-", &lha_pm2_decoder },
 };
 
-LHADecoder *lha_decoder_new(LHACodec *codec,
+LHADecoder *lha_decoder_new(const LHACodec *codec,
                             LHACodecCallback callback,
                             void *callback_data,
                             size_t stream_length)
@@ -109,7 +109,7 @@ LHADecoder *lha_decoder_new(LHACodec *codec,
 	return decoder;
 }
 
-LHACodec *lha_decoder_for_name(char *name)
+const LHACodec *lha_decoder_for_name(const char *name)
 {
 	unsigned int i;
 
