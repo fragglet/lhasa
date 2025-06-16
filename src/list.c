@@ -48,6 +48,9 @@ typedef struct {
 
 static const char *os_type_to_string(uint8_t os_type)
 {
+	// Note that the OS type string returned here should always be
+	// a single "word" (no spaces) to make output more consistent and
+	// easier to parse by higher-level programs.
 	switch (os_type) {
 		case LHA_OS_TYPE_MSDOS:
 			return "[MS-DOS]";
@@ -62,7 +65,8 @@ static const char *os_type_to_string(uint8_t os_type)
 		case LHA_OS_TYPE_CPM:
 			return "[CP/M]";
 		case LHA_OS_TYPE_MACOS:
-			return "[Mac OS]";
+			// Unix lha showed "Mac OS" (with space) here:
+			return "[MacOS]";
 		case LHA_OS_TYPE_JAVA:
 			return "[Java]";
 		case LHA_OS_TYPE_FLEX:
