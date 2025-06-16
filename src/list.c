@@ -174,7 +174,11 @@ static void unix_uid_gid_column_print(LHAFileHeader *header)
 	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_UID_GID)) {
 		printf("%5i/%-5i", header->unix_uid, header->unix_gid);
 	} else {
-		printf("           ");
+		// Note: Original Unix lha shows whitespace here, but we
+		// instead print a dummy spacer word to be kinder to programs
+		// that parse our output (see Lhasa bug #59)
+		//printf("           ");
+		printf("*****/*****");
 	}
 }
 
@@ -316,7 +320,7 @@ static void output_timestamp(unsigned int timestamp)
 	time_t tmp;
 
 	if (timestamp == 0) {
-		printf("            ");
+		printf("*** ** *****");
 		return;
 	}
 
@@ -345,7 +349,7 @@ static void output_full_timestamp(unsigned int timestamp)
 	time_t tmp;
 
 	if (timestamp == 0) {
-		printf("                   ");
+		printf("********** ********");
 		return;
 	}
 

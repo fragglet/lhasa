@@ -111,8 +111,8 @@ created on Microware OS-9, the permissions for that system will also be shown.
 \fBUnix user ID / group IDs (UID/GID)\fR
 For files compressed on a Unix system, this lists the user and group IDs of
 the file, similar to the output seen from \fBls\fR(1) when it is invoked with
-the \fB-ln\fR option. If the file was not created on a Unix system, nothing is
-shown.
+the \fB-ln\fR option. If the file was not created on a Unix system,
+"*****/*****" is shown; see \fBLIST FORMAT DIFFERENCES\fR below.
 .TP
 \fBCompressed size (PACKED)\fR
 Size of the file in bytes as it is stored inside the archive (not including
@@ -151,6 +151,20 @@ quite conformant with that standard). An example is "2020-08-24 12:38:25".
 .TP
 \fBHeader level (LV)\fR
 Lha header format used to store this file. Supported formats are 0-3.
+.SH LIST FORMAT DIFFERENCES
+The list mode output from the original Unix lha tool was not designed to be
+machine-readable. Since some tools do try to parse the list output, Lhasa's
+list output has been deliberately tweaked slightly to make the output more
+consistent and easier to parse.
+.PP
+Here are the main differences:
+.IP \(bu
+If a file was not created on a Unix system, a spacer word is shown in the
+UID/GID column. The original lha just showed whitespace.
+.PP
+Note that in general, the approach of parsing text output is inherently fragile
+and prone to bugs. It's recommended that you instead use the proper API
+(liblhasa).
 .SH COMPRESSION FORMATS
 The following gives some basic description of the various different supported
 compression formats (as listed when using the list command documented above).
