@@ -36,6 +36,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define L1_HEADER_MAX_LEN 0x101  /* 0xff + 2 to include mini-header */
 #define MAX_FILE_LENGTH 0xffffffffUL
 
+// If the compression ratio on the first few kilobytes is less than this,
+// we store the file uncompressed.
+#define STORE_RATIO_PERCENT  98
+
 /*
 
 Routines for writing an LHA file. There are many different versions of
@@ -503,7 +507,6 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 		return 0;
 	}
 
-	memcpy(header->compress_method, "-lh0-", 6);
 	header->length = (uint32_t) uncompressed_len;
 	header->compressed_length = compressed_len;
 	header->crc = lha_encoder_get_crc(encoder);
@@ -511,21 +514,48 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	return 1;
 }
 
+static LHAEncoder *encoder_for_stream(char *name, FILE *instream)
+{
+	LHACodec *codec = lha_encoder_for_name(name);
+	if (codec == NULL) {
+		return NULL;
+	}
+
+	return lha_encoder_new(codec, file_read_callback, instream);
+}
+
 static int lha_encode_and_write(LHAOutputStream *out, LHAFileHeader *header,
                                 FILE *instream)
 {
-	LHAEncoder *encoder;
-	LHACodec *codec;
+	LHAEncoder *encoder = encoder_for_stream("-lh1-", instream);
+	size_t filled, uncompressed_len;
 	int result;
 
-	// TODO: For now, we don't do any kind of encoding, we only write
-	// the -lh0- uncompressed encoding type.
-	codec = lha_encoder_for_name("-lh0-");
-	if (codec == NULL) {
+	if (encoder == NULL) {
 		return 0;
 	}
 
-	encoder = lha_encoder_new(codec, file_read_callback, instream);
+	memcpy(header->compress_method, "-lh1-", 6);
+
+	// Compress the first few kilobytes of data from the input file, then
+	// check the compression ratio. If close to 100%, the file is probably
+	// already compressed. If that's the case, throw away the encoder and
+	// allocate a new one using the -lh0- (stored/uncompressed) scheme.
+	filled = lha_encoder_fill(encoder, LHA_ENCODER_HEADROOM);
+	uncompressed_len = lha_encoder_get_length(encoder);
+
+	if (filled * 100 > (uncompressed_len * STORE_RATIO_PERCENT)) {
+		lha_encoder_free(encoder);
+		fseek(instream, 0, SEEK_SET);
+
+		encoder = encoder_for_stream("-lh0-", instream);
+		if (encoder == NULL) {
+			return 0;
+		}
+
+		memcpy(header->compress_method, "-lh0-", 6);
+	}
+
 	result = lha_write_file_data(out, header, instream, encoder);
 	lha_encoder_free(encoder);
 
