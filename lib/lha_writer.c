@@ -508,7 +508,7 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	header->compressed_length = compressed_len;
 	header->crc = lha_encoder_get_crc(encoder);
 
-	return header->crc;
+	return 1;
 }
 
 static int lha_encode_and_write(LHAOutputStream *out, LHAFileHeader *header,
