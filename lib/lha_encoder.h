@@ -27,7 +27,7 @@ struct _LHAEncoder {
 	LHACodec *codec;
 
 	/** Output buffer, containing encoded data not yet returned. */
-	unsigned int outbuf_pos, outbuf_len;
+	unsigned int outbuf_pos, outbuf_len, outbuf_alloced;
 	uint8_t *outbuf;
 
 	/** Length of input stream */

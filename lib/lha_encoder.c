@@ -26,6 +26,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_codec.h"
 #include "lha_encoder.h"
 
+// "Headroom" space to allocate in the output buffer. We can always use
+// `lha_encoder_fill` to fill the buffer up to this size.
+#define OUTBUF_HEADROOM (4 * 1024)
+
 // Null encoder, used for -lz4-, -lh0-, -pm0-:
 extern LHACodec lha_null_codec;
 
@@ -65,13 +69,14 @@ LHAEncoder *lha_encoder_new(LHACodec *codec,
                             void *callback_data)
 {
 	LHAEncoder *encoder;
+	size_t buf_len = OUTBUF_HEADROOM + codec->max_read;
 	void *state;
 
 	// Space is allocated together: the LHAEncoder structure,
 	// then the private data area used by the algorithm,
 	// followed by the output buffer,
 	encoder = calloc(1, sizeof(LHAEncoder) + codec->state_size
-	                        + codec->max_read);
+	                        + buf_len);
 
 	if (encoder == NULL) {
 		return NULL;
@@ -80,6 +85,7 @@ LHAEncoder *lha_encoder_new(LHACodec *codec,
 	encoder->codec = codec;
 	encoder->outbuf_pos = 0;
 	encoder->outbuf_len = 0;
+	encoder->outbuf_alloced = buf_len;
 	encoder->instream_length = 0;
 	encoder->encoder_failed = 0;
 	encoder->crc = 0;
@@ -123,53 +129,48 @@ void lha_encoder_free(LHAEncoder *encoder)
 	free(encoder);
 }
 
-size_t lha_encoder_read(LHAEncoder *encoder, uint8_t *buf, size_t buf_len)
+void lha_encoder_fill(LHAEncoder *encoder, size_t min_size)
 {
-	size_t filled, bytes;
+	size_t max_fill = encoder->outbuf_alloced - encoder->codec->max_read;
+	size_t nbytes;
 
-	// Try to fill up the buffer that has been passed with as much
-	// data as possible. Each call to read() will fill up outbuf
-	// with some data; this is then copied into buf, with some
-	// data left at the end for the next call.
-	filled = 0;
-	while (filled < buf_len) {
-
-		// Try to empty out some of the output buffer first.
-		bytes = encoder->outbuf_len - encoder->outbuf_pos;
-
-		if (buf_len - filled < bytes) {
-			bytes = buf_len - filled;
-		}
-
-		memcpy(buf + filled, encoder->outbuf + encoder->outbuf_pos,
-		       bytes);
-		encoder->outbuf_pos += bytes;
-		filled += bytes;
-
-		// If we previously encountered a failure reading from
-		// the encoder, don't try to call the read function again.
-		if (encoder->encoder_failed) {
-			break;
-		}
-
-		// If outbuf is now empty, we can process another run to
-		// re-fill it.
-		if (encoder->outbuf_pos >= encoder->outbuf_len) {
-			encoder->outbuf_len
-			    = encoder->codec->read(encoder + 1,
-			                           encoder->outbuf);
-			encoder->outbuf_pos = 0;
-		}
+	while (!encoder->encoder_failed
+	    && encoder->outbuf_len < min_size
+	    && encoder->outbuf_len <= max_fill) {
+		nbytes = encoder->codec->read(
+			encoder + 1, encoder->outbuf + encoder->outbuf_len);
 
 		// No more data to be read?
-
-		if (encoder->outbuf_len == 0) {
+		if (nbytes == 0) {
 			encoder->encoder_failed = 1;
-			break;
 		}
-	}
 
-	return filled;
+		encoder->outbuf_len += nbytes;
+	}
+}
+
+size_t lha_encoder_read(LHAEncoder *encoder, uint8_t *buf, size_t buf_len)
+{
+	size_t result = 0, nbytes;
+
+	do {
+		if (encoder->outbuf_pos >= encoder->outbuf_len) {
+			encoder->outbuf_pos = 0;
+			encoder->outbuf_len = 0;
+			lha_encoder_fill(encoder, buf_len);
+		}
+
+		nbytes = encoder->outbuf_len - encoder->outbuf_pos;
+		nbytes = nbytes < buf_len ? nbytes : buf_len;
+		memcpy(buf, encoder->outbuf + encoder->outbuf_pos, nbytes);
+		encoder->outbuf_pos += nbytes;
+
+		result += nbytes;
+		buf += nbytes;
+		buf_len -= nbytes;
+	} while (nbytes > 0);
+
+	return result;
 }
 
 uint16_t lha_encoder_get_crc(LHAEncoder *encoder)
