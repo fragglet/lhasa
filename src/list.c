@@ -48,6 +48,9 @@ typedef struct {
 
 static const char *os_type_to_string(uint8_t os_type)
 {
+	// Note that the OS type string returned here should always be
+	// a single "word" (no spaces) to make output more consistent and
+	// easier to parse by higher-level programs.
 	switch (os_type) {
 		case LHA_OS_TYPE_MSDOS:
 			return "[MS-DOS]";
@@ -62,7 +65,8 @@ static const char *os_type_to_string(uint8_t os_type)
 		case LHA_OS_TYPE_CPM:
 			return "[CP/M]";
 		case LHA_OS_TYPE_MACOS:
-			return "[Mac OS]";
+			// Unix lha showed "Mac OS" (with space) here:
+			return "[MacOS]";
 		case LHA_OS_TYPE_JAVA:
 			return "[Java]";
 		case LHA_OS_TYPE_FLEX:
@@ -174,7 +178,11 @@ static void unix_uid_gid_column_print(LHAFileHeader *header)
 	if (LHA_FILE_HAVE_EXTRA(header, LHA_FILE_UNIX_UID_GID)) {
 		printf("%5i/%-5i", header->unix_uid, header->unix_gid);
 	} else {
-		printf("           ");
+		// Note: Original Unix lha shows whitespace here, but we
+		// instead print a dummy spacer word to be kinder to programs
+		// that parse our output (see Lhasa bug #59)
+		//printf("           ");
+		printf("*****/*****");
 	}
 }
 
@@ -316,7 +324,7 @@ static void output_timestamp(unsigned int timestamp)
 	time_t tmp;
 
 	if (timestamp == 0) {
-		printf("            ");
+		printf("*** ** *****");
 		return;
 	}
 
@@ -345,7 +353,7 @@ static void output_full_timestamp(unsigned int timestamp)
 	time_t tmp;
 
 	if (timestamp == 0) {
-		printf("                   ");
+		printf("********** ********");
 		return;
 	}
 
