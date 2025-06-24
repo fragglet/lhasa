@@ -471,22 +471,11 @@ static size_t file_read_callback(void *buf, size_t buf_len, void *user_data)
 }
 
 static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
-                               FILE *instream)
+                               FILE *instream, LHAEncoder *encoder)
 {
-	LHACodec *codec;
-	LHAEncoder *encoder;
 	uint8_t buf[64];
 	uint64_t uncompressed_len;
 	size_t compressed_len = 0, cnt;
-
-	// TODO: For now, we don't do any kind of encoding, we only write
-	// the -lh0- uncompressed encoding type.
-	codec = lha_encoder_for_name("-lh0-");
-	if (codec == NULL) {
-		return 0;
-	}
-
-	encoder = lha_encoder_new(codec, file_read_callback, instream);
 
 	for (;;) {
 		cnt = lha_encoder_read(encoder, buf, sizeof(buf));
@@ -503,7 +492,6 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 		// limit on file size. We must therefore ensure that the
 		// counter does not overflow.
 		if (compressed_len > MAX_FILE_LENGTH - cnt) {
-			lha_encoder_free(encoder);
 			return 0;
 		}
 		compressed_len += cnt;
@@ -512,7 +500,6 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	// Overflow check for uncompressed size.
 	uncompressed_len = lha_encoder_get_length(encoder);
 	if (uncompressed_len > UINT32_MAX) {
-		lha_encoder_free(encoder);
 		return 0;
 	}
 
@@ -520,9 +507,29 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	header->length = (uint32_t) uncompressed_len;
 	header->compressed_length = compressed_len;
 	header->crc = lha_encoder_get_crc(encoder);
-	lha_encoder_free(encoder);
 
 	return header->crc;
+}
+
+static int lha_encode_and_write(LHAOutputStream *out, LHAFileHeader *header,
+                                FILE *instream)
+{
+	LHAEncoder *encoder;
+	LHACodec *codec;
+	int result;
+
+	// TODO: For now, we don't do any kind of encoding, we only write
+	// the -lh0- uncompressed encoding type.
+	codec = lha_encoder_for_name("-lh0-");
+	if (codec == NULL) {
+		return 0;
+	}
+
+	encoder = lha_encoder_new(codec, file_read_callback, instream);
+	result = lha_write_file_data(out, header, instream, encoder);
+	lha_encoder_free(encoder);
+
+	return result;
 }
 
 // Unix LHa generates symlinks in a weird way, but we don't want to invent
@@ -636,7 +643,7 @@ int lha_write_file(LHAOutputStream *out, LHAFileHeader *header, FILE *instream)
 	if (header->filename != NULL && header->symlink_target == NULL) {
 		// Write compressed data. The compress_method, length and
 		// compressed_length fields will be populated.
-		if (!lha_write_file_data(out, header, instream)) {
+		if (!lha_encode_and_write(out, header, instream)) {
 			goto restore_and_fail;
 		}
 	} else {
