@@ -21,6 +21,13 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef LHASA_LHA_ENCODER_H
 #define LHASA_LHA_ENCODER_H
 
+/**
+ * "Headroom" space allocated in the output buffer of an @ref LHAEncoder.
+ * It is always possible to use @ref lha_encoder_fill` to fill the buffer
+ * up to this size.
+ */
+#define LHA_ENCODER_HEADROOM (4 * 1024)
+
 struct _LHAEncoder {
 
 	/** Type of encoder (algorithm) */
@@ -112,5 +119,17 @@ uint16_t lha_encoder_get_crc(LHAEncoder *encoder);
  * @return              The number of bytes read for compression so far.
  */
 uint64_t lha_encoder_get_length(LHAEncoder *encoder);
+
+/**
+ * Fill the encoder's output buffer without reading any data.
+ *
+ * This function is usually called internally by @ref lha_encoder_read.
+ *
+ * @param encoder       The encoder.
+ * @param min_size      Number of bytes to try to fill the output buffer with.
+ *                      To fill to maximum, use @ref LHA_ENCODER_HEADROOM.
+ * @return              The number of bytes now waiting to be read.
+ */
+size_t lha_encoder_fill(LHAEncoder *encoder, size_t min_size);
 
 #endif /* #ifndef LHASA_LHA_ENCODER_H */

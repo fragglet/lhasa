@@ -26,10 +26,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "lha_codec.h"
 #include "lha_encoder.h"
 
-// "Headroom" space to allocate in the output buffer. We can always use
-// `lha_encoder_fill` to fill the buffer up to this size.
-#define OUTBUF_HEADROOM (4 * 1024)
-
 // Null encoder, used for -lz4-, -lh0-, -pm0-:
 extern LHACodec lha_null_codec;
 
@@ -69,7 +65,7 @@ LHAEncoder *lha_encoder_new(LHACodec *codec,
                             void *callback_data)
 {
 	LHAEncoder *encoder;
-	size_t buf_len = OUTBUF_HEADROOM + codec->max_read;
+	size_t buf_len = LHA_ENCODER_HEADROOM + codec->max_read;
 	void *state;
 
 	// Space is allocated together: the LHAEncoder structure,
@@ -129,7 +125,7 @@ void lha_encoder_free(LHAEncoder *encoder)
 	free(encoder);
 }
 
-void lha_encoder_fill(LHAEncoder *encoder, size_t min_size)
+size_t lha_encoder_fill(LHAEncoder *encoder, size_t min_size)
 {
 	size_t max_fill = encoder->outbuf_alloced - encoder->codec->max_read;
 	size_t nbytes;
@@ -147,6 +143,8 @@ void lha_encoder_fill(LHAEncoder *encoder, size_t min_size)
 
 		encoder->outbuf_len += nbytes;
 	}
+
+	return encoder->outbuf_len - encoder->outbuf_pos;
 }
 
 size_t lha_encoder_read(LHAEncoder *encoder, uint8_t *buf, size_t buf_len)
