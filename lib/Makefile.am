@@ -27,6 +27,7 @@ SRC =                                                   \
 	lha_writer.c                                    \
 	macbinary.c             macbinary.h             \
 	null_codec.c                                    \
+	search_buffer.c         search_buffer.h         \
 	lh1_common.c            lh1_common.h            \
 	lh1_decoder.c                                   \
 	lh5_decoder.c                                   \
