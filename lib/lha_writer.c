@@ -159,7 +159,7 @@ static void level1_header_write(LHAFileHeader *header,
 	memcpy(buf + 2, header->compress_method, 5);
 	lha_encode_uint32(buf + 7,
 	                  header->compressed_length
-			  + header->raw_data_len - buf_len);
+	                + header->raw_data_len - buf_len);
 	lha_encode_uint32(buf + 11, header->length);
 	lha_encode_uint32(buf + 15, encode_ftime(header->timestamp));
 

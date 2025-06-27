@@ -351,7 +351,7 @@ static int read_copy_byte_count(LHAPM1Decoder *decoder)
 
 static int read_bit_after_threshold(LHAPM1Decoder *decoder,
                                     unsigned int threshold,
-				    int def)
+                                    int def)
 {
 	if (decoder->output_stream_pos >= threshold) {
 		return read_bit(&decoder->bit_stream_reader);

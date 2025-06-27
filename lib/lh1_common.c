@@ -108,7 +108,7 @@ static void init_tree(LHALH1State *state)
 		// The node's frequency is equal to the sum of the frequencies
 		// of its children.
 		node->freq = (uint16_t) (state->nodes[child].freq
-				       + state->nodes[child - 1].freq);
+		                       + state->nodes[child - 1].freq);
 
 		// Is the frequency the same as the last node we processed?
 		// if so, we are in the same group. If not, we must
@@ -133,7 +133,7 @@ static void init_tree(LHALH1State *state)
 // any values in the range from 'mask'.  Set these values to point
 // to 'offset'.
 static void fill_offset_range(LHALH1State *state, uint8_t code,
-			      unsigned int mask, unsigned int offset)
+                              unsigned int mask, unsigned int offset)
 {
 	unsigned int i;
 
@@ -173,7 +173,7 @@ static void init_offset_table(LHALH1State *state)
 			// (iterbit - 1) turns into a mask for the lower
 			// bits that are not part of the code.
 			fill_offset_range(state, code,
-					  (uint8_t) (iterbit - 1), offset);
+			                  (uint8_t) (iterbit - 1), offset);
 			state->offset_lengths[offset] = (uint8_t) len;
 
 			// Iterate to next code.
@@ -196,8 +196,7 @@ int lha_lh1_init_state(LHALH1State *state)
 // Make the given node the leader of its group: swap it with the current
 // leader so that it is in the left-most position.  Returns the new index
 // of the node.
-static uint16_t make_group_leader(LHALH1State *state,
-				  uint16_t node_index)
+static uint16_t make_group_leader(LHALH1State *state, uint16_t node_index)
 {
 	Node *node, *leader;
 	uint16_t group;
@@ -334,7 +333,7 @@ static void reconstruct_tree(LHALH1State *state)
 		// of the new branch node, we can calculate the branch
 		// node's frequency.
 		freq = (unsigned int) (state->nodes[child].freq
-				     + state->nodes[child - 1].freq);
+		                     + state->nodes[child - 1].freq);
 
 		// Now copy more leaf nodes until the correct place to
 		// insert the new branch node presents itself.
@@ -414,5 +413,3 @@ void lha_lh1_increment_for_code(LHALH1State *state, uint16_t code)
 		node_index = state->nodes[node_index].parent;
 	}
 }
-
-
