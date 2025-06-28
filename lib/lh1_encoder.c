@@ -125,7 +125,7 @@ static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 	size_t result = 0, cnt;
 	uint8_t b;
 
-	while (result < RING_BUFFER_SIZE) {
+	while (result < OUTPUT_BUFFER_SIZE) {
 		cnt = flush_bytes(&encoder->bit_stream_writer, buf + result,
 		                  OUTPUT_BUFFER_SIZE - result);
 		result += cnt;
