@@ -138,6 +138,12 @@ static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 		// This greatly reduces the effectiveness of the encoder,
 		// since we are not making full use of the format.
 		write_code(encoder, b);
+
+		// At EOF, there may still be bits left over waiting to be
+		// written, so flush them out by writing some zero bits.
+		if (encoder->read_buffer_pos >= encoder->read_buffer_len) {
+			write_bits(&encoder->bit_stream_writer, 0, 7);
+		}
 	}
 
 	return result;
