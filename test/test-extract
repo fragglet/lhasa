@@ -509,6 +509,15 @@ test_archive lha_os2_208/h3_lh0.lzh         "GPL-2.gz"
 test_archive lha_os2_208/h3_lh5.lzh         "gpl-2"
 test_archive lha_os2_208/h3_subdir.lzh      "subdir/subdir2/HELLO.TXT"
 
+test_archive lh2_222/lh0.lzh                "gpl-2.gz"
+test_archive lh2_222/lh5.lzh                "gpl-2"
+test_archive lh2_222/readonly.lzh           "readonly.txt"
+test_archive lh2_222/subdir.lzh             "subdir/SUBDIR2/HELLO.TXT"
+test_archive lh2_222/sfx.exe                "gpl-2.gz"
+# TODO: Currently disabled as we don't yet detect and ignore EA files:
+#test_archive lh2_222/eas.lzh                "hello.txt"
+#test_archive lh2_222/easubdir.lzh           "subdir/subdir2/hello.txt"
+
 test_archive pmarc124/pm0.pma               "gpl-2.gz"
 test_archive pmarc124/pm1.pma               "copying.txt"
 test_archive pmarc124/pm1_long.pma          "long.txt"

@@ -116,7 +116,6 @@ test_archive lha_unix114i/h2_subdir.lzh         $hello_world1
 test_archive lha_unix114i/lh6_long.lzh          $long
 test_archive lha_unix114i/lh7_long.lzh          $long
 
-
 test_archive lha_os2_208/lh0.lzh                $gpl2_gz
 test_archive lha_os2_208/lh5.lzh                $gpl2
 test_archive lha_os2_208/lfn.lzh                $hello_world2
@@ -126,6 +125,14 @@ test_archive lha_os2_208/h3_lfn.lzh             $hello_world2
 test_archive lha_os2_208/h3_lh0.lzh             $gpl2_gz
 test_archive lha_os2_208/h3_lh5.lzh             $gpl2
 test_archive lha_os2_208/h3_subdir.lzh          $hello_world2
+
+test_archive lh2_222/lh0.lzh                    $gpl2_gz
+test_archive lh2_222/lh5.lzh                    $gpl2
+test_archive lh2_222/subdir.lzh                 b0595a59 14
+test_archive lh2_222/sfx.exe                    $gpl2_gz
+# TODO: Currently disabled as we don't yet detect and ignore EA files:
+#test_archive lh2_222/eas.lzh                "hello.txt"
+#test_archive lh2_222/easubdir.lzh           "subdir/subdir2/hello.txt"
 
 # The PMarc archives contain trailing zero-space, meaning that
 # the results here are technically incorrect. This is an unfortunate

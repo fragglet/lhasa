@@ -120,6 +120,14 @@ test_archive lha_os2_208/h3_lh0.lzh
 test_archive lha_os2_208/h3_lh5.lzh
 test_archive lha_os2_208/h3_subdir.lzh
 
+test_archive lh2_222/lh0.lzh
+test_archive lh2_222/lh5.lzh
+test_archive lh2_222/readonly.lzh
+test_archive lh2_222/subdir.lzh
+test_archive lh2_222/sfx.exe
+test_archive lh2_222/eas.lzh
+test_archive lh2_222/easubdir.lzh
+
 test_archive pmarc124/pm0.pma
 test_archive pmarc124/pm1.pma
 test_archive pmarc124/pm1_long.pma

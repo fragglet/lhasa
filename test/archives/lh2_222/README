@@ -1,0 +1,15 @@
+These archives are generated using LH/2 v2.22 for OS/2:
+
+ * lh0.lzh       - Uncompressed (stored) file using -lh0- scheme
+ * lh5.lzh       - Compressed file using -lh5- scheme
+ * readonly.lzh  - File attributes preserved using /a option
+ * sfx.exe       - Self-extracting archive
+ * subdir.lzh    - File in multiple levels of subdirectories
+ * eas.lzh       - File with extended attributes
+ * easubdir.lzh  - File in subdirectories that have extended attributes
+
+The EA test archives store the extended attributes in separate directory
+entries and the LH2 has some special handling for these. How it identifies
+them as special is currently unclear. We probably ought to have special
+handling to skip over them, as it causes problems with directories being
+extracted as files instead of directories.

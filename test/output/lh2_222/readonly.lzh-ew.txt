@@ -1,0 +1,1 @@
+/tmp/extract2/dir/readonly.txt	- Melting  :  ./tmp/extract2/dir/readonly.txt	- Melting  :  o/tmp/extract2/dir/readonly.txt	- Melted  

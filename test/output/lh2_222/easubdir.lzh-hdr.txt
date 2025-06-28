@@ -1,0 +1,28 @@
+filename: subdir
+compress_method: -lh5-
+compressed_length: 354
+length: 570
+header_level: 0
+os_type: 0
+crc: 9b49
+timestamp: 1751110212
+--
+path: subdir/subdir2/
+filename: hello.txt
+compress_method: -lh0-
+compressed_length: 14
+length: 14
+header_level: 0
+os_type: 0
+crc: f1c6
+timestamp: 1751109298
+--
+filename: Apply-Ea.Cmd
+compress_method: -lh5-
+compressed_length: 277
+length: 486
+header_level: 0
+os_type: 0
+crc: 1961
+timestamp: 1751110212
+--
