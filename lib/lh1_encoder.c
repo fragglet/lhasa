@@ -63,7 +63,7 @@ static int lha_lh1_encoder_init(void *data, LHACodecCallback callback,
 	return 1;
 }
 
-static int read_next_byte(LHALH1Encoder *encoder, uint8_t *result)
+static int refill_input_buffer(LHALH1Encoder *encoder)
 {
 	size_t cnt;
 
@@ -86,13 +86,14 @@ static int read_next_byte(LHALH1Encoder *encoder, uint8_t *result)
 		}
 	}
 
-	if (encoder->read_buffer_pos >= encoder->read_buffer_len) {
-		return 0;
-	}
+	return encoder->read_buffer_pos < encoder->read_buffer_len;
+}
 
-	*result = encoder->read_buffer[encoder->read_buffer_pos];
+static uint8_t read_next_byte(LHALH1Encoder *encoder)
+{
+	uint8_t result = encoder->read_buffer[encoder->read_buffer_pos];
 	++encoder->read_buffer_pos;
-	return 1;
+	return result;
 }
 
 static void write_code(LHALH1Encoder *encoder, uint8_t b)
@@ -122,22 +123,20 @@ static void write_code(LHALH1Encoder *encoder, uint8_t b)
 static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 {
 	LHALH1Encoder *encoder = data;
-	size_t result = 0, cnt;
-	uint8_t b;
+	size_t result = 0;
 
 	while (result < OUTPUT_BUFFER_SIZE) {
-		cnt = flush_bytes(&encoder->bit_stream_writer, buf + result,
-		                  OUTPUT_BUFFER_SIZE - result);
-		result += cnt;
+		result += flush_bytes(&encoder->bit_stream_writer, buf + result,
+		                      OUTPUT_BUFFER_SIZE - result);
 
-		if (!read_next_byte(encoder, &b)) {
+		if (!refill_input_buffer(encoder)) {
 			break;
 		}
 
 		// TODO: We currently do not do copies from history at all.
 		// This greatly reduces the effectiveness of the encoder,
 		// since we are not making full use of the format.
-		write_code(encoder, b);
+		write_code(encoder, read_next_byte(encoder));
 
 		// At EOF, there may still be bits left over waiting to be
 		// written, so flush them out by writing some zero bits.
