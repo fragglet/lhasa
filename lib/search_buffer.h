@@ -32,7 +32,7 @@ typedef struct {
 } SearchBuffer;
 
 typedef struct {
-	unsigned int position;
+	unsigned int offset;
 	unsigned int length;
 } SearchResult;
 

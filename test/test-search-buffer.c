@@ -49,7 +49,7 @@ void test_insert_search(void)
 	unsigned int i;
 	struct {
 		const char *s;
-		unsigned int position, length;
+		unsigned int offset, length;
 	} tests[] = {
 		// Short strings, and not found.
 		{"", 0, 0},
@@ -58,15 +58,15 @@ void test_insert_search(void)
 		{"not found anywhere", 0, 0},
 
 		// Full matches and substring matches.
-		{"Space", 0, 5},
-		{"big it is", 73, 9},
-		{"big it isn't", 73, 9},
-		{"pacer", 182, 4},
+		{"Space", 196, 5},
+		{"big it is", 123, 9},
+		{"big it isn't", 123, 9},
+		{"pacer", 14, 4},
 
 		// End of buffer.
-		{"listen,", 189, 7},
-		{"listen, maybe", 189, 7},
-		{"listen,listen,listen,listen,", 189, 7},
+		{"listen,", 7, 7},
+		{"listen, maybe", 7, 7},
+		{"listen,listen,listen,listen,", 7, 7},
 	};
 
 	lha_search_buffer_init(&b, TEST_BUFFER_LEN);
@@ -75,7 +75,7 @@ void test_insert_search(void)
 	for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i) {
 		SearchResult r = lha_search_buffer_search(
 			&b, (uint8_t *) tests[i].s, strlen(tests[i].s));
-		assert(r.position == 0 && r.length == 0);
+		assert(r.offset == 0 && r.length == 0);
 	}
 
 	for (i = 0; i < strlen(TEST_STRING); ++i) {
@@ -87,8 +87,8 @@ void test_insert_search(void)
 		SearchResult r = lha_search_buffer_search(
 			&b, (uint8_t *) tests[i].s, strlen(tests[i].s));
 
-		//printf("%s -> <%d, %d>\n", tests[i].s, r.position, r.length);
-		assert(r.position == tests[i].position);
+		//printf("%s -> <%d, %d>\n", tests[i].s, r.offset, r.length);
+		assert(r.offset == tests[i].offset);
 		assert(r.length == tests[i].length);
 	}
 
@@ -100,7 +100,7 @@ void test_insert_search(void)
 	for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i) {
 		SearchResult r = lha_search_buffer_search(
 			&b, (uint8_t *) tests[i].s, strlen(tests[i].s));
-		assert(r.position == 0 && r.length == 0);
+		assert(r.offset == 0 && r.length == 0);
 	}
 
 }
@@ -118,11 +118,11 @@ void test_long_sequence(void)
 		lha_search_buffer_insert(&b, my_random() & 0xff);
 	}
 
-	// Now check (almost) every position in the history buffer and ensure
+	// Now check (almost) every offset in the history buffer and ensure
 	// that we can find everything.
 	for (i = 0; i < TEST_BUFFER_LEN - 20; ++ i) {
 		r = lha_search_buffer_search(&b, b.history + i, 20);
-		assert(r.position == i);
+		assert(r.offset == TEST_BUFFER_LEN - i);
 		assert(r.length == 20);
 	}
 

@@ -184,7 +184,8 @@ SearchResult lha_search_buffer_search(SearchBuffer *b, const uint8_t *s,
 		//       idx, this_match_len);
 
 		if (this_match_len > result.length) {
-			result.position = idx;
+			result.offset = idx < b->history_pos ? b->history_pos - idx :
+			                b->history_pos + b->history_len - idx;
 			result.length = this_match_len;
 		}
 		idx = b->hash_chain_next[idx];
