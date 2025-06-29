@@ -1,0 +1,11 @@
+path: Mounted Volume/
+filename: gpl-2
+compress_method: -lh5-
+compressed_length: 6996
+length: 18092
+header_level: 2
+os_type: 77 ('M')
+crc: a33a
+timestamp: 1751154366
+common_crc: a47a
+--

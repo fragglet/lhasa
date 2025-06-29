@@ -255,6 +255,10 @@ test_archive lha_os9_211c/h2_lh0.lzh            $gpl2_gz
 test_archive lha_os9_211c/h2_lh1.lzh            $gpl2
 test_archive lha_os9_211c/h2_subdir.lzh         $hello_world1
 
+test_archive tascal_lha_051h/abspath.lzh        $hello_world1
+test_archive tascal_lha_051h/lh0.lzh            $gpl2_gz
+test_archive tascal_lha_051h/lh5.lzh            $gpl2
+
 test_archive regression/abspath.lzh             bd98d221  46
 test_archive regression/badterm.lzh             00000000  0
 test_archive regression/unixsep.lzh             $hello_world1

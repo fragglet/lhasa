@@ -1,0 +1,6 @@
+ PERMSSN    UID  GID      SIZE  RATIO     STAMP     LV
+---------- ----------- ------- ------ ------------ ---
+/Mounted Volume/subdir/subdir2/hello.txt
+[MS-DOS]   *****/*****      12 100.0% Jun 29 01:11 [2]
+---------- ----------- ------- ------ ------------ ---
+ Total         1 file       12 100.0% Jan  1  2000

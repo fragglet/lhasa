@@ -427,6 +427,10 @@ test_archive() {
 	# TODO: check v option
 }
 
+test_archive tascal_lha_051h/abspath.lzh    "Mounted Volume/subdir/subdir2/hello.txt"
+test_archive tascal_lha_051h/lh0.lzh        "Mounted Volume/gpl-2.gz"
+test_archive tascal_lha_051h/lh5.lzh        "Mounted Volume/gpl-2"
+
 test_archive explzh_723/h0_lh0.lzh              "gpl-2.gz"
 test_archive explzh_723/h0_lh5.lzh              "gpl-2"
 test_archive explzh_723/h0_lh6.lzh              "gpl-2"

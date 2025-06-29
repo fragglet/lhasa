@@ -284,6 +284,10 @@ test_archive lha_os9_211c/h2_lh0.lzh
 test_archive lha_os9_211c/h2_lh1.lzh
 test_archive lha_os9_211c/h2_subdir.lzh
 
+test_archive tascal_lha_051h/abspath.lzh
+test_archive tascal_lha_051h/lh0.lzh
+test_archive tascal_lha_051h/lh5.lzh
+
 test_archive unlha32/h2_lhx.lzh
 test_archive unlha32/lhx_long.lzh
 
