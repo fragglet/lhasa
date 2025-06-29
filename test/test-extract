@@ -67,7 +67,7 @@ files_to_overwrite() {
 	for filename in "$@"; do
 		filename=$(simplify_filename "$filename")
 		local tmpfile="$run_sandbox/$filename"
-		mkdir -p $(dirname "$tmpfile")
+		mkdir -p "$(dirname "$tmpfile")"
 		echo "__OW_FILE__" > "$tmpfile"
 	done
 }
@@ -367,7 +367,7 @@ test_i_option() {
 	# The transformation turns out to be a bit complicated because for
 	# "Symbolic Link" lines we only want to transform the left side.
 	sed '/^Symbolic/  s/[A-Za-z0-9\/]*\/\([a-z]* ->\)/\1/;
-	     /^Symbolic/! s/[A-Za-z0-9\/]*\///g'                \
+	     /^Symbolic/! s/[A-Za-z0-9\/ ]*\///g'                \
 	      < "$test_base/output/$archive_file-e.txt"         \
 	      > "$expected"
 
