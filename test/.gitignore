@@ -9,3 +9,4 @@ test-crc16
 test-decoder
 test-*.log
 test-*.trs
+/*.exe
