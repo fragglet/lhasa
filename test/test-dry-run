@@ -39,7 +39,7 @@ test_dry_run() {
 
 	tail -n 1 < "$wd/output.txt" > "$wd/output2.txt"
 
-	if ! diff "$wd/expected.txt" "$wd/output2.txt"; then
+	if ! diff -u "$wd/expected.txt" "$wd/output2.txt"; then
 		fail "Output not as expected for $archive_file"
 	fi
 
