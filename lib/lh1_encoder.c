@@ -69,18 +69,19 @@ static int lha_lh1_encoder_init(void *data, LHACodecCallback callback,
 
 static int refill_input_buffer(LHALH1Encoder *encoder)
 {
-	size_t cnt;
-
-	if (!encoder->eof
-	 && (encoder->read_buffer_pos >= encoder->read_buffer_len
-	  || encoder->read_buffer_pos > READ_BUFFER_SIZE / 2)) {
+	// Empty out already-read data, but only when the buffer is half-empty.
+	if (encoder->read_buffer_pos >= encoder->read_buffer_len
+	 || encoder->read_buffer_pos > READ_BUFFER_SIZE / 2) {
 		memmove(encoder->read_buffer,
 		        encoder->read_buffer + encoder->read_buffer_pos,
 		        encoder->read_buffer_len - encoder->read_buffer_pos);
 		encoder->read_buffer_len -= encoder->read_buffer_pos;
 		encoder->read_buffer_pos = 0;
+	}
 
-		cnt = encoder->callback(
+	// Refill the buffer. We do this repeatedly to catch EOF condition.
+	while (!encoder->eof && encoder->read_buffer_len < READ_BUFFER_SIZE) {
+		size_t cnt = encoder->callback(
 			encoder->read_buffer + encoder->read_buffer_len,
 			READ_BUFFER_SIZE - encoder->read_buffer_len,
 			encoder->callback_data);
@@ -185,7 +186,8 @@ static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 
 		// At EOF, there may still be bits left over waiting to be
 		// written, so flush them out by writing some zero bits.
-		if (encoder->read_buffer_pos >= encoder->read_buffer_len) {
+		if (encoder->eof
+		 && encoder->read_buffer_pos >= encoder->read_buffer_len) {
 			write_bits(&encoder->bit_stream_writer, 0, 7);
 		}
 	}
