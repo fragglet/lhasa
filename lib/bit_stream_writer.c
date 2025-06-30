@@ -18,6 +18,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
+#include <assert.h>
+
 //
 // Data structure used to read bits from an input source as a stream.
 //
@@ -36,17 +38,13 @@ static void bit_stream_writer_init(BitStreamWriter *writer)
 	writer->bit_buffer = 0;
 }
 
-static int write_bits(BitStreamWriter *writer, unsigned int bits,
-                      unsigned int n)
+static void write_bits(BitStreamWriter *writer, unsigned int bits,
+                       unsigned int n)
 {
-	if (writer->bits + n > 8 * sizeof(writer->bit_buffer)) {
-		return 0;
-	}
+	assert(writer->bits + n <= 8 * sizeof(writer->bit_buffer));
 
 	writer->bit_buffer = (writer->bit_buffer << n) | bits;
 	writer->bits += n;
-
-	return 1;
 }
 
 static unsigned int flush_bytes(BitStreamWriter *writer, uint8_t *buf, size_t n)
