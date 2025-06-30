@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include "lh1_common.h"
 #include "lha_codec.h"
@@ -173,6 +174,13 @@ static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 			uint8_t c = read_next_byte(encoder);
 			write_code(encoder, c);
 			lha_search_buffer_insert(&encoder->search_buffer, c);
+#ifdef TRACE
+			printf("byte %d", c);
+			if (isprint(c)) {
+				printf(" (%c)", c);
+			}
+			printf("\n");
+#endif
 		} else {
 			write_code(encoder, 0x100 + r.length - COPY_THRESHOLD);
 			write_offset(encoder, r.offset - 1);
@@ -182,6 +190,9 @@ static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 					&encoder->search_buffer,
 					read_next_byte(encoder));
 			}
+#ifdef TRACE
+			printf("copy %d, %d\n", r.length, r.offset - 1);
+#endif
 		}
 
 		// At EOF, there may still be bits left over waiting to be

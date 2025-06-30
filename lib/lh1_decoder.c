@@ -22,6 +22,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include "lh1_common.h"
 #include "lha_codec.h"
@@ -165,6 +166,13 @@ static size_t lha_lh1_read(void *data, uint8_t *buf)
 
 	if (code < 0x100) {
 		output_byte(decoder, buf, &result, (uint8_t) code);
+#ifdef TRACE
+		printf("byte %d", code);
+		if (isprint(code)) {
+			printf(" (%c)", code);
+		}
+		printf("\n");
+#endif
 	} else {
 		unsigned int count, start, i, pos, offset;
 
@@ -177,6 +185,9 @@ static size_t lha_lh1_read(void *data, uint8_t *buf)
 
 		count = code - 0x100U + COPY_THRESHOLD;
 		start = decoder->ringbuf_pos - offset + RING_BUFFER_SIZE - 1;
+#ifdef TRACE
+		printf("copy %d, %d\n", count, offset);
+#endif
 
 		// Copy from history into output buffer:
 
