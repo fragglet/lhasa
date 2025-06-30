@@ -25,6 +25,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "lh1_common.h"
 #include "lha_codec.h"
+#include "search_buffer.h"
 
 #include "bit_stream_writer.c"
 
@@ -42,6 +43,8 @@ typedef struct {
 	uint8_t read_buffer[READ_BUFFER_SIZE];
 	unsigned int read_buffer_pos, read_buffer_len;
 	int eof;
+
+	SearchBuffer search_buffer;
 } LHALH1Encoder;
 
 // Initialize the history ring buffer.
@@ -60,7 +63,8 @@ static int lha_lh1_encoder_init(void *data, LHACodecCallback callback,
 	encoder->read_buffer_len = 0;
 	encoder->eof = 0;
 
-	return 1;
+	return lha_search_buffer_init(&encoder->search_buffer,
+	                              RING_BUFFER_SIZE);
 }
 
 static int refill_input_buffer(LHALH1Encoder *encoder)
@@ -96,13 +100,13 @@ static uint8_t read_next_byte(LHALH1Encoder *encoder)
 	return result;
 }
 
-static void write_code(LHALH1Encoder *encoder, uint8_t b)
+static void write_code(LHALH1Encoder *encoder, unsigned int code)
 {
 	LHALH1State *state = &encoder->state;
 	unsigned int node_index, parent_index, bit;
 	unsigned int out, bits;
 
-	node_index = state->leaf_nodes[b];
+	node_index = state->leaf_nodes[code];
 
 	// We start from the leaf node and walk up to the root.
 	bits = 0;
@@ -117,13 +121,39 @@ static void write_code(LHALH1Encoder *encoder, uint8_t b)
 	}
 
 	write_bits(&encoder->bit_stream_writer, out, bits);
-	lha_lh1_increment_for_code(state, b);
+	lha_lh1_increment_for_code(state, code);
+}
+
+static void write_offset(LHALH1Encoder *encoder, int offset)
+{
+	unsigned int top, bottom;
+
+	top = (offset >> 6) & 0x3f;
+	bottom = offset & 0x3f;
+
+	write_bits(&encoder->bit_stream_writer,
+	           encoder->state.offset_codes[top],
+	           encoder->state.offset_lengths[top]);
+	write_bits(&encoder->bit_stream_writer, bottom, 6);
+}
+
+static size_t search_bytes(LHALH1Encoder *encoder)
+{
+	size_t result = encoder->read_buffer_len - encoder->read_buffer_pos;
+	size_t max_copy = NUM_CODES - 0x100 - 1 + COPY_THRESHOLD;
+	if (result < max_copy) {
+		return result;
+	} else {
+		return max_copy;
+	}
 }
 
 static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 {
 	LHALH1Encoder *encoder = data;
+	SearchResult r;
 	size_t result = 0;
+	unsigned int i;
 
 	while (result < OUTPUT_BUFFER_SIZE) {
 		result += flush_bytes(&encoder->bit_stream_writer, buf + result,
@@ -133,10 +163,25 @@ static size_t lha_lh1_encoder_read(void *data, uint8_t *buf)
 			break;
 		}
 
-		// TODO: We currently do not do copies from history at all.
-		// This greatly reduces the effectiveness of the encoder,
-		// since we are not making full use of the format.
-		write_code(encoder, read_next_byte(encoder));
+		r = lha_search_buffer_search(
+			&encoder->search_buffer,
+			encoder->read_buffer + encoder->read_buffer_pos,
+			search_bytes(encoder));
+
+		if (r.length < COPY_THRESHOLD) {
+			uint8_t c = read_next_byte(encoder);
+			write_code(encoder, c);
+			lha_search_buffer_insert(&encoder->search_buffer, c);
+		} else {
+			write_code(encoder, 0x100 + r.length - COPY_THRESHOLD);
+			write_offset(encoder, r.offset - 1);
+
+			for (i = 0; i < r.length; ++i) {
+				lha_search_buffer_insert(
+					&encoder->search_buffer,
+					read_next_byte(encoder));
+			}
+		}
 
 		// At EOF, there may still be bits left over waiting to be
 		// written, so flush them out by writing some zero bits.

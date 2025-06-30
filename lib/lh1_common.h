@@ -92,6 +92,9 @@ typedef struct {
 	// 8 bits from input stream) to an offset value.
 	uint8_t offset_lookup[256];
 
+	// Variable-length code for each offset (3-8 bits; see offset_lengths).
+	uint8_t offset_codes[NUM_OFFSETS];
+
 	// Length of offsets, in bits.
 	uint8_t offset_lengths[NUM_OFFSETS];
 } LHALH1State;

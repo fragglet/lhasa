@@ -167,6 +167,7 @@ static void init_offset_table(LHALH1State *state)
 		iterbit = (uint8_t) (1 << (8 - len));
 
 		for (j = 0; j < offset_fdist[i]; ++j) {
+			state->offset_codes[offset] = code >> (8 - len);
 
 			// Store lookup values for this offset in the
 			// lookup table, and save the code length.
