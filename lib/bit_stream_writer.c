@@ -26,7 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
 typedef struct {
-	uint32_t bit_buffer;
+	uint64_t bit_buffer;
 	int bits;
 } BitStreamWriter;
 
@@ -52,7 +52,7 @@ static int write_bits(BitStreamWriter *writer, unsigned int bits,
 static unsigned int flush_bytes(BitStreamWriter *writer, uint8_t *buf, size_t n)
 {
 	unsigned int result = 0;
-	unsigned int b;
+	uint64_t b;
 
 	while (result < n && writer->bits >= 8) {
 		b = writer->bit_buffer >> (writer->bits - 8);
