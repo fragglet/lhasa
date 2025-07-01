@@ -135,6 +135,17 @@ void lha_search_buffer_insert(SearchBuffer *b, uint8_t c)
 	b->history_pos = (b->history_pos + 1) % b->history_len;
 }
 
+static size_t substring_match_len(const uint8_t *s, size_t s_len, size_t start)
+{
+	unsigned int i = 0;
+
+	while (start + i < s_len && s[i] == s[start + i]) {
+		++i;
+	}
+
+	return i;
+}
+
 // Returns the number of bytes that match between `s` and the string
 // that starts at b->history[idx] in the search buffer.
 static size_t match_len(SearchBuffer *b, unsigned int idx, const uint8_t *s,
@@ -150,12 +161,13 @@ static size_t match_len(SearchBuffer *b, unsigned int idx, const uint8_t *s,
 			return i;
 		}
 		// Stop once we reach the latest byte in the history buffer.
-		// TODO: This is where we should implement the optimization
-		// where we can copy from the same string that we're writing
-		// (the BANANANANANA... case).
+		// Note that we don't stop here, but check for an overlapping
+		// substring match if the search string repeats (the
+		// BANANANANANA... case).
 		check_idx = (check_idx + 1) % b->history_len;
 		if (check_idx == b->history_pos) {
-			return i + 1;
+			return i + 1
+			     + substring_match_len(s, s_len, i + 1);
 		}
 	}
 

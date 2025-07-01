@@ -55,7 +55,7 @@ void test_insert_search(void)
 		{"", 0, 0},
 		{"a", 0, 0},
 		{"aa", 0, 0},
-		{"not found anywhere", 0, 0},
+		{"text not found anywhere", 0, 0},
 
 		// Full matches and substring matches.
 		{"Space", 196, 5},
@@ -63,10 +63,10 @@ void test_insert_search(void)
 		{"big it isn't", 123, 9},
 		{"pacer", 14, 4},
 
-		// End of buffer.
+		// End of buffer. This includes the BANANANANANA.. optimization.
 		{"listen,", 7, 7},
 		{"listen, maybe", 7, 7},
-		{"listen,listen,listen,listen,", 7, 7},
+		{"listen,listen,listen,listen,listen,listen,listen,listen,", 7, 56},
 	};
 
 	lha_search_buffer_init(&b, TEST_BUFFER_LEN);
