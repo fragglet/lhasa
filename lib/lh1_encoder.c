@@ -30,7 +30,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "bit_stream_writer.c"
 
-#define READ_BUFFER_SIZE  64
+#define READ_BUFFER_SIZE  512
 
 typedef struct {
 	LHALH1State state;
