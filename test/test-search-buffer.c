@@ -63,6 +63,12 @@ void test_insert_search(void)
 		{"big it isn't", 123, 9},
 		{"pacer", 14, 4},
 
+		// Last few bytes match.
+		{",", 1, 1},
+		{"n,", 2, 2},
+		{"en,", 3, 3},
+		{"ten,", 4, 4},
+
 		// End of buffer. This includes the BANANANANANA.. optimization.
 		{"listen,", 7, 7},
 		{"listen, maybe", 7, 7},

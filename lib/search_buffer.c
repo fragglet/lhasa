@@ -178,9 +178,22 @@ SearchResult lha_search_buffer_search(SearchBuffer *b, const uint8_t *s,
                                       size_t s_len)
 {
 	SearchResult result = {0, 0};
-	int hash;
+	size_t len;
+	int i, hash;
 	uint16_t idx;
 
+	// The most recent bytes in the buffer are not yet indexed. So check
+	// them explicitly before we look at the hash chains.
+	for (i = 1; i < 3; ++i) {
+		idx = (b->history_pos + b->history_len - i) % b->history_len;
+		len = match_len(b, idx, s, s_len);
+		if (len > result.length) {
+			result.offset = i;
+			result.length = len;
+		}
+	}
+
+	// Our hash function requires at least three bytes.
 	if (s_len < 3) {
 		return result;
 	}
