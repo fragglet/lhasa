@@ -27,6 +27,7 @@ typedef struct {
 	uint8_t *history;
 	size_t history_pos, history_len;
 
+	uint16_t *hash_chain_prev;
 	uint16_t *hash_chain_next;
 	uint16_t hash_chain_head[SEARCH_BUFFER_HASH_SIZE];
 } SearchBuffer;

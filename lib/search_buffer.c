@@ -38,15 +38,19 @@ int lha_search_buffer_init(SearchBuffer *b, size_t history_len)
 	b->history_pos = 0;
 	b->history_len = history_len;
 	b->hash_chain_next = calloc(history_len, sizeof(uint16_t));
+	b->hash_chain_prev = calloc(history_len, sizeof(uint16_t));
 
-	if (b->history == NULL || b->hash_chain_next == NULL) {
+	if (b->history == NULL || b->hash_chain_prev == NULL
+	 || b->hash_chain_next == NULL) {
 		free(b->history);
 		free(b->hash_chain_next);
+		free(b->hash_chain_prev);
 		return 0;
 	}
 
 	for (i = 0; i < history_len; ++i) {
 		b->hash_chain_next[i] = HASH_CHAIN_END;
+		b->hash_chain_prev[i] = HASH_CHAIN_END;
 	}
 	for (i = 0; i < SEARCH_BUFFER_HASH_SIZE; ++i) {
 		b->hash_chain_head[i] = HASH_CHAIN_END;
@@ -59,6 +63,7 @@ void lha_search_buffer_free(SearchBuffer *b)
 {
 	free(b->history);
 	free(b->hash_chain_next);
+	free(b->hash_chain_prev);
 }
 
 // For the hash function we look at three character prefixes. This is the
@@ -92,21 +97,19 @@ static uint16_t hash_at_position(SearchBuffer *b, unsigned int idx)
 
 static void unhook(SearchBuffer *b, unsigned int idx)
 {
-	uint16_t hash = hash_at_position(b, idx);
-	uint16_t *rover;
-
 	//printf("unhook at %d (hash %d)\n", idx, hash);
-	rover = &b->hash_chain_head[hash];
-	//printf("\thead[%d] = %d\n", hash, *rover);
-	while (*rover != HASH_CHAIN_END) {
-		if (*rover == idx) {
-			*rover = b->hash_chain_next[idx];
-			b->hash_chain_next[idx] = HASH_CHAIN_END;
-			return;
-		}
-		//printf("\tnext[%d] = %d\n", *rover, b->hash_chain_next[*rover]);
-		rover = &b->hash_chain_next[*rover];
+
+	// If this is the only entry in the chain, we must clear the head
+	// pointer. Otherwise unhook from the predecessor in the chain.
+	if (b->hash_chain_prev[idx] == HASH_CHAIN_END) {
+		uint16_t hash = hash_at_position(b, idx);
+		b->hash_chain_head[hash] = HASH_CHAIN_END;
+	} else {
+		uint16_t j = b->hash_chain_prev[idx];
+		b->hash_chain_next[j] = HASH_CHAIN_END;
 	}
+	b->hash_chain_prev[idx] = HASH_CHAIN_END;
+	b->hash_chain_next[idx] = HASH_CHAIN_END;
 }
 
 static void hook(SearchBuffer *b, unsigned int idx)
@@ -117,8 +120,16 @@ static void hook(SearchBuffer *b, unsigned int idx)
 	//printf("\tnext[%d] = %d\n", idx, b->hash_chain_head[hash]);
 	//printf("\thead[%d] = %d\n", hash, idx);
 
+	b->hash_chain_prev[idx] = HASH_CHAIN_END;
 	b->hash_chain_next[idx] = b->hash_chain_head[hash];
 	b->hash_chain_head[hash] = idx;
+
+	// If there was already an entry in the chain, update its prev pointer
+	// to point to our new entry.
+	if (b->hash_chain_next[idx] != HASH_CHAIN_END) {
+		uint16_t j = b->hash_chain_next[idx];
+		b->hash_chain_prev[j] = idx;
+	}
 }
 
 void lha_search_buffer_insert(SearchBuffer *b, uint8_t c)
