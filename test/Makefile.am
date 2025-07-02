@@ -21,6 +21,7 @@ EXTRA_DIST=                           \
 	compressed                    \
 	output                        \
 	test_common.sh                \
+	test_extract.sh               \
 	$(UNCOMPILED_TESTS)
 
 TESTS=$(COMPILED_TESTS) $(UNCOMPILED_TESTS)
