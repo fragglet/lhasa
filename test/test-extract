@@ -638,6 +638,9 @@ test_archive lha_os9_211c/h2_lh0.lzh        "gpl2.gz"
 test_archive lha_os9_211c/h2_lh1.lzh        "gpl2"
 test_archive lha_os9_211c/h2_subdir.lzh     "SUBDIR/SUBDIR2/hello.txt"
 
+test_archive unlha32/h2_lhx.lzh             "gpl-2"
+test_archive unlha32/lhx_long.lzh           "long.txt"
+
 test_archive regression/abspath.lzh         "tmp/absolute_path.txt"
 test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
 
