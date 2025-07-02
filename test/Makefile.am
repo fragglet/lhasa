@@ -14,7 +14,14 @@ UNCOMPILED_TESTS=                     \
 	test-crc-output               \
 	test-print                    \
 	test-dry-run                  \
-	test-extract
+	test-extract-regression       \
+	test-extract-mac              \
+	test-extract-msdos            \
+	test-extract-os2              \
+	test-extract-unix             \
+	test-extract-windows          \
+	test-extract-misc1            \
+	test-extract-misc2
 
 EXTRA_DIST=                           \
 	archives                      \

@@ -1,0 +1,258 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2011, 2012, Simon Howard
+#
+# Permission to use, copy, modify, and/or distribute this software
+# for any purpose with or without fee is hereby granted, provided
+# that the above copyright notice and this permission notice appear
+# in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+# WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+# AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+# CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+#
+# Test script that tests the extract functionality.
+# This script contains regression tests.
+#
+
+. test_extract.sh
+
+test_archive regression/abspath.lzh         "tmp/absolute_path.txt"
+test_archive regression/unixsep.lzh         "subdir/subdir2/hello.txt"
+
+test_archive generated/lzs/lzs.lzs          "gpl-2"
+test_archive generated/lzs/long.lzs         "long.txt"
+
+# The test -pm1- archive contains lots of archived files:
+
+test_archive generated/pm1/pm1.pma                          \
+    "data_00.bin" "data_01.bin" "data_02.bin" "data_03.bin" \
+    "data_04.bin" "data_05.bin" "data_06.bin" "data_07.bin" \
+    "data_08.bin" "data_09.bin" "data_10.bin" "data_11.bin" \
+    "data_12.bin" "data_13.bin" "data_14.bin" "data_15.bin" \
+    "data_16.bin" "data_17.bin" "data_18.bin" "data_19.bin" \
+    "data_20.bin" "data_21.bin" "data_22.bin" "data_23.bin" \
+    "data_24.bin" "data_25.bin" "data_26.bin" "data_27.bin" \
+    "data_28.bin" "data_29.bin" "data_30.bin" "data_31.bin"
+
+# ======================================================================
+#
+# Special cases:
+#
+
+# Test basic overwrite prompt (y/n).
+
+test_overwrite_prompt() {
+	make_sandboxes
+
+	local archive_file=regression/multiple.lzh
+
+	files_to_overwrite \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
+
+	(echo y; echo n; echo Y; echo N; echo "") |               \
+	lha_check_output "$test_base/output/regression/multiple.lzh-ow1.txt" \
+	    e $(test_arc_file "$archive_file")
+
+	check_overwritten     "$archive_file" "file1.txt"
+	check_not_overwritten "$archive_file" "file2-1.txt"
+	check_overwritten     "$archive_file" "file2-2.txt"
+	check_not_overwritten "$archive_file" "file3.txt"
+	check_not_overwritten "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test "overwrite all" ('a' option).
+
+test_overwrite_all() {
+	local cmd=$1
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	files_to_overwrite \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
+
+	echo $cmd |                                               \
+	lha_check_output "$test_base/output/regression/multiple.lzh-ow2.txt" \
+	    e $(test_arc_file "$archive_file")
+
+	check_overwritten "$archive_file" \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test overwrite "skip" ('s' option).
+
+test_overwrite_skip() {
+	local cmd=$1
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	files_to_overwrite \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
+
+	echo $cmd |                                               \
+	lha_check_output "$test_base/output/regression/multiple.lzh-ow3.txt" \
+	    e $(test_arc_file "$archive_file")
+
+	check_not_overwritten "$archive_file" \
+	    "file1.txt" "file2-1.txt" "file2-2.txt" "file3.txt" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test wildcards for extract option.
+
+test_wildcard1() {
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/regression/multiple.lzh-e1.txt" \
+	    e $(test_arc_file "$archive_file") "file2*.txt"
+
+	check_not_exists "$archive_file" "file1.txt"
+	check_exists     "$archive_file" "file2-1.txt"
+	check_exists     "$archive_file" "file2-2.txt"
+	check_not_exists "$archive_file" "file3.txt"
+	check_not_exists "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test wildcards for extract option (second test).
+
+test_wildcard2() {
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/regression/multiple.lzh-e2.txt" \
+	    e $(test_arc_file "$archive_file") "file?.txt"
+
+	check_exists     "$archive_file" "file1.txt"
+	check_not_exists "$archive_file" "file2-1.txt"
+	check_not_exists "$archive_file" "file2-2.txt"
+	check_exists     "$archive_file" "file3.txt"
+	check_exists     "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test extract of a specific list of files.
+
+test_extract_list() {
+	local archive_file=regression/multiple.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/regression/multiple.lzh-e3.txt" \
+	    e $(test_arc_file "$archive_file")                    \
+	    file1.txt file2-2.txt file4.txt
+
+	check_exists     "$archive_file" "file1.txt"
+	check_not_exists "$archive_file" "file2-1.txt"
+	check_exists     "$archive_file" "file2-2.txt"
+	check_not_exists "$archive_file" "file3.txt"
+	check_exists     "$archive_file" "file4.txt"
+
+	remove_sandboxes
+}
+
+# Test extract of a truncated archive file.
+
+test_extract_truncated() {
+	local archive_file=regression/truncated.lzh
+
+	make_sandboxes
+
+	SUCCESS_EXPECTED=false \
+	  lha_check_output "$test_base/output/regression/truncated.lzh-e.txt" \
+	      e $(test_arc_file "$archive_file")
+
+	remove_sandboxes
+}
+
+# Symbolic link test. When extracting symlink1.lzh, the symlink should be
+# overwritten by the second file, not dereferenced. A file named 'bar.txt'
+# should not be created.
+
+test_symlink_overwrite() {
+	local archive_file=regression/symlink1.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/$archive_file-e.txt" \
+	    e $(test_arc_file "$archive_file")
+
+	check_exists     "$archive_file" "foo.txt"
+	check_not_exists "$archive_file" "bar.txt"
+
+	remove_sandboxes
+}
+
+# Symbolic link security test. When extracting symlink[23].lzh, the symlink
+# should be created but the extract of the file should fail.
+
+test_symlink_security() {
+	local archive_file=$1
+	local symlink_file=$2
+
+	make_sandboxes
+
+	SUCCESS_EXPECTED=false \
+	  lha_check_output "$test_base/output/$archive_file-e.txt" \
+	      e $(test_arc_file "$archive_file")
+
+	check_exists "$archive_file" "$2"
+
+	remove_sandboxes
+}
+
+# '..' path check. It should not be possible to escape the extract
+# directory.
+
+test_dotdot() {
+	local archive_file=regression/dotdot.lzh
+
+	make_sandboxes
+
+	lha_check_output "$test_base/output/regression/dotdot.lzh-e.txt" \
+	    ef $(test_arc_file "$archive_file")
+
+	check_not_exists "$archive_file" "../evil1.txt"
+	check_not_exists "$archive_file" "../evil2.txt"
+
+	remove_sandboxes
+}
+
+test_overwrite_prompt
+test_overwrite_all a
+test_overwrite_all A
+test_overwrite_skip s
+test_overwrite_skip S
+
+test_wildcard1
+test_wildcard2
+test_extract_list
+test_extract_truncated
+
+test_dotdot
+
+# Symlink tests only make sense on systems that support them:
+
+if [ "$build_arch" = "unix" ]; then
+	test_symlink_overwrite
+	test_symlink_security regression/symlink2.lzh etc
+	test_symlink_security regression/symlink3.lzh etc
+fi
