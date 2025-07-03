@@ -123,8 +123,13 @@ extern "C" {
  */
 #define LHA_FILE_64BIT_SIZES           0x20
 
+/**
+ * Macro that evaluates to true if the specified flag is set in the
+ * given @ref LHAFileHeader.
+ */
 #define LHA_FILE_HAVE_EXTRA(header, flag) \
 	(((header)->extra_flags & (flag)) != 0)
+
 /**
  * Structure containing a decoded LZH file header.
  *
