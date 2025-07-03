@@ -94,7 +94,7 @@ struct _LHADecoder {
 
 	/** Current position in the decode stream, and total length. */
 
-	size_t stream_pos, stream_length;
+	uint64_t stream_pos, stream_length;
 
 	/** Output buffer, containing decoded data not yet returned. */
 

@@ -251,7 +251,20 @@ uint16_t lha_decoder_get_crc(LHADecoder *decoder)
 	return decoder->crc;
 }
 
+#undef lha_decoder_get_length
+
+// This is the old version of lha_decoder_get_length, retained for ABI
+// compatibility purposes.
 size_t lha_decoder_get_length(LHADecoder *decoder)
+{
+	if (decoder->stream_pos > SIZE_MAX) {
+		return SIZE_MAX;
+	}
+	return decoder->stream_pos;
+}
+
+// The "actual" lha_decoder_get_length; code gets #define-renamed to use this.
+uint64_t lha_decoder_get_length64(LHADecoder *decoder)
 {
 	return decoder->stream_pos;
 }

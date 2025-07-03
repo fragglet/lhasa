@@ -163,6 +163,9 @@ size_t lha_decoder_read(LHADecoder *decoder, uint8_t *buf, size_t buf_len);
 
 uint16_t lha_decoder_get_crc(LHADecoder *decoder);
 
+/* This macro performs a rename for ABI backwards-compatibility. */
+#define lha_decoder_get_length lha_decoder_get_length64
+
 /**
  * Get the count of the number of bytes decoded.
  *
@@ -173,7 +176,7 @@ uint16_t lha_decoder_get_crc(LHADecoder *decoder);
  * @return               The number of decoded bytes.
  */
 
-size_t lha_decoder_get_length(LHADecoder *decoder);
+uint64_t lha_decoder_get_length(LHADecoder *decoder);
 
 #ifdef __cplusplus
 }
