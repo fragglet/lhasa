@@ -125,8 +125,11 @@ Size of the file in bytes before it was compressed.
 .TP
 \fBFile compression ratio (RATIO)\fR
 Compressed size divided by uncompressed size. This measures the effectiveness
-of the compression format. If an uncompressed format like \fB-lh0-\fR is used,
-this will be equal to 100%. For directories, "******" is shown.
+of the compression format; the smaller the percentage, the better. If an
+uncompressed format like \fB-lh0-\fR is used, this will be equal to 100%. For
+directories, "******" is shown.
+Note that the value here is backwards relative to \fBunzip\fR(1), which instead
+shows the percentage of the original file size reduced.
 .TP
 \fBCompression format (METHOD)\fR
 The compression format used to store this file. See the \fBCOMPRESSION
