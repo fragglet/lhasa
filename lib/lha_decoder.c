@@ -139,8 +139,8 @@ static void check_progress_callback(LHADecoder *decoder)
 {
 	unsigned int block;
 
-	block = (decoder->stream_pos + decoder->dtype->block_size - 1)
-	      / decoder->dtype->block_size;
+	block = (decoder->stream_pos + decoder->block_size - 1)
+	      / decoder->block_size;
 
 	// If the stream has advanced by another block, invoke the callback
 	// function. Invoke it multiple times if it has advanced by
@@ -161,9 +161,23 @@ void lha_decoder_monitor(LHADecoder *decoder,
 	decoder->progress_callback = callback;
 	decoder->progress_callback_data = callback_data;
 
+	// Usually, the block size we pass to the callback function is just
+	// the block size from the codec. However, for huge file sizes (100s
+	// of megabytes) we scale the block size up; this limits the number of
+	// blocks that we report to 128K. The reasons here are twofold:
+	// * Progress reporting shouldn't require any more detail than that
+	//   anyway; for a file gigabytes in size we don't need to report on
+	//   every single 4KiB block.
+	// * It ensures the block counts never overflow the 32-bit limit,
+	//   without needing an ABI change for the callback interface.
+	decoder->block_size = decoder->dtype->block_size;
+	while (decoder->stream_length / (128 * 1024) > decoder->block_size) {
+		decoder->block_size <<= 1;
+	}
+
 	decoder->total_blocks
-	  = (decoder->stream_length + decoder->dtype->block_size - 1)
-	  / decoder->dtype->block_size;
+	  = (decoder->stream_length + decoder->block_size - 1)
+	  / decoder->block_size;
 
 	check_progress_callback(decoder);
 }

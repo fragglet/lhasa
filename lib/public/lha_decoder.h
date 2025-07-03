@@ -79,11 +79,12 @@ typedef size_t (*LHADecoderCallback)(void *buf, size_t buf_len,
 
 /**
  * Callback function used for monitoring decode progress.
- * The callback is invoked for every block processed (block size depends on
- * decode algorithm).
+ * The callback is invoked for every block processed; the block size that is
+ * chosen is arbitrary and depends on the decode algorithm and file size, but
+ * you should not make any assumptions about how many bytes are in a block.
  *
- * @param num_blocks      Number of blocks processed so far.
- * @param total_blocks    Total number of blocks to process.
+ * @param num_blocks     Number of blocks processed so far.
+ * @param total_blocks   Total number of blocks to process.
  * @param callback_data  Extra user-specified data passed to the callback.
  */
 
