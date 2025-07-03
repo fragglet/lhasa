@@ -267,7 +267,7 @@ test_archive morphos_lha_2717/h1_lh5.lzh        $gpl2
 test_archive morphos_lha_2717/h1_lh6.lzh        $gpl2
 test_archive morphos_lha_2717/h1_metadata.lzh   f0771cc4 29
 test_archive morphos_lha_2717/h1_subdir.lzh     $hello_world1
-#test_archive morphos_lha_2717/h2_huge.lzh   # TODO: Extended size header
+test_archive morphos_lha_2717/h2_huge.lzh       f01352be 4718592000
 test_archive morphos_lha_2717/h2_lh0.lzh        $gpl2_gz
 test_archive morphos_lha_2717/h2_lh1.lzh        $gpl2
 test_archive morphos_lha_2717/h2_lh5.lzh        $gpl2

@@ -226,7 +226,7 @@ test_archive morphos_lha_2717/h1_lh5.lzh       "gpl-2"
 test_archive morphos_lha_2717/h1_lh6.lzh       "gpl-2"
 test_archive morphos_lha_2717/h1_metadata.lzh  "metadata.txt"
 test_archive morphos_lha_2717/h1_subdir.lzh    "subdir/subdir2/hello.txt"
-#test_archive morphos_lha_2717/h2_huge.lzh   # TODO: Extended size header
+test_archive morphos_lha_2717/h2_huge.lzh      "zero.bin"
 test_archive morphos_lha_2717/h2_lh0.lzh       "gpl-2.gz"
 test_archive morphos_lha_2717/h2_lh1.lzh       "gpl-2"
 test_archive morphos_lha_2717/h2_lh5.lzh       "gpl-2"

@@ -1,0 +1,10 @@
+filename: zero.bin
+compress_method: -lh5-
+compressed_length: 23891
+length: 4718592000
+header_level: 2
+os_type: 65 ('A')
+crc: 0000
+timestamp: 1751480104
+common_crc: fe6c
+--

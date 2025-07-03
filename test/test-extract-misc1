@@ -65,10 +65,13 @@ test_archive morphos_lha_2717/h1_lh5.lzh       "gpl-2"
 test_archive morphos_lha_2717/h1_lh6.lzh       "gpl-2"
 test_archive morphos_lha_2717/h1_metadata.lzh  "metadata.txt"
 test_archive morphos_lha_2717/h1_subdir.lzh    "subdir/subdir2/hello.txt"
-#test_archive morphos_lha_2717/h2_huge.lzh   # TODO: Extended size header
 test_archive morphos_lha_2717/h2_lh0.lzh       "gpl-2.gz"
 test_archive morphos_lha_2717/h2_lh1.lzh       "gpl-2"
 test_archive morphos_lha_2717/h2_lh5.lzh       "gpl-2"
 test_archive morphos_lha_2717/h2_lh6.lzh       "gpl-2"
 test_archive morphos_lha_2717/h2_metadata.lzh  "metadata.txt"
 test_archive morphos_lha_2717/h2_subdir.lzh    "subdir/subdir2/hello.txt"
+# We don't run extract tests on h2_huge.lzh because it contains a 4.7GiB
+# file that takes a long time to extract. Extraction is already tested using
+# other tests, eg. test-crc-output, test-decompress
+#test_archive morphos_lha_2717/h2_huge.lzh      "zero.bin"

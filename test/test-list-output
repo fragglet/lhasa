@@ -296,7 +296,7 @@ test_archive morphos_lha_2717/h1_lh5.lzh
 test_archive morphos_lha_2717/h1_lh6.lzh
 test_archive morphos_lha_2717/h1_metadata.lzh
 test_archive morphos_lha_2717/h1_subdir.lzh
-#test_archive morphos_lha_2717/h2_huge.lzh   # TODO: Extended size header
+test_archive morphos_lha_2717/h2_huge.lzh
 test_archive morphos_lha_2717/h2_lh0.lzh
 test_archive morphos_lha_2717/h2_lh1.lzh
 test_archive morphos_lha_2717/h2_lh5.lzh
