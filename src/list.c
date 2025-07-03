@@ -32,8 +32,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 typedef struct {
 	unsigned int num_files;
-	unsigned int compressed_length;
-	unsigned int length;
+	uint64_t compressed_length;
+	uint64_t length;
 	unsigned int timestamp;
 } FileStatistics;
 
@@ -208,12 +208,12 @@ static const ListColumn unix_uid_gid_column = {
 
 static void packed_column_print(LHAFileHeader *header)
 {
-	printf("%7lu", (unsigned long) header->compressed_length);
+	printf("%7" PRIu64, header->compressed_length);
 }
 
 static void packed_column_footer(FileStatistics *stats)
 {
-	printf("%7lu", (unsigned long) stats->compressed_length);
+	printf("%7" PRIu64, stats->compressed_length);
 }
 
 static const ListColumn packed_column = {
@@ -226,12 +226,12 @@ static const ListColumn packed_column = {
 
 static void size_column_print(LHAFileHeader *header)
 {
-	printf("%7lu", (unsigned long) header->length);
+	printf("%7" PRIu64, header->length);
 }
 
 static void size_column_footer(FileStatistics *stats)
 {
-	printf("%7lu", (unsigned long) stats->length);
+	printf("%7" PRIu64, stats->length);
 }
 
 static const ListColumn size_column = {

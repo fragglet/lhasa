@@ -650,6 +650,8 @@ static int decode_level0_header(LHAFileHeader **header, LHAInputStream *stream)
 
 	(*header)->compressed_length = lha_decode_uint32(&RAW_DATA(header, 7));
 	(*header)->length = lha_decode_uint32(&RAW_DATA(header, 11));
+	(*header)->_old_compressed_length = (*header)->compressed_length;
+	(*header)->_old_length = (*header)->length;
 
 	// Timestamp:
 
@@ -741,6 +743,8 @@ static int decode_level2_header(LHAFileHeader **header, LHAInputStream *stream)
 
 	(*header)->compressed_length = lha_decode_uint32(&RAW_DATA(header, 7));
 	(*header)->length = lha_decode_uint32(&RAW_DATA(header, 11));
+	(*header)->_old_compressed_length = (*header)->compressed_length;
+	(*header)->_old_length = (*header)->length;
 
 	// Timestamp. Unlike level 0/1, this is a Unix-style timestamp.
 
@@ -820,6 +824,8 @@ static int decode_level3_header(LHAFileHeader **header, LHAInputStream *stream)
 
 	(*header)->compressed_length = lha_decode_uint32(&RAW_DATA(header, 7));
 	(*header)->length = lha_decode_uint32(&RAW_DATA(header, 11));
+	(*header)->_old_compressed_length = (*header)->compressed_length;
+	(*header)->_old_length = (*header)->length;
 
 	// Unix-style timestamp.
 
