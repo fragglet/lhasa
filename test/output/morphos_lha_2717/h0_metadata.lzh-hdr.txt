@@ -1,0 +1,9 @@
+filename: metadata.txt
+compress_method: -lh0-
+compressed_length: 29
+length: 29
+header_level: 0
+os_type: 0
+crc: d1b8
+timestamp: 1751499212
+--

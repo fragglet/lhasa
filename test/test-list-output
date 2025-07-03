@@ -284,6 +284,26 @@ test_archive lha_os9_211c/h2_lh0.lzh
 test_archive lha_os9_211c/h2_lh1.lzh
 test_archive lha_os9_211c/h2_subdir.lzh
 
+test_archive morphos_lha_2717/h0_lh0.lzh
+test_archive morphos_lha_2717/h0_lh1.lzh
+test_archive morphos_lha_2717/h0_lh5.lzh
+test_archive morphos_lha_2717/h0_lh6.lzh
+test_archive morphos_lha_2717/h0_metadata.lzh
+test_archive morphos_lha_2717/h0_subdir.lzh
+test_archive morphos_lha_2717/h1_lh0.lzh
+test_archive morphos_lha_2717/h1_lh1.lzh
+test_archive morphos_lha_2717/h1_lh5.lzh
+test_archive morphos_lha_2717/h1_lh6.lzh
+test_archive morphos_lha_2717/h1_metadata.lzh
+test_archive morphos_lha_2717/h1_subdir.lzh
+#test_archive morphos_lha_2717/h2_huge.lzh   # TODO: Extended size header
+test_archive morphos_lha_2717/h2_lh0.lzh
+test_archive morphos_lha_2717/h2_lh1.lzh
+test_archive morphos_lha_2717/h2_lh5.lzh
+test_archive morphos_lha_2717/h2_lh6.lzh
+test_archive morphos_lha_2717/h2_metadata.lzh
+test_archive morphos_lha_2717/h2_subdir.lzh
+
 test_archive tascal_lha_051h/abspath.lzh
 test_archive tascal_lha_051h/lh0.lzh
 test_archive tascal_lha_051h/lh5.lzh
@@ -298,4 +318,3 @@ test_archive regression/unixsep.lzh
 
 test_archive generated/lzs/lzs.lzs
 test_archive generated/lzs/long.lzs
-

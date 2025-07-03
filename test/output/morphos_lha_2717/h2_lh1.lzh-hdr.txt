@@ -1,0 +1,10 @@
+filename: gpl-2
+compress_method: -lh1-
+compressed_length: 7201
+length: 18092
+header_level: 2
+os_type: 65 ('A')
+crc: a33a
+timestamp: 1262322000
+common_crc: 0f3e
+--
