@@ -195,7 +195,7 @@ typedef struct _LHAFileHeader {
 	 */
 	uint8_t os_type;
 
-	/** 16-bit CRC of the compressed data. */
+	/** CRC-16 checksum of the compressed data. */
 	uint16_t crc;
 
 	/** Unix timestamp of the modification time of the file. */
