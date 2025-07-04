@@ -14,7 +14,7 @@ LHA tools on different operating systems and platforms:
 | --------- | ---------------- | ----------- |
 | [explzh_723](explzh_723/) | Microsoft Windows | ExpLZH v7.23 |
 | [larc333](larc333/) | MS-DOS | LArc v3.33 |
-| [lh2_222](lh2_222/) | LH/2 v2.22 OS/2
+| [lh2_222](lh2_222/) | OS/2 | LH/2 v2.22 |
 | [lha213](lha213/) | MS-DOS | LHA v2.13 |
 | [lha255e](lha255e/) | MS-DOS | LHA v2.55e |
 | [lha_amiga_122](lha_amiga_122/) | AmigaOS | LHA v1.22 |
