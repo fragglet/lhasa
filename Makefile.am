@@ -6,6 +6,7 @@ EXTRA_DIST = \
 	COPYING.md \
 	README.md \
 	NEWS.md \
+	SECURITY.md \
 	gencov \
 	rpm.spec
 MAINTAINERCLEANFILES = $(AUX_DIST_GEN)
