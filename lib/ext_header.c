@@ -243,21 +243,6 @@ static int ext_header_file_size_decoder(LHAFileHeader *header, uint8_t *data,
 	header->compressed_length = lha_decode_uint64(data);
 	header->length = lha_decode_uint64(data + 8);
 
-	// We populate the old ABI size fields, which used size_t. On some
-	// systems this is a 32-bit integer, so if the new values would
-	// overflow this, store the maximum value possible instead.
-	if (header->compressed_length > SIZE_MAX) {
-		header->_old_compressed_length = SIZE_MAX;
-	} else {
-		header->_old_compressed_length =
-			(size_t) header->compressed_length;
-	}
-	if (header->length > SIZE_MAX) {
-		header->_old_length = SIZE_MAX;
-	} else {
-		header->_old_length = (size_t) header->length;
-	}
-
 	return 1;
 }
 
