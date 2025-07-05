@@ -17,6 +17,8 @@ v0.5.0 (????-??-??):
        extracted correctly.
      * The manual page now includes more detailed information about the
        different list subcommands.
+     * The liblhasa headers are now installed into a directory with a name
+       that accurately reflects the project's version number.
      * Some error messages were changed to print filenames safely.
      * Several minor memory leaks were fixed.
      * Extraction of DECLHA self-extracting archives was fixed.
