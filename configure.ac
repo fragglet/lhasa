@@ -2,17 +2,10 @@ AC_INIT([Lhasa],[0.4.0],[fraggle@gmail.com],[lhasa])
 AC_CONFIG_AUX_DIR(autotools)
 
 # The version information below should be updated with each new release.
-#
-# From <https://autotools.info/libtool/version.html>:
-#
-# * Always increase the revision value.
-# * Increase the current value whenever an interface has been added,
-#   removed or changed.
-# * Increase the age value only if the changes made to the ABI are
-#   backward compatible.
-#
+# See <https://www.gnu.org/software/libtool/manual/html_node/Versioning.html>
+# for documentation about how this works.
 LIBVER_CURRENT=1
-LIBVER_REVISION=1
+LIBVER_REVISION=0
 LIBVER_AGE=1
 
 AM_INIT_AUTOMAKE([no-define])
