@@ -1,0 +1,3 @@
+subdir	- Testing  :  .subdir	- Testing  :  osubdir	- Tested  
+subdir/subdir2/hello.txt	- Testing  :  .subdir/subdir2/hello.txt	- Testing  :  osubdir/subdir2/hello.txt	- Tested  
+Apply-Ea.Cmd	- Testing  :  .Apply-Ea.Cmd	- Testing  :  oApply-Ea.Cmd	- Tested  

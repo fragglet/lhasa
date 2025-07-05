@@ -34,13 +34,17 @@ struct _LHADecoder {
 	LHADecoderProgressCallback progress_callback;
 	void *progress_callback_data;
 
+	/** Size of blocks for progress callback. This is usually but not
+	    always equal to dtype->block_size. */
+	unsigned int block_size;
+
 	/** Last announced block position, for progress callback. */
 
 	unsigned int last_block, total_blocks;
 
 	/** Current position in the decode stream, and total length. */
 
-	size_t stream_pos, stream_length;
+	uint64_t stream_pos, stream_length;
 
 	/** Output buffer, containing decoded data not yet returned. */
 

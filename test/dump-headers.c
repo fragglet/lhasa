@@ -40,8 +40,8 @@ static void print_header(LHAFileHeader *header)
 	}
 
 	printf("compress_method: %s\n", header->compress_method);
-	printf("compressed_length: %i\n", (int) header->compressed_length);
-	printf("length: %i\n", (int) header->length);
+	printf("compressed_length: %" PRIu64 "\n", header->compressed_length);
+	printf("length: %" PRIu64 "\n", header->length);
 	printf("header_level: %i\n", header->header_level);
 	printf("os_type: %i", header->os_type);
 	if (header->os_type != LHA_OS_TYPE_UNKNOWN) {

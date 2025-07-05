@@ -10,3 +10,4 @@ test-decoder
 test-search-buffer
 test-*.log
 test-*.trs
+/*.exe

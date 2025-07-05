@@ -120,6 +120,14 @@ test_archive lha_os2_208/h3_lh0.lzh
 test_archive lha_os2_208/h3_lh5.lzh
 test_archive lha_os2_208/h3_subdir.lzh
 
+test_archive lh2_222/lh0.lzh
+test_archive lh2_222/lh5.lzh
+test_archive lh2_222/readonly.lzh
+test_archive lh2_222/subdir.lzh
+test_archive lh2_222/sfx.exe
+test_archive lh2_222/eas.lzh
+test_archive lh2_222/easubdir.lzh
+
 test_archive pmarc124/pm0.pma
 test_archive pmarc124/pm1.pma
 test_archive pmarc124/pm1_long.pma
@@ -232,10 +240,34 @@ test_archive lha_os9_211c/h2_lh0.lzh
 test_archive lha_os9_211c/h2_lh1.lzh
 test_archive lha_os9_211c/h2_subdir.lzh
 
+test_archive morphos_lha_2717/h0_lh0.lzh
+test_archive morphos_lha_2717/h0_lh1.lzh
+test_archive morphos_lha_2717/h0_lh5.lzh
+test_archive morphos_lha_2717/h0_lh6.lzh
+test_archive morphos_lha_2717/h0_metadata.lzh
+test_archive morphos_lha_2717/h0_subdir.lzh
+test_archive morphos_lha_2717/h1_lh0.lzh
+test_archive morphos_lha_2717/h1_lh1.lzh
+test_archive morphos_lha_2717/h1_lh5.lzh
+test_archive morphos_lha_2717/h1_lh6.lzh
+test_archive morphos_lha_2717/h1_metadata.lzh
+test_archive morphos_lha_2717/h1_subdir.lzh
+test_archive morphos_lha_2717/h2_huge.lzh
+test_archive morphos_lha_2717/h2_lh0.lzh
+test_archive morphos_lha_2717/h2_lh1.lzh
+test_archive morphos_lha_2717/h2_lh5.lzh
+test_archive morphos_lha_2717/h2_lh6.lzh
+test_archive morphos_lha_2717/h2_metadata.lzh
+test_archive morphos_lha_2717/h2_subdir.lzh
+
 test_archive lhark04d/lh0.lzh
 test_archive lhark04d/lh5.lzh
 test_archive lhark04d/lh7.lzh
 test_archive lhark04d/lh7_long.lzh
+
+test_archive tascal_lha_051h/abspath.lzh
+test_archive tascal_lha_051h/lh0.lzh
+test_archive tascal_lha_051h/lh5.lzh
 
 test_archive unlha32/h2_lhx.lzh
 test_archive unlha32/lhx_long.lzh

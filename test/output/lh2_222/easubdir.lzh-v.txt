@@ -1,0 +1,7 @@
+ PERMSSN    UID  GID    PACKED    SIZE  RATIO METHOD CRC     STAMP          NAME
+---------- ----------- ------- ------- ------ ---------- ------------ -------------
+[generic]  *****/*****     354     570  62.1% -lh5- 9b49 Jun 28 12:30 subdir
+[generic]  *****/*****      14      14 100.0% -lh0- f1c6 Jun 28 12:14 subdir/subdir2/hello.txt
+[generic]  *****/*****     277     486  57.0% -lh5- 1961 Jun 28 12:30 Apply-Ea.Cmd
+---------- ----------- ------- ------- ------ ---------- ------------ -------------
+ Total         3 files     645    1070  60.3%            Jan  1  2000

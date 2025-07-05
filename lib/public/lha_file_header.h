@@ -117,8 +117,19 @@ extern "C" {
  */
 #define LHA_FILE_OS9_PERMS             0x10
 
+/**
+ * Bit field value set in extra_flags to indicate that the extended
+ * file sizes header was present.
+ */
+#define LHA_FILE_64BIT_SIZES           0x20
+
+/**
+ * Macro that evaluates to true if the specified flag is set in the
+ * given @ref LHAFileHeader.
+ */
 #define LHA_FILE_HAVE_EXTRA(header, flag) \
 	(((header)->extra_flags & (flag)) != 0)
+
 /**
  * Structure containing a decoded LZH file header.
  *
@@ -167,11 +178,13 @@ typedef struct _LHAFileHeader {
 	 */
 	char compress_method[6];
 
-	/** Length of the compressed data. */
-	size_t compressed_length;
+	/* Deprecated old version of the compressed_length field, retained
+	 * for ABI compatibility. */
+	size_t _old_compressed_length;
 
-	/** Length of the uncompressed data. */
-	size_t length;
+	/* Deprecated old version of the length field, retained for ABI
+	 * compatibility. */
+	size_t _old_length;
 
 	/** LZH header format used to store this header. */
 	uint8_t header_level;
@@ -182,7 +195,7 @@ typedef struct _LHAFileHeader {
 	 */
 	uint8_t os_type;
 
-	/** 16-bit CRC of the compressed data. */
+	/** CRC-16 checksum of the compressed data. */
 	uint16_t crc;
 
 	/** Unix timestamp of the modification time of the file. */
@@ -238,6 +251,13 @@ typedef struct _LHAFileHeader {
 	 * @ref LHA_FILE_WINDOWS_TIMESTAMPS is set.
 	 */
 	uint64_t win_access_time;
+
+	/** Length of the compressed data. */
+	uint64_t compressed_length;
+
+	/** Length of the uncompressed data. */
+	uint64_t length;
+
 } LHAFileHeader;
 
 #ifdef __cplusplus

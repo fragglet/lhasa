@@ -41,6 +41,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define LHA_EXT_HEADER_COMMENT             0x3f
 
 #define LHA_EXT_HEADER_WINDOWS_TIMESTAMPS  0x41
+#define LHA_EXT_HEADER_FILE_SIZES          0x42
 
 #define LHA_EXT_HEADER_UNIX_PERMISSION     0x50
 #define LHA_EXT_HEADER_UNIX_UID_GID        0x51
@@ -230,6 +231,41 @@ static const LHAExtHeaderType lha_ext_header_windows_timestamps = {
 	24
 };
 
+// File sizes header (0x42).
+//
+// This contains 64-bit versions of the uncompressed/compressed file size
+// header fields, for storing very long files.
+
+static int ext_header_file_size_decoder(LHAFileHeader *header, uint8_t *data,
+                                        size_t data_len)
+{
+	header->extra_flags |= LHA_FILE_64BIT_SIZES;
+	header->compressed_length = lha_decode_uint64(data);
+	header->length = lha_decode_uint64(data + 8);
+
+	// We populate the old ABI size fields, which used size_t. On some
+	// systems this is a 32-bit integer, so if the new values would
+	// overflow this, store the maximum value possible instead.
+	if (header->compressed_length > SIZE_MAX) {
+		header->_old_compressed_length = SIZE_MAX;
+	} else {
+		header->_old_compressed_length =
+			(size_t) header->compressed_length;
+	}
+	if (header->length > SIZE_MAX) {
+		header->_old_length = SIZE_MAX;
+	} else {
+		header->_old_length = (size_t) header->length;
+	}
+
+	return 1;
+}
+
+static const LHAExtHeaderType lha_ext_header_file_sizes = {
+	LHA_EXT_HEADER_FILE_SIZES,
+	ext_header_file_size_decoder,
+	16
+};
 
 // Unix permissions header (0x50).
 
@@ -389,6 +425,7 @@ static const LHAExtHeaderType *const ext_header_types[] = {
 	&lha_ext_header_unix_group,
 	&lha_ext_header_unix_timestamp,
 	&lha_ext_header_windows_timestamps,
+	&lha_ext_header_file_sizes,
 	&lha_ext_header_os9,
 };
 

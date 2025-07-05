@@ -1,0 +1,10 @@
+path: subdir/SUBDIR2/
+filename: HELLO.TXT
+compress_method: -lh0-
+compressed_length: 14
+length: 14
+header_level: 0
+os_type: 0
+crc: f1c6
+timestamp: 1751108522
+--

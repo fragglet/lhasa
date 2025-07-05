@@ -32,7 +32,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 static void decompress_file(LHAReader *reader)
 {
 	uint8_t buf[128];
-	size_t total, bytes;
+	size_t bytes;
+	uint64_t total;
 	uint32_t crc;
 
 	total = 0;
@@ -45,7 +46,7 @@ static void decompress_file(LHAReader *reader)
 	} while (bytes > 0);
 
 	printf("crc: %08x\n", crc);
-	printf("length: %i\n", (unsigned int) total);
+	printf("length: %" PRIu64 "\n", total);
 }
 
 int main(int argc, char *argv[])

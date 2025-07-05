@@ -1,0 +1,9 @@
+filename: readonly.txt
+compress_method: -lh0-
+compressed_length: 12
+length: 12
+header_level: 0
+os_type: 0
+crc: 5406
+timestamp: 1751110062
+--

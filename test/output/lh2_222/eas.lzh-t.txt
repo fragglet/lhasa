@@ -1,0 +1,3 @@
+EAS/hello.txt	- Testing  :  .EAS/hello.txt	- Testing  :  oEAS/hello.txt	- Tested  
+hello.txt	- Testing  :  .hello.txt	- Testing  :  ohello.txt	- Tested  
+Apply-Ea.Cmd	- Testing  :  .Apply-Ea.Cmd	- Testing  :  oApply-Ea.Cmd	- Tested  
