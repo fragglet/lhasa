@@ -1,6 +1,20 @@
 AC_INIT([Lhasa],[0.4.0],[fraggle@gmail.com],[lhasa])
 AC_CONFIG_AUX_DIR(autotools)
 
+# The version information below should be updated with each new release.
+#
+# From <https://autotools.info/libtool/version.html>:
+#
+# * Always increase the revision value.
+# * Increase the current value whenever an interface has been added,
+#   removed or changed.
+# * Increase the age value only if the changes made to the ABI are
+#   backward compatible.
+#
+LIBVER_CURRENT=1
+LIBVER_REVISION=1
+LIBVER_AGE=1
+
 AM_INIT_AUTOMAKE([no-define])
 LT_INIT
 
@@ -62,6 +76,9 @@ if [[ "$use_valgrind" = "true" ]]; then
 fi
 
 AM_CONDITIONAL(USE_VALGRIND, $use_valgrind)
+
+LT_LIBRARY_VERSION=$LIBVER_CURRENT:$LIBVER_REVISION:$LIBVER_AGE
+AC_SUBST(LT_LIBRARY_VERSION)
 
 # Save the default CFLAGS and clear them, so that the test build
 # of the library doesn't get the optimisation flags.

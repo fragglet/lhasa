@@ -19,6 +19,7 @@ v0.5.0 (????-??-??):
        different list subcommands.
      * The liblhasa headers are now installed into a directory with a name
        that accurately reflects the project's version number.
+     * The liblhasa .so version numbers now have meaningful numbers.
      * Some error messages were changed to print filenames safely.
      * Several minor memory leaks were fixed.
      * Extraction of DECLHA self-extracting archives was fixed.
