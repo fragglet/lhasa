@@ -103,6 +103,9 @@ typedef void (*LHADecoderProgressCallback)(unsigned int num_blocks,
 
 const LHADecoderType *lha_decoder_for_name(const char *name);
 
+/* This macro performs a rename for ABI backwards-compatibility. */
+#define lha_decoder_new lha_decoder_new64
+
 /**
  * Allocate a new decoder for the specified type.
  *
@@ -118,7 +121,7 @@ const LHADecoderType *lha_decoder_for_name(const char *name);
 LHADecoder *lha_decoder_new(const LHADecoderType *dtype,
                             LHADecoderCallback callback,
                             void *callback_data,
-                            size_t stream_length);
+                            uint64_t stream_length);
 
 /**
  * Free a decoder.
