@@ -242,13 +242,22 @@ static const ListColumn size_column = {
 
 // Compression ratio
 
-static float compression_percent(size_t compressed, size_t uncompressed)
+static const char *compression_percent(size_t compressed, size_t uncompressed)
 {
+	static char buf[10];
+	int permille;
+
+	// We pessimistically round the compression ratio up to the next 0.1%,
+	// so that even if eg. a 10,000:1 ratio was achieved, it will be shown
+	// as "0.1%", not "0.0%". This is marginally more honest.
 	if (uncompressed > 0) {
-		return ((float) compressed * 100.0f) / (float) uncompressed;
+		permille = (compressed * 1000 + uncompressed - 1) / uncompressed;
 	} else {
-		return 100.0f;
+		permille = 1000;
 	}
+
+	snprintf(buf, sizeof(buf), "%3d.%1d%%", permille / 10, permille % 10);
+	return buf;
 }
 
 static void ratio_column_print(LHAFileHeader *header)
@@ -256,8 +265,8 @@ static void ratio_column_print(LHAFileHeader *header)
 	if (!strcmp(header->compress_method, "-lhd-")) {
 		printf("******");
 	} else {
-		printf("%5.1f%%", compression_percent(header->compressed_length,
-		                                      header->length));
+		printf("%s", compression_percent(header->compressed_length,
+		                                 header->length));
 	}
 }
 
@@ -266,8 +275,8 @@ static void ratio_column_footer(FileStatistics *stats)
 	if (stats->length == 0) {
 		printf("******");
 	} else {
-		printf("%5.1f%%", compression_percent(stats->compressed_length,
-		                                      stats->length));
+		printf("%s", compression_percent(stats->compressed_length,
+		                                 stats->length));
 	}
 }
 
