@@ -155,7 +155,8 @@ static void level1_header_write(LHAFileHeader *header,
 	size_t filename_len = buf_len - LEVEL_1_MIN_HEADER_LEN - 2;
 
 	// Fill in main fields.
-
+	// TODO: We should generate a file size extended header if either the
+	// compressed or uncompressed lengths won't fit in a 32-bit field.
 	memcpy(buf + 2, header->compress_method, 5);
 	lha_encode_uint32(buf + 7,
 	                  header->compressed_length
@@ -171,6 +172,9 @@ static void level1_header_write(LHAFileHeader *header,
 	buf[21] = filename_len;
 
 	memcpy(&buf[22], header->filename, filename_len);
+	// TODO: CRC-16 is not suitable for protecting more than a few KB
+	// of data. To be proper, responsible data custodians, we should
+	// really define a new extended header with something better.
 	lha_encode_uint16(buf + 22 + filename_len, header->crc);
 
 	buf[24 + filename_len] = header->os_type;
@@ -495,6 +499,7 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 		// uncompressed and compressed sizes, so there is an inherent
 		// limit on file size. We must therefore ensure that the
 		// counter does not overflow.
+		// TODO: Remove after file size extended header support is added
 		if (compressed_len > MAX_FILE_LENGTH - cnt) {
 			return 0;
 		}
@@ -502,6 +507,7 @@ static int lha_write_file_data(LHAOutputStream *out, LHAFileHeader *header,
 	}
 
 	// Overflow check for uncompressed size.
+	// TODO: Remove after file size extended header support is added
 	uncompressed_len = lha_encoder_get_length(encoder);
 	if (uncompressed_len > UINT32_MAX) {
 		return 0;
