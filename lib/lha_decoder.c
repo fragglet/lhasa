@@ -66,13 +66,10 @@ static const struct {
 	{ "-pm2-", &lha_pm2_decoder },
 };
 
-#undef lha_decoder_new
-
-// The "actual" lha_decoder_new; code gets #define-renamed to use this.
-LHADecoder *lha_decoder_new64(const LHACodec *codec,
-                              LHACodecCallback callback,
-                              void *callback_data,
-                              uint64_t stream_length)
+LHADecoder *lha_decoder_new(const LHACodec *codec,
+                            LHACodecCallback callback,
+                            void *callback_data,
+                            uint64_t stream_length)
 {
 	LHADecoder *decoder;
 	void *state;
@@ -110,17 +107,6 @@ LHADecoder *lha_decoder_new64(const LHACodec *codec,
 	}
 
 	return decoder;
-}
-
-// This is the old version of lha_decoder_new, retained for ABI
-// compatibility purposes.
-LHADecoder *lha_decoder_new(const LHACodec *codec,
-                            LHACodecCallback callback,
-                            void *callback_data,
-                            size_t stream_length)
-{
-	return lha_decoder_new64(codec, callback, callback_data,
-	                         stream_length);
 }
 
 const LHACodec *lha_decoder_for_name(const char *name)
@@ -280,7 +266,6 @@ uint16_t lha_decoder_get_crc(LHADecoder *decoder)
 	return decoder->crc;
 }
 
-// The "actual" lha_decoder_get_length; code gets #define-renamed to use this.
 uint64_t lha_decoder_get_length(LHADecoder *decoder)
 {
 	return decoder->stream_pos;
