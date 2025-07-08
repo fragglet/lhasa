@@ -1,7 +1,7 @@
  PERMSSN    UID  GID    PACKED    SIZE  RATIO METHOD CRC     STAMP            LV
 ---------- ----------- ------- ------- ------ ---------- ------------------- ---
 subdir
-[generic]  *****/*****     354     570  62.1% -lh5- 9b49 2025-06-28 12:30:12 [0]
+[generic]  *****/*****     354     570  62.2% -lh5- 9b49 2025-06-28 12:30:12 [0]
 subdir/subdir2/hello.txt
 [generic]  *****/*****      14      14 100.0% -lh0- f1c6 2025-06-28 12:14:58 [0]
 Apply-Ea.Cmd

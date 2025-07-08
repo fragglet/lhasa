@@ -46,7 +46,7 @@ liblhasatest_a_SOURCES=$(SRC) $(HEADER_FILES)
 
 liblhasa_la_CFLAGS=$(MAIN_CFLAGS)
 liblhasa_la_SOURCES=$(SRC) $(HEADER_FILES)
-liblhasa_la_LDFLAGS=-no-undefined
+liblhasa_la_LDFLAGS=-no-undefined -version-info $(LT_LIBRARY_VERSION)
 
 clean-local:
 	rm -f *.gcno *.gcda *.c.gcov
