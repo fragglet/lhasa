@@ -1,4 +1,4 @@
-## v0.5.0 (????-??-??):
+## v0.5.0 (2025-08-01):
 
  * The output from the list subcommands has been tweaked to be more
    consistent. This should help to avoid parsing bugs with
