@@ -215,4 +215,4 @@ archive files found in the wild. The main missing features are:
 These are features that I aim to add in future releases. Other future
 features can be found in the TODO file.
 
-<!-- vim: tw=75 -->
+<!-- vim: set tw=75: -->
