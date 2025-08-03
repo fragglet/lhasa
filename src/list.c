@@ -244,7 +244,7 @@ static const ListColumn size_column = {
 
 static const char *compression_percent(size_t compressed, size_t uncompressed)
 {
-	static char buf[10];
+	static char buf[16];
 	int permille;
 
 	// We pessimistically round the compression ratio up to the next 0.1%,
