@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: configure
       run: |
         LDFLAGS="$CFLAGS" ./autogen.sh  \
@@ -23,7 +23,7 @@ jobs:
         mkdir artifacts
         tar cf - lib/*.gcov src/*.gcov | tar -C artifacts -xf -
     - name: Upload coverage-annotated source files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: "artifacts"
         name: coverage_reports
@@ -39,7 +39,7 @@ jobs:
                -fno-sanitize=shift-base"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install dependencies
       run: |
         sudo apt update
@@ -65,7 +65,7 @@ jobs:
         msystem: MINGW32
         update: true
         install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-i686-gcc
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Find Git version
       id: version
       run: |
@@ -89,7 +89,7 @@ jobs:
         cd pkg/win32
         make
     - name: Upload build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: "pkg/win32/staging"
         name: lhasa-${{steps.version.outputs.VERSION}}
@@ -108,7 +108,7 @@ jobs:
         msystem: MINGW64
         update: true
         install: base-devel git autoconf automake libtool groff zip dos2unix mingw-w64-x86_64-gcc
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Find Git version
       id: version
       run: |
@@ -133,7 +133,7 @@ jobs:
     #    cd pkg/win64
     #    make
     #- name: Upload build
-    #  uses: actions/upload-artifact@v4
+    #  uses: actions/upload-artifact@v6
     #  with:
     #    path: "pkg/win64/staging"
     #    name: lhasa-${{steps.version.outputs.VERSION}}
